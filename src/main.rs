@@ -1,27 +1,23 @@
+mod ship;
+
 use std::f32::consts::PI;
 
 use bevy::{
     prelude::{
-        default, shape, App, Assets, Camera3dBundle, Color, Commands, Component, DirectionalLight,
-        DirectionalLightBundle, Mesh, OrthographicProjection, PbrBundle, Quat, Query, ResMut,
-        StandardMaterial, Transform, Vec3, Res,
+        default, shape, App, Assets, Camera3dBundle, Color, Commands, DirectionalLight,
+        DirectionalLightBundle, Mesh, OrthographicProjection, PbrBundle, Quat, ResMut,
+        StandardMaterial, Transform, Vec3,
     },
-    DefaultPlugins, time::Time,
+    DefaultPlugins,
 };
+use ship::{space_ship::SpaceShip, SpaceShipPlugin};
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
+        .add_plugin(SpaceShipPlugin)
         .add_startup_system(setup)
-        .add_system(forever_move)
         .run();
-}
-
-fn forever_move(mut query: Query<(&mut Transform, &SpaceShip)>, time: Res<Time>) {
-    for (mut transform, spaceship) in query.iter_mut() {
-        let forward = transform.forward().clone();
-        transform.translation += forward * time.delta_seconds();
-    }
 }
 
 fn setup(
@@ -38,7 +34,7 @@ fn setup(
     commands
         .spawn(PbrBundle {
             mesh: meshes.add(shape::Cube { size: 1. }.into()),
-            material: materials.add(Color::ALICE_BLUE.into()),
+            material: materials.add(Color::GREEN.into()),
             ..default()
         })
         .insert(SpaceShip { hp: 20 });
@@ -71,9 +67,4 @@ fn setup(
         },
         ..default()
     });
-}
-
-#[derive(Component)]
-struct SpaceShip {
-    hp: i32,
 }
