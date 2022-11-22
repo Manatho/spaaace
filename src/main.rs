@@ -1,3 +1,4 @@
+mod projectile;
 mod ship;
 
 use std::f32::consts::PI;
@@ -10,12 +11,14 @@ use bevy::{
     },
     DefaultPlugins,
 };
+use projectile::ProjectilePlugin;
 use ship::{space_ship::SpaceShip, SpaceShipPlugin};
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugin(SpaceShipPlugin)
+        .add_plugin(ProjectilePlugin)
         .add_startup_system(setup)
         .run();
 }

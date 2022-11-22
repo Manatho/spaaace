@@ -1,7 +1,12 @@
 use bevy::{
-    prelude::{Component, Input, KeyCode, Query, Res, Transform},
+    prelude::{
+        Assets, Commands, Component, Input, KeyCode, Mesh, Query, Res, ResMut, StandardMaterial,
+        Transform,
+    },
     time::Time,
 };
+
+use crate::projectile::projectile::LaserProjectileBundle;
 
 #[derive(Component)]
 pub struct SpaceShip {
@@ -17,8 +22,11 @@ pub fn forever_move(mut query: Query<(&mut Transform, &SpaceShip)>, time: Res<Ti
 
 pub fn sometimes_move(
     mut query: Query<(&mut Transform, &SpaceShip)>,
+    mut commands: Commands,
     time: Res<Time>,
     keyboard: Res<Input<KeyCode>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     for (mut transform, _) in query.iter_mut() {
         let forward = transform.forward().clone();
@@ -34,6 +42,9 @@ pub fn sometimes_move(
         }
         if keyboard.pressed(KeyCode::A) {
             transform.translation -= right * time.delta_seconds();
+        }
+        if (keyboard.pressed(KeyCode::Space)) {
+            commands.spawn(LaserProjectileBundle::new(meshes, materials));
         }
     }
 }
