@@ -1,4 +1,5 @@
 mod ship;
+mod capture_point;
 
 use std::f32::consts::PI;
 
@@ -25,12 +26,6 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    commands.spawn(PbrBundle {
-        mesh: meshes.add(shape::Plane { size: 50. }.into()),
-        material: materials.add(Color::SILVER.into()),
-        ..default()
-    });
-
     commands
         .spawn(PbrBundle {
             mesh: meshes.add(shape::Cube { size: 1. }.into()),
