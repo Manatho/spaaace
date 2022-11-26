@@ -1,22 +1,31 @@
-mod ship;
 mod capture_point;
+mod ship;
 
 use std::f32::consts::PI;
 
 use bevy::{
+    pbr::NotShadowCaster,
     prelude::{
-        default, shape, App, Assets, Camera3dBundle, Color, Commands, DirectionalLight,
-        DirectionalLightBundle, Mesh, OrthographicProjection, PbrBundle, Quat, ResMut,
-        StandardMaterial, Transform, Vec3,
+        default, shape, App, AssetPlugin, Assets, Camera3dBundle, Color, Commands,
+        DirectionalLight, DirectionalLightBundle, MaterialMeshBundle, Mesh, OrthographicProjection,
+        PbrBundle, PluginGroup, Quat, ResMut, StandardMaterial, Transform, Vec3, Vec4,
     },
     DefaultPlugins,
 };
+use capture_point::CapturePointPlugin;
 use ship::{space_ship::SpaceShip, SpaceShipPlugin};
+
+use crate::capture_point::capture_point::{CapturePoint, CaptureSphere, ForceFieldMaterial};
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(AssetPlugin {
+            // Tell the asset server to watch for asset changes on disk:
+            watch_for_changes: true,
+            ..default()
+        }))
         .add_plugin(SpaceShipPlugin)
+        .add_plugin(CapturePointPlugin)
         .add_startup_system(setup)
         .run();
 }
@@ -25,6 +34,7 @@ fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut force_field_materials: ResMut<Assets<ForceFieldMaterial>>,
 ) {
     commands
         .spawn(PbrBundle {
@@ -33,6 +43,25 @@ fn setup(
             ..default()
         })
         .insert(SpaceShip { hp: 20 });
+
+    commands
+        .spawn(MaterialMeshBundle {
+            mesh: meshes.add(
+                shape::Icosphere {
+                    radius: 3.,
+                    subdivisions: 8,
+                }
+                .into(),
+            ),
+            material: force_field_materials.add(ForceFieldMaterial {}),
+            ..default()
+        })
+        .insert(NotShadowCaster)
+        .insert(CaptureSphere {
+            radius: 3.,
+            progress: 0.0,
+            attacker: 0,
+        });
 
     commands.spawn(Camera3dBundle {
         transform: Transform::from_xyz(0.0, 6., 12.0).looking_at(Vec3::new(0., 1., 0.), Vec3::Y),

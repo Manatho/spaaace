@@ -1,5 +1,9 @@
 use bevy::{
-    prelude::{Bundle, Component, PbrBundle, Query, Res, Transform, With},
+    prelude::{
+        AlphaMode, Bundle, Component, Material, PbrBundle, Query, Res, Transform, Vec4, With,
+    },
+    reflect::TypeUuid,
+    render::render_resource::{AsBindGroup, ShaderRef},
     time::Time,
 };
 
@@ -7,9 +11,9 @@ use crate::ship::space_ship::SpaceShip;
 
 #[derive(Component)]
 pub struct CaptureSphere {
-    radius: f32,
-    progress: f32,
-    attacker: u8,
+    pub radius: f32,
+    pub progress: f32,
+    pub attacker: u8,
 }
 
 #[derive(Bundle)]
@@ -36,5 +40,23 @@ pub fn capture_system(
                 print!("{}", capture_sphere.progress);
             }
         }
+    }
+}
+
+// This is the struct that will be passed to your shader
+#[derive(AsBindGroup, TypeUuid, Debug, Clone)]
+#[uuid = "f690fdae-d598-45ab-8225-97e2a3f056e0"]
+pub struct ForceFieldMaterial {
+    // #[uniform(0)]
+    // pub selection: Vec4,
+}
+
+impl Material for ForceFieldMaterial {
+    fn fragment_shader() -> ShaderRef {
+        "shaders/forcefield.wgsl".into()
+    }
+
+    fn alpha_mode(&self) -> AlphaMode {
+        AlphaMode::Blend
     }
 }
