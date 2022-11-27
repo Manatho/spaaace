@@ -37,7 +37,7 @@ pub fn receive_message_event(
     mut local: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    /* mut global: ResMut<ClientGlobal>, */
+    mut global: ResMut<ClientGlobal>,
     client: Client<Protocol, Channels>,
 ) {
     /* for event in event_reader.iter() {
