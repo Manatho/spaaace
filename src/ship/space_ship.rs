@@ -3,6 +3,8 @@ use bevy::{
     time::Time,
 };
 
+use crate::player::player::Player;
+
 #[derive(Component)]
 pub struct SpaceShip {
     pub hp: i32,

@@ -27,5 +27,8 @@
     "VERTEX_COLORS",
     "SKINNED",
     "STANDARDMATERIAL_NORMAL_MAP"
-  ]
+  ],
+
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 100
 }

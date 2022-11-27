@@ -1,5 +1,7 @@
 mod capture_point;
+mod player;
 mod ship;
+mod team;
 
 use std::f32::consts::PI;
 
@@ -10,12 +12,18 @@ use bevy::{
         DirectionalLight, DirectionalLightBundle, MaterialMeshBundle, Mesh, OrthographicProjection,
         PbrBundle, PluginGroup, Quat, ResMut, StandardMaterial, Transform, Vec3, Vec4,
     },
+    utils::HashSet,
     DefaultPlugins,
 };
 use capture_point::CapturePointPlugin;
+use player::PlayerPlugin;
 use ship::{space_ship::SpaceShip, SpaceShipPlugin};
 
-use crate::capture_point::capture_point::{CapturePoint, CaptureSphere, ForceFieldMaterial};
+use crate::{
+    capture_point::capture_point::{CapturePoint, CaptureSphere, ForceFieldMaterial},
+    player::player::Player,
+    team::team_enum::Team,
+};
 
 fn main() {
     App::new()
@@ -26,6 +34,7 @@ fn main() {
         }))
         .add_plugin(SpaceShipPlugin)
         .add_plugin(CapturePointPlugin)
+        .add_plugin(PlayerPlugin)
         .add_startup_system(setup)
         .run();
 }
@@ -42,7 +51,8 @@ fn setup(
             material: materials.add(Color::GREEN.into()),
             ..default()
         })
-        .insert(SpaceShip { hp: 20 });
+        .insert(SpaceShip { hp: 20 })
+        .insert(Player { team: Team::Blue });
 
     commands
         .spawn(MaterialMeshBundle {
@@ -60,7 +70,8 @@ fn setup(
         .insert(CaptureSphere {
             radius: 3.,
             progress: 0.0,
-            attacker: 0,
+            attackers: HashSet::new(),
+            owner: Team::Neutral,
         });
 
     commands.spawn(Camera3dBundle {
