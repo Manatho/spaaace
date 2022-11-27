@@ -3,18 +3,9 @@ use bevy::{
     time::Time,
 };
 
-use crate::player::player::Player;
-
 #[derive(Component)]
 pub struct SpaceShip {
     pub hp: i32,
-}
-
-pub fn forever_move(mut query: Query<(&mut Transform, &SpaceShip)>, time: Res<Time>) {
-    for (mut transform, _) in query.iter_mut() {
-        let forward = transform.forward().clone();
-        transform.translation += forward * time.delta_seconds();
-    }
 }
 
 pub fn sometimes_move(

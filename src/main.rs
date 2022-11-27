@@ -10,7 +10,7 @@ use bevy::{
     prelude::{
         default, shape, App, AssetPlugin, Assets, Camera3dBundle, Color, Commands,
         DirectionalLight, DirectionalLightBundle, MaterialMeshBundle, Mesh, OrthographicProjection,
-        PbrBundle, PluginGroup, Quat, ResMut, StandardMaterial, Transform, Vec3, Vec4,
+        PbrBundle, PluginGroup, Quat, ResMut, StandardMaterial, Transform, Vec3,
     },
     utils::HashSet,
     DefaultPlugins,
@@ -20,7 +20,7 @@ use player::PlayerPlugin;
 use ship::{space_ship::SpaceShip, SpaceShipPlugin};
 
 use crate::{
-    capture_point::capture_point::{CapturePoint, CaptureSphere, ForceFieldMaterial},
+    capture_point::capture_point::{CaptureSphere, ForceFieldMaterial},
     player::player::Player,
     team::team_enum::Team,
 };
