@@ -1,5 +1,5 @@
 
-use bevy::prelude::{ResMut, Query};
+use bevy::{prelude::{ResMut, Query, Res}, time::Time};
 use naia_bevy_server::Server;
 
 use crate::networking::{protocol::{Protocol, NetworkPosition}, channels::Channels, behavior::process_command};
@@ -11,6 +11,7 @@ use super::resources::Global;
 
 pub fn tick(
     mut global: ResMut<Global>,
+    time: Res<Time>,
     mut server: Server<Protocol, Channels>,
     mut position_query: Query<&mut NetworkPosition>,
 ) {
@@ -32,7 +33,7 @@ pub fn tick(
     // Process all received commands
     for (entity, last_command) in global.player_last_command.drain() {
         if let Ok(mut position) = position_query.get_mut(entity) {
-            process_command(&last_command, &mut position);
+            process_command(&last_command, &mut position, &time);
         }
     }
 

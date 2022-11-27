@@ -17,7 +17,7 @@ impl OwnedEntity {
   }
 }
 
-#[derive(Resource)]
+#[derive(Default, Resource)]
 pub struct ClientGlobal {
   pub owned_entity: Option<OwnedEntity>,
   pub queued_command: Option<KeyCommand>,

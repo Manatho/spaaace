@@ -43,8 +43,8 @@ pub fn connection_event<'world, 'state>(
 
         // Position component
         let position = {
-            let x = 16 * ((Random::gen_range_u32(0, 40) as i16) - 20);
-            let y = 16 * ((Random::gen_range_u32(0, 30) as i16) - 15);
+            let x = 0.;
+            let y = 0.;
             NetworkPosition::new(x, y)
         };
 
