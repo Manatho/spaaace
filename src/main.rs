@@ -1,23 +1,34 @@
 mod capture_point;
+mod client;
+mod networking;
 mod player;
+mod server;
+mod server_main;
 mod ship;
 mod team;
-
-use std::f32::consts::PI;
+use client::events as ClientEvents;
+use client::init::client_init;
+use naia_bevy_client::ClientConfig;
+use naia_bevy_client::{Plugin as ClientPlugin, Stage as ClientStage};
+use naia_bevy_server::{Plugin as ServerPlugin, ServerConfig, Stage as ServerStage};
+use server::{events as ServerEvents, server_init, tick};
 
 use bevy::{
     pbr::NotShadowCaster,
     prelude::{
         default, shape, App, AssetPlugin, Assets, Camera3dBundle, Color, Commands,
-        DirectionalLight, DirectionalLightBundle, MaterialMeshBundle, Mesh, OrthographicProjection,
-        PbrBundle, PluginGroup, Quat, ResMut, StandardMaterial, Transform, Vec3,
+        DirectionalLight, DirectionalLightBundle, IntoSystemDescriptor, MaterialMeshBundle, Mesh,
+        OrthographicProjection, PbrBundle, PluginGroup, Quat, ResMut, StandardMaterial, Transform,
+        Vec3,
     },
     utils::HashSet,
     DefaultPlugins,
 };
 use capture_point::CapturePointPlugin;
+use networking::{channels::Channels, protocol::Protocol, shared::shared_config};
 use player::PlayerPlugin;
 use ship::{space_ship::SpaceShip, SpaceShipPlugin};
+use std::f32::consts::PI;
 
 use crate::{
     capture_point::capture_point::{CaptureSphere, ForceFieldMaterial},
@@ -36,6 +47,35 @@ fn main() {
         .add_plugin(CapturePointPlugin)
         .add_plugin(PlayerPlugin)
         .add_startup_system(setup)
+        //naia stuff
+        .add_plugin(ServerPlugin::<Protocol, Channels>::new(
+            ServerConfig::default(),
+            shared_config(),
+        ))
+        .add_plugin(ClientPlugin::<Protocol, Channels>::new(
+            ClientConfig::default(),
+            shared_config(),
+        ))
+        // Startup System
+        .add_startup_system(server_init)
+        .add_startup_system(client_init.after(server_init))
+        .add_system_to_stage(ClientStage::ReceiveEvents, ClientEvents::spawn_entity_event)
+        // Receive Server Events
+        .add_system_to_stage(
+            ServerStage::ReceiveEvents,
+            ServerEvents::authorization_event,
+        )
+        .add_system_to_stage(ServerStage::ReceiveEvents, ServerEvents::connection_event)
+        .add_system_to_stage(
+            ServerStage::ReceiveEvents,
+            ServerEvents::disconnection_event,
+        )
+        .add_system_to_stage(
+            ServerStage::ReceiveEvents,
+            ServerEvents::receive_message_event,
+        )
+        // Gameplay Loop on Tick
+        .add_system_to_stage(ServerStage::Tick, tick)
         .run();
 }
 

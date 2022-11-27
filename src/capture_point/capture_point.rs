@@ -82,7 +82,7 @@ pub fn capture_progress(mut query_capture_spheres: Query<&mut CaptureSphere>, ti
                 (capture_sphere.progress - capture_rate * time.delta_seconds()).clamp(0.0, 1.0);
         }
 
-        println!("{} {}", capture_sphere.progress, capture_sphere.owner)
+        /* println!("{} {}", capture_sphere.progress, capture_sphere.owner) */
     }
 }
 

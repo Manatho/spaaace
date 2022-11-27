@@ -7,4 +7,7 @@ edition = "2021"
 
 [dependencies]
 bevy = "0.9.0"
-bevy_renet = "0.0.6"
+naia-shared = "0.14.0"
+naia-bevy-server = "0.14.0"
+naia-bevy-shared = "0.14.0"
+naia-bevy-client = "0.14.0"
