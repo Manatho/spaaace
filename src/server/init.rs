@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use bevy::prelude::{info, Commands};
 use naia_bevy_server::{Server, ServerAddrs};
 
-use crate::{
+pub use crate::{
     networking::{channels::Channels, protocol::Protocol},
     server::resources::Global,
 };

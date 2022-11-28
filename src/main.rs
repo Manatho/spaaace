@@ -3,9 +3,9 @@ mod client;
 mod networking;
 mod player;
 mod server;
-mod server_main;
 mod ship;
 mod team;
+use bevy_egui::{egui::Window, EguiContext, EguiPlugin};
 use client::ClientPlugin;
 
 use bevy::{
@@ -19,10 +19,16 @@ use bevy::{
     DefaultPlugins,
 };
 use capture_point::CapturePointPlugin;
+use naia_bevy_client::Client;
+use naia_bevy_server::{Server, ServerAddrs};
+use networking::{
+    channels::Channels,
+    protocol::{Auth, Protocol},
+};
 use player::PlayerPlugin;
 use server::ServerPlugin;
 use ship::{space_ship::SpaceShip, SpaceShipPlugin};
-use std::f32::consts::PI;
+use std::{collections::HashMap, f32::consts::PI};
 
 use crate::{
     capture_point::capture_point::{CaptureSphere, ForceFieldMaterial},
@@ -37,50 +43,96 @@ fn main() {
             watch_for_changes: true,
             ..default()
         }))
-        /* .add_plugin(SpaceShipPlugin)
-        .add_plugin(CapturePointPlugin)
-        .add_plugin(PlayerPlugin)
-        .add_startup_system(setup) */
+        .add_plugin(EguiPlugin)
+        .add_system(ui_example)
+        // .add_plugin(SpaceShipPlugin)
+        // .add_plugin(CapturePointPlugin)
+        // .add_plugin(PlayerPlugin)
+        .add_startup_system(setup)
         // Client, Server
         .add_plugin(ServerPlugin)
         .add_plugin(ClientPlugin)
         .run();
 }
 
+fn ui_example(
+    mut egui_context: ResMut<EguiContext>,
+    mut commands: Commands,
+    mut server: Server<Protocol, Channels>,
+    mut client: Client<Protocol, Channels>,
+) {
+    Window::new("Hello").show(egui_context.ctx_mut(), |ui| {
+        ui.label("world");
+        if ui.button("Start Server").clicked() {
+            println!("Starting Server");
+            // Naia Server initialization
+            let server_addresses = ServerAddrs::new(
+                "127.0.0.1:14191"
+                    .parse()
+                    .expect("could not parse Signaling address/port"),
+                // IP Address to listen on for UDP WebRTC data channels
+                "127.0.0.1:14192"
+                    .parse()
+                    .expect("could not parse WebRTC data address/port"),
+                // The public WebRTC IP address to advertise
+                "http://127.0.0.1:14192",
+            );
+
+            server.listen(&server_addresses);
+
+            // Create a new, singular room, which will contain Users and Entities that they
+            // can receive updates from
+            let main_room_key = server.make_room().key();
+
+            // Resources
+            commands.insert_resource(server::resources::Global {
+                main_room_key,
+                user_to_prediction_map: HashMap::new(),
+                player_last_command: HashMap::new(),
+            })
+        }
+
+        if ui.button("Join Server").clicked() {
+            client.auth(Auth::new("charlie", "12345"));
+            client.connect("http://127.0.0.1:14191");
+        }
+    });
+}
+
 fn setup(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    mut force_field_materials: ResMut<Assets<ForceFieldMaterial>>,
+    // mut meshes: ResMut<Assets<Mesh>>,
+    // mut materials: ResMut<Assets<StandardMaterial>>,
+    // mut force_field_materials: ResMut<Assets<ForceFieldMaterial>>,
 ) {
-    commands
-        .spawn(PbrBundle {
-            mesh: meshes.add(shape::Cube { size: 1. }.into()),
-            material: materials.add(Color::GREEN.into()),
-            ..default()
-        })
-        .insert(SpaceShip { hp: 20 })
-        .insert(Player { team: Team::Blue });
+    // commands
+    //     .spawn(PbrBundle {
+    //         mesh: meshes.add(shape::Cube { size: 1. }.into()),
+    //         material: materials.add(Color::GREEN.into()),
+    //         ..default()
+    //     })
+    //     .insert(SpaceShip { hp: 20 })
+    //     .insert(Player { team: Team::Blue });
 
-    commands
-        .spawn(MaterialMeshBundle {
-            mesh: meshes.add(
-                shape::Icosphere {
-                    radius: 3.,
-                    subdivisions: 8,
-                }
-                .into(),
-            ),
-            material: force_field_materials.add(ForceFieldMaterial {}),
-            ..default()
-        })
-        .insert(NotShadowCaster)
-        .insert(CaptureSphere {
-            radius: 3.,
-            progress: 0.0,
-            attackers: HashSet::new(),
-            owner: Team::Neutral,
-        });
+    // commands
+    //     .spawn(MaterialMeshBundle {
+    //         mesh: meshes.add(
+    //             shape::Icosphere {
+    //                 radius: 3.,
+    //                 subdivisions: 8,
+    //             }
+    //             .into(),
+    //         ),
+    //         material: force_field_materials.add(ForceFieldMaterial {}),
+    //         ..default()
+    //     })
+    //     .insert(NotShadowCaster)
+    //     .insert(CaptureSphere {
+    //         radius: 3.,
+    //         progress: 0.0,
+    //         attackers: HashSet::new(),
+    //         owner: Team::Neutral,
+    //     });
 
     commands.spawn(Camera3dBundle {
         transform: Transform::from_xyz(0.0, 6., 12.0).looking_at(Vec3::new(0., 1., 0.), Vec3::Y),
