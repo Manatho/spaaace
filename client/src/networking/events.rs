@@ -72,6 +72,9 @@ pub fn insert_component_event(
                 });
             }
         }
+        if let InsertComponentEvent(entity, ProtocolKind::Projectile) = event {
+            println!("asd");
+        }
     }
 }
 

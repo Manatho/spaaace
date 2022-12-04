@@ -5,7 +5,7 @@ use naia_bevy_server::Server;
 use spaaaace_shared::{
     behavior as shared_behavior,
     protocol::{Position, Protocol},
-    Channels,
+    Channels, projectiles::Projectile,
 };
 
 use crate::resources::Global;
@@ -31,9 +31,19 @@ pub fn tick(
     }
 
     // Process all received commands
+    let key = &global.main_room_key.clone();
     for (entity, last_command) in global.player_last_command.drain() {
         if let Ok(mut position) = position_query.get_mut(entity) {
             shared_behavior::process_command(&last_command, &mut position);
+
+            if *last_command.primary_fire {
+                server
+                    .spawn()
+                    .enter_room(key)
+                    .insert(position.clone())
+                    .insert(Projectile {})
+                    .id();
+            }
         }
     }
 

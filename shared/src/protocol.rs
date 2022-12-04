@@ -12,6 +12,8 @@ pub use entity_assignment::EntityAssignment;
 pub use key_command::KeyCommand;
 pub use position::Position;
 
+use crate::projectiles::Projectile;
+
 #[derive(Protocolize)]
 pub enum Protocol {
     Auth(Auth),
@@ -19,4 +21,5 @@ pub enum Protocol {
     KeyCommand(KeyCommand),
     Position(Position),
     Color(Color),
+    Projectile(Projectile),
 }

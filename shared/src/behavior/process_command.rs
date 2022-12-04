@@ -1,4 +1,4 @@
-use bevy_math::{vec3};
+use bevy_math::vec3;
 
 use crate::protocol::{KeyCommand, Position};
 
