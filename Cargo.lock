@@ -4158,12 +4158,12 @@ dependencies = [
  "bevy",
  "cfg-if",
  "naia-bevy-client",
- "spaaaace-shared",
+ "spaaaace_shared",
  "wasm-bindgen",
 ]
 
 [[package]]
-name = "spaaaace-server"
+name = "spaaaace_server"
 version = "0.1.0"
 dependencies = [
  "bevy_app",
@@ -4171,11 +4171,11 @@ dependencies = [
  "bevy_ecs",
  "bevy_log",
  "naia-bevy-server",
- "spaaaace-shared",
+ "spaaaace_shared",
 ]
 
 [[package]]
-name = "spaaaace-shared"
+name = "spaaaace_shared"
 version = "0.1.0"
 dependencies = [
  "bevy_ecs",

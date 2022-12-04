@@ -20,7 +20,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 naia-bevy-client = { version = "0.14.0" }
-spaaaace-shared = { path = "../shared" }
+spaaaace_shared = { path = "../shared" }
 bevy = { version = "0.9" }
 cfg-if = { version = "1.0" }
 

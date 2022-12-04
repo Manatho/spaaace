@@ -7,7 +7,7 @@ use naia_bevy_server::{
     Server,
 };
 
-use naia_bevy_demo_shared::{
+use spaaaace_shared::{
     protocol::{Color, ColorValue, EntityAssignment, Position, Protocol},
     Channels,
 };

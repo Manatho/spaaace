@@ -5,7 +5,7 @@ use bevy::{
 
 use naia_bevy_client::Client;
 
-use naia_bevy_demo_shared::{
+use spaaaace_shared::{
     protocol::{KeyCommand, Protocol},
     Channels,
 };

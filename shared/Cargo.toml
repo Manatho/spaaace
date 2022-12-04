@@ -1,5 +1,5 @@
 [package]
-name = "spaaaace-shared"
+name = "spaaaace_shared"
 version = "0.1.0"
 authors = []
 workspace = "../"

@@ -2,7 +2,7 @@ use bevy::{app::App, DefaultPlugins};
 
 use naia_bevy_client::{ClientConfig, Plugin as ClientPlugin, Stage};
 
-use naia_bevy_demo_shared::{protocol::Protocol, shared_config, Channels};
+use spaaaace_shared::{protocol::Protocol, shared_config, Channels};
 
 use crate::systems::{events, init, input, sync, tick};
 

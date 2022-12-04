@@ -16,7 +16,7 @@ use naia_bevy_client::{
     Client, CommandsExt,
 };
 
-use naia_bevy_demo_shared::{
+use spaaaace_shared::{
     behavior as shared_behavior,
     protocol::{Color, ColorValue, Position, Protocol, ProtocolKind},
     Channels,

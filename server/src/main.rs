@@ -4,7 +4,7 @@ use bevy_log::{info, LogPlugin};
 
 use naia_bevy_server::{Plugin as ServerPlugin, ServerConfig, Stage};
 
-use naia_bevy_demo_shared::{protocol::Protocol, shared_config, Channels};
+use spaaaace_shared::{protocol::Protocol, shared_config, Channels};
 
 mod resources;
 mod systems;

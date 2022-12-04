@@ -2,7 +2,7 @@ use bevy::ecs::system::{Query, ResMut};
 
 use naia_bevy_client::Client;
 
-use naia_bevy_demo_shared::{
+use spaaaace_shared::{
     behavior as shared_behavior,
     protocol::{Position, Protocol},
     Channels,

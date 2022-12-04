@@ -5,7 +5,7 @@ use bevy_log::info;
 
 use naia_bevy_server::{Server, ServerAddrs};
 
-use naia_bevy_demo_shared::{protocol::Protocol, Channels};
+use spaaaace_shared::{protocol::Protocol, Channels};
 
 use crate::resources::Global;
 

@@ -2,7 +2,7 @@ use bevy::{ecs::system::Commands, log::info, prelude::Camera2dBundle};
 
 use naia_bevy_client::Client;
 
-use naia_bevy_demo_shared::{
+use spaaaace_shared::{
     protocol::{Auth, Protocol},
     Channels,
 };
