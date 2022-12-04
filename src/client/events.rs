@@ -1,24 +1,32 @@
-use bevy::{prelude::{
-    default, info, shape, Assets, Color, Commands, EventReader, Mesh, PbrBundle, ResMut,
-    StandardMaterial, Query, Res,
-}, time::Time};
+use bevy::{
+    prelude::{
+        default, info, shape, Assets, Color, Commands, Component, EventReader, Mesh, PbrBundle,
+        Query, Res, ResMut, StandardMaterial,
+    },
+    time::Time,
+};
 use naia_bevy_client::{
     events::{MessageEvent, SpawnEntityEvent, UpdateComponentEvent},
     Client, CommandsExt,
 };
-use naia_shared::{Tick, sequence_greater_than};
+use naia_shared::{sequence_greater_than, Tick};
 
 use crate::{
     client::global::OwnedEntity,
-    networking::{channels::Channels, protocol::{Protocol, ProtocolKind, NetworkPosition}, behavior::process_command},
+    networking::{
+        behavior::process_command,
+        channels::Channels,
+        protocol::{NetworkPosition, Protocol, ProtocolKind},
+    },
 };
 
 use super::global::ClientGlobal;
 
-pub fn spawn_entity_event(mut event_reader: EventReader<SpawnEntityEvent>) {
+pub fn spawn_entity_event(mut event_reader: EventReader<SpawnEntityEvent>, mut commands: Commands) {
     for event in event_reader.iter() {
         match event {
             SpawnEntityEvent(_entity) => {
+                commands.entity(*_entity).insert(ClientSide {});
                 info!("spawned entity");
             }
         }
@@ -70,7 +78,6 @@ pub fn update_component_event(
     }
 }
 
-
 pub fn receive_message_event(
     mut event_reader: EventReader<MessageEvent<Protocol, Channels>>,
     mut local: Commands,
@@ -95,6 +102,7 @@ pub fn receive_message_event(
                             material: materials.add(Color::GREEN.into()),
                             ..default()
                         })
+                        .insert(ClientSide {})
                         .id();
 
                 global.owned_entity = Some(OwnedEntity::new(entity, prediction_entity));
@@ -114,3 +122,6 @@ pub fn receive_message_event(
         }
     }
 }
+
+#[derive(Component)]
+pub struct ClientSide();

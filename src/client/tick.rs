@@ -1,16 +1,24 @@
-use bevy::{ecs::system::{Query, ResMut}, time::Time, prelude::Res};
+use bevy::{
+    ecs::system::{Query, ResMut},
+    prelude::{Res, With},
+    time::Time,
+};
 
 use naia_bevy_client::Client;
 
-use crate::networking::{protocol::{Protocol, NetworkPosition}, channels::Channels, behavior::process_command};
+use crate::networking::{
+    behavior::process_command,
+    channels::Channels,
+    protocol::{NetworkPosition, Protocol},
+};
 
-use super::global::ClientGlobal;
+use super::{global::ClientGlobal, events::ClientSide};
 
 pub fn tick(
     mut global: ResMut<ClientGlobal>,
     time: Res<Time>,
     mut client: Client<Protocol, Channels>,
-    mut position_query: Query<&mut NetworkPosition>,
+    mut position_query: Query<&mut NetworkPosition, With<ClientSide>>,
 ) {
     //All game logic should happen here, on a tick event
 

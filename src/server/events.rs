@@ -1,4 +1,4 @@
-use bevy::prelude::{info, EventReader, ResMut};
+use bevy::prelude::{info, Component, EventReader, ResMut};
 use naia_bevy_server::{
     events::{AuthorizationEvent, ConnectionEvent, DisconnectionEvent, MessageEvent},
     shared::Random,
@@ -69,6 +69,9 @@ pub fn connection_event<'world, 'state>(
         server.send_message(user_key, Channels::EntityAssignment, &assignment_message);
     }
 }
+
+#[derive(Component)]
+struct ServerSide {}
 
 pub fn disconnection_event(
     mut event_reader: EventReader<DisconnectionEvent>,

@@ -1,19 +1,25 @@
-
-use bevy::{prelude::{ResMut, Query, Res}, time::Time};
+use bevy::{
+    prelude::{Query, Res, ResMut, Without},
+    time::Time,
+};
 use naia_bevy_server::Server;
 
-use crate::networking::{protocol::{Protocol, NetworkPosition}, channels::Channels, behavior::process_command};
+use crate::{
+    client::events::ClientSide,
+    networking::{
+        behavior::process_command,
+        channels::Channels,
+        protocol::{NetworkPosition, Protocol},
+    },
+};
 
 use super::resources::Global;
-
-
-
 
 pub fn tick(
     mut global: ResMut<Global>,
     time: Res<Time>,
     mut server: Server<Protocol, Channels>,
-    mut position_query: Query<&mut NetworkPosition>,
+    mut position_query: Query<&mut NetworkPosition, Without<ClientSide>>,
 ) {
     // All game logic should happen here, on a tick event
     //info!("tick");

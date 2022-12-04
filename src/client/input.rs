@@ -23,20 +23,11 @@ pub fn input(
     let d = keyboard_input.pressed(KeyCode::D);
 
     if let Some(command) = &mut global.queued_command {
-        if w {
-            *command.w = true;
-        }
-        if s {
-            *command.s = true;
-        }
-        if a {
-            *command.a = true;
-        }
-        if d {
-            *command.d = true;
-        }
+        *command.w = w;
+        *command.s = s;
+        *command.a = a;
+        *command.d = d;
     } else if let Some(owned_entity) = &global.owned_entity {
-        println!("Input");
         let mut key_command = KeyCommand::new(w, s, a, d);
         key_command.entity.set(&client, &owned_entity.confirmed);
         global.queued_command = Some(key_command);

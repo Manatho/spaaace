@@ -6,6 +6,7 @@ mod server;
 mod ship;
 mod team;
 use bevy_egui::{egui::Window, EguiContext, EguiPlugin};
+use bevy_inspector_egui::{Inspectable, RegisterInspectable, WorldInspectorPlugin};
 use client::ClientPlugin;
 
 use bevy::{
@@ -13,7 +14,7 @@ use bevy::{
     prelude::{
         default, shape, App, AssetPlugin, Assets, Camera3dBundle, Color, Commands,
         DirectionalLight, DirectionalLightBundle, MaterialMeshBundle, Mesh, OrthographicProjection,
-        PbrBundle, PluginGroup, Quat, ResMut, StandardMaterial, Transform, Vec3,
+        PbrBundle, PluginGroup, Quat, Query, ResMut, StandardMaterial, Transform, Vec3,
     },
     utils::HashSet,
     DefaultPlugins,
@@ -23,7 +24,7 @@ use naia_bevy_client::Client;
 use naia_bevy_server::{Server, ServerAddrs};
 use networking::{
     channels::Channels,
-    protocol::{Auth, Protocol},
+    protocol::{Auth, NetworkPosition, Protocol},
 };
 use player::PlayerPlugin;
 use server::ServerPlugin;
@@ -45,6 +46,7 @@ fn main() {
         }))
         .add_plugin(EguiPlugin)
         .add_system(ui_example)
+        .add_system(trala)
         // .add_plugin(SpaceShipPlugin)
         // .add_plugin(CapturePointPlugin)
         // .add_plugin(PlayerPlugin)
@@ -52,6 +54,8 @@ fn main() {
         // Client, Server
         .add_plugin(ServerPlugin)
         .add_plugin(ClientPlugin)
+        .add_plugin(WorldInspectorPlugin::new())
+        .register_inspectable::<NetworkPosition>()
         .run();
 }
 
@@ -95,6 +99,16 @@ fn ui_example(
         if ui.button("Join Server").clicked() {
             client.auth(Auth::new("charlie", "12345"));
             client.connect("http://127.0.0.1:14191");
+        }
+    });
+}
+
+fn trala(mut egui_context: ResMut<EguiContext>, query: Query<&NetworkPosition>) {
+    Window::new("Hellos").show(egui_context.ctx_mut(), |ui| {
+        for p in query.iter() {
+            ui.label(p.x.to_string());
+            ui.label(p.y.to_string());
+            ui.label(p.z.to_string());
         }
     });
 }
