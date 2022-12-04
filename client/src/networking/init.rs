@@ -1,4 +1,8 @@
-use bevy::{ecs::system::Commands, log::info, prelude::Camera2dBundle};
+use bevy::{
+    ecs::system::Commands,
+    log::info,
+    prelude::{Camera3dBundle, Vec3, Transform, default},
+};
 
 use naia_bevy_client::Client;
 
@@ -16,7 +20,10 @@ pub fn init(mut commands: Commands, mut client: Client<Protocol, Channels>) {
     client.connect("http://127.0.0.1:14191");
 
     // Setup Camera
-    commands.spawn(Camera2dBundle::default());
+    commands.spawn(Camera3dBundle {
+        transform: Transform::from_xyz(0.0, 6., 12.0).looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
+        ..default()
+    });
 
     // Setup Colors
     commands.init_resource::<Global>();

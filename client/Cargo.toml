@@ -23,6 +23,7 @@ naia-bevy-client = { version = "0.14.0" }
 spaaaace_shared = { path = "../shared" }
 bevy = { version = "0.9" }
 cfg-if = { version = "1.0" }
+bevy-inspector-egui = "0.14.0"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = { version = "0.2" }

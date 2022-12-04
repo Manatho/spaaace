@@ -50,12 +50,7 @@ pub fn connection_event<'world, 'state>(
         // Create components for Entity to represent new player
 
         // Position component
-        let position = {
-            let x = 16 * ((Random::gen_range_u32(0, 40) as i16) - 20);
-            let y = 16 * ((Random::gen_range_u32(0, 30) as i16) - 15);
-            Position::new(x, y)
-        };
-
+        let position = { Position::new(0.0, 0.0, 0.0) };
         // Color component
         let color = {
             let color_value = match server.users_count() % 3 {

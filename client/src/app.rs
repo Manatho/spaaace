@@ -1,5 +1,6 @@
 use bevy::{app::App, DefaultPlugins};
 
+use bevy_inspector_egui::WorldInspectorPlugin;
 use naia_bevy_client::{ClientConfig, Plugin as ClientPlugin, Stage};
 
 use spaaaace_shared::{protocol::Protocol, shared_config, Channels};
@@ -26,6 +27,7 @@ pub fn run() {
         .add_system_to_stage(Stage::ReceiveEvents, events::receive_message_event)
         .add_system_to_stage(Stage::Frame, input)
         .add_system_to_stage(Stage::PostFrame, sync)
+        .add_plugin(WorldInspectorPlugin::new())
         // Gameplay Loop on Tick
         .add_system_to_stage(Stage::Tick, tick)
         // Run App

@@ -5,6 +5,7 @@ use bevy::{
     },
     log::info,
     math::Vec2,
+    prelude::{default, shape, Assets, Mesh, PbrBundle, StandardMaterial},
     render::color::Color as BevyColor,
     sprite::{Sprite, SpriteBundle},
     transform::components::Transform,
@@ -55,28 +56,19 @@ pub fn insert_component_event(
     mut event_reader: EventReader<InsertComponentEvent<ProtocolKind>>,
     mut local: Commands,
     color_query: Query<&Color>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    // mut force_field_materials: ResMut<Assets<ForceFieldMaterial>>,
 ) {
     for event in event_reader.iter() {
         if let InsertComponentEvent(entity, ProtocolKind::Color) = event {
             if let Ok(color) = color_query.get(*entity) {
                 info!("add color to entity");
 
-                let color = {
-                    match *color.value {
-                        ColorValue::Red => BevyColor::RED,
-                        ColorValue::Blue => BevyColor::BLUE,
-                        ColorValue::Yellow => BevyColor::YELLOW,
-                    }
-                };
-
-                local.entity(*entity).insert(SpriteBundle {
-                    sprite: Sprite {
-                        custom_size: Some(Vec2::new(SQUARE_SIZE, SQUARE_SIZE)),
-                        color,
-                        ..Default::default()
-                    },
-                    transform: Transform::from_xyz(0.0, 0.0, 0.0),
-                    ..Default::default()
+                local.entity(*entity).insert(PbrBundle {
+                    mesh: meshes.add(shape::Cube { size: 1. }.into()),
+                    material: materials.add(BevyColor::RED.into()),
+                    ..default()
                 });
             }
         }
@@ -117,6 +109,7 @@ pub fn update_component_event(
                 // set to authoritative state
                 client_position.x.mirror(&server_position.x);
                 client_position.y.mirror(&server_position.y);
+                client_position.z.mirror(&server_position.z);
 
                 // Replay all stored commands
                 for (_command_tick, command) in replay_commands {
@@ -131,6 +124,8 @@ pub fn receive_message_event(
     mut event_reader: EventReader<MessageEvent<Protocol, Channels>>,
     mut local: Commands,
     mut global: ResMut<Global>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
     client: Client<Protocol, Channels>,
 ) {
     for event in event_reader.iter() {
@@ -144,14 +139,10 @@ pub fn receive_message_event(
 
                 let prediction_entity =
                     CommandsExt::<Protocol>::duplicate_entity(&mut local, entity)
-                        .insert(SpriteBundle {
-                            sprite: Sprite {
-                                custom_size: Some(Vec2::new(SQUARE_SIZE, SQUARE_SIZE)),
-                                color: BevyColor::WHITE,
-                                ..Default::default()
-                            },
-                            transform: Transform::from_xyz(0.0, 0.0, 0.0),
-                            ..Default::default()
+                        .insert(PbrBundle {
+                            mesh: meshes.add(shape::Cube { size: 1. }.into()),
+                            material: materials.add(BevyColor::GREEN.into()),
+                            ..default()
                         })
                         .id();
 
