@@ -45,7 +45,8 @@ pub fn connection_event<'world, 'state>(
         let position = {
             let x = 0.;
             let y = 0.;
-            NetworkPosition::new(x, y)
+            let z = 0.;
+            NetworkPosition::new(x, y, z)
         };
 
         // Spawn entity

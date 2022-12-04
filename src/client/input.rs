@@ -36,6 +36,7 @@ pub fn input(
             *command.d = true;
         }
     } else if let Some(owned_entity) = &global.owned_entity {
+        println!("Input");
         let mut key_command = KeyCommand::new(w, s, a, d);
         key_command.entity.set(&client, &owned_entity.confirmed);
         global.queued_command = Some(key_command);
