@@ -5,6 +5,7 @@ use bevy::{
     prelude::{Component, Vec3},
 };
 
+use bevy_inspector_egui::Inspectable;
 use naia_shared::{Property, Replicate};
 
 #[derive(Component, Replicate)]
@@ -13,6 +14,22 @@ pub struct NetworkPosition {
     pub x: Property<f32>,
     pub y: Property<f32>,
     pub z: Property<f32>,
+}
+
+impl Inspectable for NetworkPosition {
+    type Attributes = ();
+
+    fn ui(
+        &mut self,
+        ui: &mut bevy_inspector_egui::egui::Ui,
+        _: Self::Attributes,
+        _: &mut bevy_inspector_egui::Context,
+    ) -> bool {
+        ui.label(self.x.to_string());
+        ui.label(self.y.to_string());
+        ui.label(self.z.to_string());
+        true
+    }
 }
 
 impl Into<Vec3> for NetworkPosition {
