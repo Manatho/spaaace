@@ -4,7 +4,7 @@ use naia_bevy_client::{ClientConfig, Plugin as ClientPlugin, Stage};
 
 use spaaaace_shared::{protocol::Protocol, shared_config, Channels};
 
-use crate::systems::{events, init, input, sync, tick};
+use crate::networking::{events, init, input, sync, tick};
 
 pub fn run() {
     App::default()

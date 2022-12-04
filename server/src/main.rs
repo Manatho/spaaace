@@ -7,9 +7,9 @@ use naia_bevy_server::{Plugin as ServerPlugin, ServerConfig, Stage};
 use spaaaace_shared::{protocol::Protocol, shared_config, Channels};
 
 mod resources;
-mod systems;
+mod networking;
 
-use systems::{events, init, tick};
+use networking::{events, init, tick};
 
 fn main() {
     info!("Naia Bevy Server Demo starting up");

@@ -5,7 +5,7 @@ cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
 
         mod resources;
-        mod systems;
+        mod networking;
         mod app;
 
         fn main() {
