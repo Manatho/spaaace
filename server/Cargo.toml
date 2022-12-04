@@ -1,0 +1,16 @@
+[package]
+name = "spaaaace-server"
+version = "0.1.0"
+authors = []
+workspace = "../"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[dependencies]
+spaaaace-shared = { path = "../shared" }
+naia-bevy-server = { version = "0.14.0" }
+bevy_app = { version = "0.9", default-features = false }
+bevy_core = { version = "0.9", default-features = false }
+bevy_ecs = { version = "0.9", default-features = false }
+bevy_log = { version = "0.9", default-features = false }

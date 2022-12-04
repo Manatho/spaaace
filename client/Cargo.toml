@@ -1,0 +1,28 @@
+[package]
+name = "spaaaace"
+version = "0.1.0"
+authors = []
+workspace = "../"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[[bin]]
+name = "app"
+path = "src/main.rs"
+
+[lib]
+name = "app"
+path = "src/lib.rs"
+crate-type = ["cdylib", "rlib"]
+
+[features]
+
+[dependencies]
+naia-bevy-client = { version = "0.14.0" }
+spaaaace-shared = { path = "../shared" }
+bevy = { version = "0.9" }
+cfg-if = { version = "1.0" }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = { version = "0.2" }

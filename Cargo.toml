@@ -1,23 +1,3 @@
-[package]
-name = "spaaaace"
-version = "0.1.0"
-edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-bevy = { version = "0.9.0", features = ["dynamic"] }
-naia-shared = "0.14.0"
-naia-bevy-server = "0.14.0"
-naia-bevy-shared = "0.14.0"
-naia-bevy-client = "0.14.0"
-bevy_egui = "0.17.1"
-bevy-inspector-egui = "0.14.0"
-
-# Enable a small amount of optimization in debug mode
-[profile.dev]
-opt-level = 1
-
-# Enable high optimizations for dependencies (incl. Bevy), but not for our code:
-[profile.dev.package."*"]
-opt-level = 3
+[workspace]
+resolver = "2"
+members = ["client", "server", "shared"]
