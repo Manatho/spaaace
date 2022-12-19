@@ -4,10 +4,10 @@ use bevy::{
     app::ScheduleRunnerPlugin,
     log::LogPlugin,
     prelude::{
-        info, App, Commands, Component, CorePlugin, Entity, EventReader, GlobalTransform, Quat,
-        Query, Res, ResMut, Resource, Transform,
+        info, App, Commands, Component, CorePlugin, CoreStage, EventReader, GlobalTransform, Query,
+        Res, ResMut, StageLabel, SystemStage, Transform,
     },
-    time::{Time, TimePlugin},
+    time::{FixedTimestep, Time, TimePlugin},
     transform::TransformBundle,
     utils::HashMap,
 };
@@ -20,17 +20,22 @@ use bevy_renet::{
     RenetServerPlugin,
 };
 
-use serde::{Deserialize, Serialize};
 use spaaaace_shared::{Lobby, PlayerInput, ServerMessages, PROTOCOL_ID};
 
+use crate::projectiles::ProjectilesPlugin;
+
 mod networking;
+mod projectiles;
+
+#[derive(Debug, Hash, PartialEq, Eq, Clone, StageLabel)]
+struct FixedUpdateStage;
 
 #[derive(Debug, Component)]
 struct Player {
     id: u64,
 }
 
-const PLAYER_MOVE_SPEED: f32 = 1.0;
+const PLAYER_MOVE_SPEED: f32 = 2.0;
 
 fn main() {
     info!("Naia Bevy Server Demo starting up");
@@ -46,8 +51,15 @@ fn main() {
         .add_plugin(RenetServerPlugin::default())
         .insert_resource(new_renet_server())
         .add_system(server_update_system)
-        .add_system(server_sync_players)
         .add_system(update_players_system)
+        .add_plugin(ProjectilesPlugin {})
+        .add_stage_after(
+            CoreStage::Update,
+            FixedUpdateStage,
+            SystemStage::parallel()
+                .with_run_criteria(FixedTimestep::step(1.0 / 30.0))
+                .with_system(server_sync_players),
+        )
         // Run App
         .run();
 }
