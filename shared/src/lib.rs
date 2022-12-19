@@ -1,11 +1,28 @@
-extern crate log;
+use std::collections::HashMap;
 
-pub mod behavior;
-pub mod protocol;
+use bevy_ecs::{
+    prelude::{Component, Entity},
+    system::Resource,
+};
+use serde::{Deserialize, Serialize};
 
-mod channels;
-pub mod projectiles;
-pub use channels::Channels;
+#[derive(Debug, Default, Serialize, Deserialize, Component, Resource)]
+pub struct PlayerInput {
+    pub up: bool,
+    pub down: bool,
+    pub left: bool,
+    pub right: bool,
+}
 
-mod shared;
-pub use shared::shared_config;
+pub const PROTOCOL_ID: u64 = 7;
+
+#[derive(Debug, Default, Resource)]
+pub struct Lobby {
+    pub players: HashMap<u64, Entity>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Component)]
+pub enum ServerMessages {
+    PlayerConnected { id: u64 },
+    PlayerDisconnected { id: u64 },
+}
