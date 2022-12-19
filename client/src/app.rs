@@ -2,6 +2,7 @@ use std::{net::UdpSocket, time::SystemTime};
 
 use bevy::{
     app::App,
+    math::vec3,
     prelude::{
         default, shape, Assets, Camera3dBundle, Color, Commands, Input, IntoSystemDescriptor,
         KeyCode, Mesh, PbrBundle, Res, ResMut, StandardMaterial, Transform, Vec3,
@@ -60,10 +61,11 @@ fn new_renet_client() -> RenetClient {
 }
 
 fn player_input(k_input: Res<Input<KeyCode>>, mut player_input: ResMut<PlayerInput>) {
-    player_input.left = k_input.pressed(KeyCode::A) || k_input.pressed(KeyCode::Left);
-    player_input.right = k_input.pressed(KeyCode::D) || k_input.pressed(KeyCode::Right);
-    player_input.up = k_input.pressed(KeyCode::W) || k_input.pressed(KeyCode::Up);
-    player_input.down = k_input.pressed(KeyCode::S) || k_input.pressed(KeyCode::Down);
+    player_input.left = k_input.pressed(KeyCode::A);
+    player_input.right = k_input.pressed(KeyCode::D);
+    player_input.up = k_input.pressed(KeyCode::W);
+    player_input.down = k_input.pressed(KeyCode::S);
+    player_input.primary_fire = k_input.pressed(KeyCode::Space);
 }
 
 fn client_send_input(player_input: Res<PlayerInput>, mut client: ResMut<RenetClient>) {
@@ -100,6 +102,21 @@ fn client_sync_players(
                 if let Some(player_entity) = lobby.players.remove(&id) {
                     commands.entity(player_entity).despawn();
                 }
+            }
+            ServerMessages::BulletSpawned { position, rotation } => {
+                commands.spawn(PbrBundle {
+                    mesh: meshes.add(Mesh::from(shape::Icosphere {
+                        radius: 0.2,
+                        ..Default::default()
+                    })),
+                    material: materials.add(Color::rgb(1.0, 0.2, 0.2).into()),
+                    transform: Transform {
+                        translation: position,
+                        rotation: rotation,
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                });
             }
         }
     }

@@ -4,8 +4,8 @@ use bevy::{
     app::ScheduleRunnerPlugin,
     log::LogPlugin,
     prelude::{
-        info, App, Commands, Component, CorePlugin, Entity, EventReader, GlobalTransform, Query,
-        Res, ResMut, Resource, Transform,
+        info, App, Commands, Component, CorePlugin, Entity, EventReader, GlobalTransform, Quat,
+        Query, Res, ResMut, Resource, Transform,
     },
     time::{Time, TimePlugin},
     transform::TransformBundle,
@@ -47,7 +47,7 @@ fn main() {
         .insert_resource(new_renet_server())
         .add_system(server_update_system)
         .add_system(server_sync_players)
-        .add_system(move_players_system)
+        .add_system(update_players_system)
         // Run App
         .run();
 }
@@ -132,11 +132,29 @@ fn server_sync_players(mut server: ResMut<RenetServer>, query: Query<(&Transform
     server.broadcast_message(DefaultChannel::Unreliable, sync_message);
 }
 
-fn move_players_system(mut query: Query<(&mut Transform, &PlayerInput)>, time: Res<Time>) {
+fn update_players_system(
+    mut query: Query<(&mut Transform, &PlayerInput)>,
+    time: Res<Time>,
+    mut commands: Commands,
+    mut server: ResMut<RenetServer>,
+) {
     for (mut transform, input) in query.iter_mut() {
         let x = (input.right as i8 - input.left as i8) as f32;
         let y = (input.down as i8 - input.up as i8) as f32;
         transform.translation.x += x * PLAYER_MOVE_SPEED * time.delta().as_secs_f32();
         transform.translation.z += y * PLAYER_MOVE_SPEED * time.delta().as_secs_f32();
+
+        if input.primary_fire {
+            commands.spawn(TransformBundle::from_transform(Transform {
+                translation: transform.translation,
+                ..Default::default()
+            }));
+            let message = bincode::serialize(&ServerMessages::BulletSpawned {
+                position: transform.translation,
+                rotation: transform.rotation,
+            })
+            .unwrap();
+            server.broadcast_message(DefaultChannel::Reliable, message);
+        }
     }
 }
