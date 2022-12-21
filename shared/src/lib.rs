@@ -9,10 +9,14 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Default, Serialize, Deserialize, Component, Resource)]
 pub struct PlayerInput {
-    pub up: bool,
-    pub down: bool,
-    pub left: bool,
-    pub right: bool,
+    pub thrust_forward: bool,
+    pub thrust_reverse: bool,
+    pub thrust_left: bool,
+    pub thrust_right: bool,
+    pub thrust_up: bool,
+    pub thrust_down: bool,
+    pub rotate_left: bool,
+    pub rotate_right: bool,
     pub primary_fire: bool,
 }
 
@@ -28,4 +32,16 @@ pub enum ServerMessages {
     PlayerConnected { id: u64 },
     PlayerDisconnected { id: u64 },
     BulletSpawned { position: Vec3, rotation: Quat },
+}
+
+#[derive(Component)]
+pub struct NetworkedTransform {
+    pub id: u64,
+    pub send_rate: f32,
+}
+
+#[derive(Debug, Default, Serialize, Deserialize)]
+pub struct TranslationRotation {
+    pub translation: Vec3,
+    pub rotation: Quat,
 }
