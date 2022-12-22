@@ -45,3 +45,5 @@ pub struct TranslationRotation {
     pub translation: Vec3,
     pub rotation: Quat,
 }
+
+pub const SERVER_TICKRATE: f32 = 10.0;

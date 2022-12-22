@@ -1,13 +1,15 @@
 use std::{f32::consts::PI, net::UdpSocket, time::SystemTime};
 
+use app::utils::{lerp_transform_targets, LerpTransformTarget};
 use bevy::{
     app::App,
+    core_pipeline::bloom::BloomSettings,
     gltf::Gltf,
     math::vec3,
     prelude::{
-        default, shape, AssetServer, Assets, Camera3d, Camera3dBundle, Color, Commands, Component,
-        DirectionalLight, DirectionalLightBundle, Handle, Input, IntoSystemDescriptor, KeyCode,
-        Mesh, OrthographicProjection, PbrBundle, Quat, Query, Res, ResMut, Resource,
+        default, shape, AmbientLight, AssetServer, Assets, Camera, Camera3d, Camera3dBundle, Color,
+        Commands, Component, DirectionalLight, DirectionalLightBundle, Handle, Input,
+        IntoSystemDescriptor, KeyCode, Mesh, PbrBundle, Quat, Query, Res, ResMut, Resource,
         StandardMaterial, Transform, Vec3, With, Without,
     },
     scene::SceneBundle,
@@ -22,7 +24,9 @@ use bevy_renet::{
     renet::{ClientAuthentication, DefaultChannel, RenetClient, RenetConnectionConfig},
     run_if_client_connected, RenetClientPlugin,
 };
-use spaaaace_shared::{Lobby, PlayerInput, ServerMessages, TranslationRotation, PROTOCOL_ID};
+use spaaaace_shared::{
+    Lobby, PlayerInput, ServerMessages, TranslationRotation, PROTOCOL_ID, SERVER_TICKRATE,
+};
 
 #[derive(Component)]
 struct LocalPlayer;
@@ -42,28 +46,29 @@ pub fn run() {
         .add_system(client_sync_players.with_run_criteria(run_if_client_connected))
         .add_system(camera_follow_local_player)
         .add_startup_system(load_gltf)
+        .add_system(lerp_transform_targets)
         // Run App
         .run();
 }
-const HALF_SIZE: f32 = 10.0;
-fn init(mut commands: Commands) {
-    commands.spawn(Camera3dBundle {
-        transform: Transform::from_xyz(0.0, 6., -12.0).looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
-        ..default()
-    });
+
+fn init(mut commands: Commands, mut ambient_light: ResMut<AmbientLight>) {
+    commands.spawn((
+        Camera3dBundle {
+            camera: Camera {
+                hdr: true,
+
+                ..default()
+            },
+
+            transform: Transform::from_xyz(0.0, 6., -12.0)
+                .looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
+            ..default()
+        },
+        BloomSettings::default(),
+    ));
 
     commands.spawn(DirectionalLightBundle {
         directional_light: DirectionalLight {
-            // Configure the projection to better fit the scene
-            shadow_projection: OrthographicProjection {
-                left: -HALF_SIZE,
-                right: HALF_SIZE,
-                bottom: -HALF_SIZE,
-                top: HALF_SIZE,
-                near: -10.0 * HALF_SIZE,
-                far: 10.0 * HALF_SIZE,
-                ..default()
-            },
             shadows_enabled: true,
             ..default()
         },
@@ -74,6 +79,9 @@ fn init(mut commands: Commands) {
         },
         ..default()
     });
+
+    ambient_light.color = Color::hsl(180.0, 1.0, 1.0);
+    ambient_light.brightness = 2.0;
 }
 
 fn new_renet_client() -> RenetClient {
@@ -136,7 +144,7 @@ fn client_sync_players(
                         client.client_id(),
                         id == client.client_id()
                     );
-                    if id == client.client_id() || true {
+                    if id == client.client_id() {
                         cmd.insert(LocalPlayer {});
                     }
 
@@ -173,12 +181,14 @@ fn client_sync_players(
         let players: HashMap<u64, TranslationRotation> = bincode::deserialize(&message).unwrap();
         for (player_id, translation_rotation) in players.iter() {
             if let Some(player_entity) = lobby.players.get(player_id) {
-                let transform = Transform {
-                    translation: translation_rotation.translation,
-                    rotation: translation_rotation.rotation,
-                    ..Default::default()
-                };
-                commands.entity(*player_entity).insert(transform);
+                commands.entity(*player_entity).insert(LerpTransformTarget {
+                    target: Transform {
+                        translation: translation_rotation.translation,
+                        rotation: translation_rotation.rotation,
+                        ..Default::default()
+                    },
+                    speed: SERVER_TICKRATE / 1.2,
+                });
             }
         }
     }

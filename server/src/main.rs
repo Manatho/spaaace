@@ -26,7 +26,7 @@ use bevy_renet::{
     RenetServerPlugin,
 };
 
-use spaaaace_shared::{Lobby, PlayerInput, ServerMessages, TranslationRotation, PROTOCOL_ID};
+use spaaaace_shared::{Lobby, PlayerInput, ServerMessages, TranslationRotation, PROTOCOL_ID, SERVER_TICKRATE};
 
 use crate::weapons::{Turret, WeaponsPlugin};
 
@@ -70,7 +70,7 @@ fn main() {
             CoreStage::Update,
             FixedUpdateStage,
             SystemStage::parallel()
-                .with_run_criteria(FixedTimestep::step(1.0 / 30.0))
+                .with_run_criteria(FixedTimestep::step(1.0 / (SERVER_TICKRATE as f64)))
                 .with_system(server_sync_players),
         )
         // Server UI for debugging
