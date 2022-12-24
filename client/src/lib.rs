@@ -1,4 +1,5 @@
 pub mod utils;
+pub mod capture_point;
 
 #[macro_use]
 extern crate cfg_if;

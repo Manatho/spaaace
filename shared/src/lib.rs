@@ -34,6 +34,7 @@ pub enum ServerMessages {
     PlayerConnected { id: u64 },
     PlayerDisconnected { id: u64 },
     BulletSpawned { position: Vec3, rotation: Quat },
+    CapturePointSpawned { position: Vec3, rotation: Quat },
 }
 
 #[derive(Component)]

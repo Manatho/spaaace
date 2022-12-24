@@ -1,16 +1,20 @@
 use std::{f32::consts::PI, net::UdpSocket, time::SystemTime};
 
-use app::utils::{lerp_transform_targets, LerpTransformTarget};
+use app::{
+    capture_point::capture_point::ForceFieldMaterial,
+    utils::{lerp_transform_targets, LerpTransformTarget},
+};
 use bevy::{
     app::App,
     core_pipeline::bloom::BloomSettings,
     gltf::Gltf,
     math::vec3,
+    pbr::NotShadowCaster,
     prelude::{
         default, shape, AmbientLight, AssetServer, Assets, Camera, Camera3d, Camera3dBundle, Color,
         Commands, Component, DirectionalLight, DirectionalLightBundle, Handle, Input,
-        IntoSystemDescriptor, KeyCode, Mesh, PbrBundle, Quat, Query, Res, ResMut, Resource,
-        StandardMaterial, Transform, Vec3, With, Without,
+        IntoSystemDescriptor, KeyCode, MaterialMeshBundle, MaterialPlugin, Mesh, PbrBundle, Quat,
+        Query, Res, ResMut, Resource, StandardMaterial, Transform, Vec3, With, Without,
     },
     scene::SceneBundle,
     time::Time,
@@ -47,6 +51,7 @@ pub fn run() {
         .add_system(camera_follow_local_player)
         .add_startup_system(load_gltf)
         .add_system(lerp_transform_targets)
+        .add_plugin(MaterialPlugin::<ForceFieldMaterial>::default())
         // Run App
         .run();
 }
@@ -123,6 +128,7 @@ fn client_sync_players(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut force_field_materials: ResMut<Assets<ForceFieldMaterial>>,
     mut client: ResMut<RenetClient>,
     mut lobby: ResMut<Lobby>,
     my: Res<MyAssetPack>,
@@ -173,6 +179,26 @@ fn client_sync_players(
                     },
                     ..Default::default()
                 });
+            }
+            ServerMessages::CapturePointSpawned { position, rotation } => {
+                commands
+                    .spawn(MaterialMeshBundle {
+                        mesh: meshes.add(
+                            shape::Icosphere {
+                                radius: 3.,
+                                subdivisions: 8,
+                            }
+                            .into(),
+                        ),
+                        material: force_field_materials.add(ForceFieldMaterial {}),
+                        transform: Transform {
+                            rotation: rotation,
+                            translation: position,
+                            ..Default::default()
+                        },
+                        ..default()
+                    })
+                    .insert(NotShadowCaster);
             }
         }
     }
