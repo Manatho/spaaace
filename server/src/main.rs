@@ -8,7 +8,7 @@ use bevy::{
     time::{FixedTimestep, Time},
     transform::TransformBundle,
     utils::HashMap,
-    DefaultPlugins,
+    DefaultPlugins, math::vec3,
 };
 
 use bevy_mod_gizmos::{draw_gizmo, Gizmo, GizmosPlugin};
@@ -26,11 +26,17 @@ use bevy_renet::{
     RenetServerPlugin,
 };
 
-use spaaaace_shared::{Lobby, PlayerInput, ServerMessages, TranslationRotation, PROTOCOL_ID, SERVER_TICKRATE};
+use capture_point::capture_point::CaptureSphere;
+use spaaaace_shared::{
+    Lobby, PlayerInput, ServerMessages, TranslationRotation, PROTOCOL_ID, SERVER_TICKRATE,
+};
 
-use crate::weapons::{Turret, WeaponsPlugin};
+use crate::{
+    capture_point::CapturePointPlugin,
+    weapons::{Turret, WeaponsPlugin},
+};
 
-mod networking;
+pub mod capture_point;
 mod weapons;
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone, StageLabel)]
@@ -66,6 +72,7 @@ fn main() {
         .add_system(server_update_system)
         .add_system(update_players_system)
         .add_plugin(WeaponsPlugin {})
+        .add_plugin(CapturePointPlugin)
         .add_stage_after(
             CoreStage::Update,
             FixedUpdateStage,
@@ -102,9 +109,16 @@ fn new_renet_server() -> RenetServer {
     RenetServer::new(current_time, server_config, connection_config, socket).unwrap()
 }
 
-fn draw_player_gizmos(query: Query<(&Player, &Transform)>) {
-    for (player, transform) in query.iter() {
+fn draw_player_gizmos(
+    query: Query<(&Player, &Transform)>,
+    cap_query: Query<(&CaptureSphere, &Transform)>,
+) {
+    for (_, transform) in query.iter() {
         draw_gizmo(Gizmo::sphere(transform.translation, 1.0, Color::RED))
+    }
+
+    for (_, transform) in cap_query.iter() {
+        draw_gizmo(Gizmo::sphere(transform.translation, 1.0, Color::GREEN))
     }
 }
 
@@ -121,7 +135,10 @@ fn server_update_system(
                 // Spawn player cube
                 let player_entity = commands
                     .spawn(TransformBundle {
-                        global: GlobalTransform::from_xyz(0.0, 0.5, 0.0),
+                        local: Transform {
+                            translation: vec3(0.0, 0.5, 0.0),
+                            ..Default::default()
+                        },
                         ..Default::default()
                     })
                     .insert(PlayerInput::default())

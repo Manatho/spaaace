@@ -1,3 +1,5 @@
+pub mod team;
+
 use std::collections::HashMap;
 
 use bevy_ecs::{
