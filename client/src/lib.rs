@@ -1,3 +1,4 @@
+pub mod particles;
 pub mod utils;
 
 #[macro_use]

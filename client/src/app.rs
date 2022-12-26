@@ -1,23 +1,36 @@
 use std::{f32::consts::PI, net::UdpSocket, time::SystemTime};
 
-use app::utils::{lerp_transform_targets, LerpTransformTarget};
+use app::{
+    particles::ThrusterModifier,
+    utils::{lerp_transform_targets, LerpTransformTarget},
+};
 use bevy::{
     app::App,
-    core_pipeline::bloom::BloomSettings,
-    gltf::Gltf,
-    math::vec3,
+    core_pipeline::{
+        bloom::BloomSettings,
+        fxaa::{Fxaa, FxaaPlugin},
+    },
+    gltf::{Gltf, GltfNode},
+    input::mouse::{MouseMotion, MouseWheel},
     prelude::{
-        default, shape, AmbientLight, AssetServer, Assets, Camera, Camera3d, Camera3dBundle, Color,
-        Commands, Component, DirectionalLight, DirectionalLightBundle, Handle, Input,
-        IntoSystemDescriptor, KeyCode, Mesh, PbrBundle, Quat, Query, Res, ResMut, Resource,
-        StandardMaterial, Transform, Vec3, With, Without,
+        default, shape, AmbientLight, AssetServer, Assets, BuildChildren, Camera, Camera3dBundle,
+        ClearColor, Color, Commands, Component, DirectionalLight, DirectionalLightBundle, Entity,
+        EventReader, Handle, Input, IntoSystemDescriptor, KeyCode, Mesh, Msaa, PbrBundle,
+        PluginGroup, Quat, Query, Res, ResMut, SpatialBundle, StandardMaterial, Transform, Vec2,
+        Vec3, Vec4, With, Without,
     },
     scene::SceneBundle,
     time::Time,
     utils::HashMap,
+    window::{PresentMode, WindowDescriptor, WindowPlugin, Windows},
     DefaultPlugins,
 };
 
+use bevy_hanabi::{
+    BillboardModifier, ColorOverLifetimeModifier, EffectAsset, Gradient, HanabiPlugin,
+    ParticleEffectBundle, ParticleLifetimeModifier, PositionSphereModifier, ShapeDimension,
+    SizeOverLifetimeModifier, Spawner,
+};
 use bevy_inspector_egui::WorldInspectorPlugin;
 
 use bevy_renet::{
@@ -34,7 +47,17 @@ struct LocalPlayer;
 pub fn run() {
     App::default()
         // Plugins
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            window: WindowDescriptor {
+                title: "Spaaace Client".to_string(),
+                width: 640.,
+                height: 320.,
+                present_mode: PresentMode::AutoVsync,
+                ..default()
+            },
+            ..default()
+        }))
+        .add_plugin(HanabiPlugin)
         .insert_resource(Lobby::default())
         .add_plugin(WorldInspectorPlugin::new())
         .add_plugin(RenetClientPlugin::default())
@@ -45,30 +68,32 @@ pub fn run() {
         .add_system(client_send_input.with_run_criteria(run_if_client_connected))
         .add_system(client_sync_players.with_run_criteria(run_if_client_connected))
         .add_system(camera_follow_local_player)
-        .add_startup_system(load_gltf)
         .add_system(lerp_transform_targets)
+        .add_system(spawn_gltf_objects)
+        .insert_resource(ClearColor(Color::rgb(0.01, 0.01, 0.01)))
         // Run App
         .run();
 }
 
 fn init(mut commands: Commands, mut ambient_light: ResMut<AmbientLight>) {
-    commands.spawn((
-        Camera3dBundle {
+    commands
+        .spawn(Camera3dBundle {
             camera: Camera {
                 hdr: true,
-
                 ..default()
             },
 
             transform: Transform::from_xyz(0.0, 6., -12.0)
                 .looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
             ..default()
-        },
-        BloomSettings::default(),
-    ));
+        })
+        .insert(OrbitCamera { zoom: 50.0 })
+        .insert(BloomSettings { ..default() })
+        .insert(Fxaa { ..default() });
 
     commands.spawn(DirectionalLightBundle {
         directional_light: DirectionalLight {
+            illuminance: 10000.0,
             shadows_enabled: true,
             ..default()
         },
@@ -81,7 +106,7 @@ fn init(mut commands: Commands, mut ambient_light: ResMut<AmbientLight>) {
     });
 
     ambient_light.color = Color::hsl(180.0, 1.0, 1.0);
-    ambient_light.brightness = 2.0;
+    ambient_light.brightness = 0.01;
 }
 
 fn new_renet_client() -> RenetClient {
@@ -125,33 +150,25 @@ fn client_sync_players(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut client: ResMut<RenetClient>,
     mut lobby: ResMut<Lobby>,
-    my: Res<MyAssetPack>,
-    assets_gltf: Res<Assets<Gltf>>,
+    ass: Res<AssetServer>,
 ) {
     while let Some(message) = client.receive_message(DefaultChannel::Reliable) {
         let server_message = bincode::deserialize(&message).unwrap();
         match server_message {
             ServerMessages::PlayerConnected { id } => {
                 println!("Player {} connected.", id);
-                if let Some(gltf) = assets_gltf.get(&my.0) {
-                    let mut cmd = commands.spawn(SceneBundle {
-                        scene: gltf.scenes[0].clone(),
-                        ..Default::default()
-                    });
-                    println!(
-                        "{} vs {} = {}",
-                        id,
-                        client.client_id(),
-                        id == client.client_id()
-                    );
-                    if id == client.client_id() {
-                        cmd.insert(LocalPlayer {});
-                    }
 
-                    let player_entity = cmd.id();
+                let my_gltf = ass.load("test_ship.glb");
+                let mut cmd =
+                    commands.spawn((SpatialBundle { ..default() }, ShipModelLoadHandle(my_gltf)));
 
-                    lobby.players.insert(id, player_entity);
+                if id == client.client_id() {
+                    cmd.insert(LocalPlayer {});
                 }
+
+                let player_entity = cmd.id();
+
+                lobby.players.insert(id, player_entity);
             }
             ServerMessages::PlayerDisconnected { id } => {
                 println!("Player {} disconnected.", id);
@@ -194,29 +211,136 @@ fn client_sync_players(
     }
 }
 
-/// Helper resource for tracking our asset
-#[derive(Resource)]
-struct MyAssetPack(Handle<Gltf>);
-
-fn load_gltf(mut commands: Commands, ass: Res<AssetServer>) {
-    let gltf = ass.load("test_ship.glb");
-    commands.insert_resource(MyAssetPack(gltf));
-}
-
 fn camera_follow_local_player(
-    mut camera_query: Query<(&mut Transform, &Camera3d), Without<LocalPlayer>>,
+    mut camera_query: Query<(&mut Transform, &mut OrbitCamera), Without<LocalPlayer>>,
     local_player_query: Query<&Transform, With<LocalPlayer>>,
-    time: Res<Time>,
+    mut motion_evr: EventReader<MouseMotion>,
+    mut scroll_evr: EventReader<MouseWheel>,
+    windows: Res<Windows>,
 ) {
-    for (mut transform, _) in camera_query.iter_mut() {
+    let mut rotation_move = Vec2::ZERO;
+
+    for ev in motion_evr.iter() {
+        rotation_move += ev.delta * 10.0;
+    }
+
+    let scroll_zoom = scroll_evr.iter().map(|x| x.y).sum::<f32>();
+
+    for (mut transform, mut orbit_camera) in camera_query.iter_mut() {
+        orbit_camera.zoom += scroll_zoom;
         match local_player_query.get_single() {
             Ok(local_player_transform) => {
-                transform.translation = transform.translation.lerp(
-                    local_player_transform.translation + vec3(0.0, 20.0, -50.0),
-                    time.delta_seconds() * 1.,
-                );
+                if rotation_move.length_squared() > 0.0 {
+                    let window = get_primary_window_size(&windows);
+                    let delta = (rotation_move / window) / PI;
+                    let yaw = Quat::from_rotation_y(-delta.x);
+                    let pitch = Quat::from_rotation_x(-delta.y);
+                    transform.rotation = yaw * transform.rotation; // rotate around global y axis
+                    transform.rotation = transform.rotation * pitch; // rotate around local x axis
+                }
+                transform.translation =
+                    local_player_transform.translation + transform.back() * orbit_camera.zoom;
+                // transform.rotation *= Rot
             }
             Err(_) => {}
+        }
+    }
+}
+
+fn get_primary_window_size(windows: &Res<Windows>) -> Vec2 {
+    let window = windows.get_primary().unwrap();
+    let window = Vec2::new(window.width() as f32, window.height() as f32);
+    window
+}
+
+#[derive(Component)]
+pub struct OrbitCamera {
+    pub zoom: f32,
+}
+
+#[derive(Component)]
+struct ShipModelLoadHandle(Handle<Gltf>);
+
+fn spawn_gltf_objects(
+    mut commands: Commands,
+    query: Query<(Entity, &ShipModelLoadHandle)>,
+    assets_gltf: Res<Assets<Gltf>>,
+    assets_gltfnode: Res<Assets<GltfNode>>,
+    mut effects: ResMut<Assets<EffectAsset>>,
+) {
+    for (entity, handle) in query.iter() {
+        if let Some(gltf) = assets_gltf.get(&handle.0) {
+            let mut gradient = Gradient::new();
+            gradient.add_key(0.0, Vec4::new(0.0, 1.0, 1.0, 1.0) * 2.0);
+            gradient.add_key(1.0, Vec4::new(0.0, 1.0, 1.0, 0.0));
+
+            println!("TEST");
+            let spawner = Spawner::rate(100.0.into());
+            let effect = effects.add(
+                EffectAsset {
+                    name: "Impact".into(),
+                    capacity: 32768,
+                    spawner,
+                    ..Default::default()
+                }
+                .init(ParticleLifetimeModifier { lifetime: 1.0 })
+                .init(PositionSphereModifier {
+                    radius: 0.75,
+                    speed: 0.0.into(),
+                    dimension: ShapeDimension::Volume,
+                    ..Default::default()
+                })
+                .render(SizeOverLifetimeModifier {
+                    gradient: Gradient::constant(Vec2::splat(0.05)),
+                })
+                .render(ColorOverLifetimeModifier { gradient })
+                .render(BillboardModifier {}),
+            );
+
+            println!("Loaded GLTF, spawning...");
+            // spawn the first scene in the file
+            let model = commands
+                .spawn(SceneBundle {
+                    scene: gltf.scenes[0].clone(),
+                    ..Default::default()
+                })
+                .id();
+
+            // for node_handle in gltf.nodes.iter() {
+            //     if let Some(node) = assets_gltfnode.get(node_handle) {
+            //         node.
+            //     }
+            // }
+
+            let mut thruster_points: Vec<Entity> = vec![];
+
+            for node_name in gltf.named_nodes.keys().into_iter() {
+                println!("NODE NAME: {}", node_name);
+                if node_name.contains("forward_thrusters") {
+                    if let Some(node) = assets_gltfnode.get(&gltf.named_nodes[node_name]) {
+                        let thruster = commands
+                            .spawn(ParticleEffectBundle::new(effect.clone()))
+                            .insert(node.transform)
+                            .id();
+                        thruster_points.push(thruster);
+                    }
+                }
+            }
+
+            commands
+                .entity(entity)
+                .push_children(&[model])
+                .push_children(&thruster_points)
+                .remove::<ShipModelLoadHandle>();
+
+            // spawn the scene named "YellowCar"
+            // commands.spawn(SceneBundle {
+            //     scene: gltf.named_scenes["YellowCar"].clone(),
+            //     transform: Transform::from_xyz(1.0, 2.0, 3.0),
+            //     ..Default::default()
+            // });
+
+            // PERF: the `.clone()`s are just for asset handles, don't worry :)
         }
     }
 }

@@ -3,11 +3,13 @@ use std::{net::UdpSocket, time::SystemTime};
 use bevy::{
     prelude::{
         default, info, App, BuildChildren, Camera3dBundle, Color, Commands, Component, CoreStage,
-        EventReader, GlobalTransform, Query, Res, ResMut, StageLabel, SystemStage, Transform, Vec3,
+        EventReader, GlobalTransform, PluginGroup, Query, Res, ResMut, StageLabel, SystemStage,
+        Transform, Vec3,
     },
     time::{FixedTimestep, Time},
     transform::TransformBundle,
     utils::HashMap,
+    window::{PresentMode, WindowDescriptor, WindowPlugin},
     DefaultPlugins,
 };
 
@@ -26,7 +28,9 @@ use bevy_renet::{
     RenetServerPlugin,
 };
 
-use spaaaace_shared::{Lobby, PlayerInput, ServerMessages, TranslationRotation, PROTOCOL_ID, SERVER_TICKRATE};
+use spaaaace_shared::{
+    Lobby, PlayerInput, ServerMessages, TranslationRotation, PROTOCOL_ID, SERVER_TICKRATE,
+};
 
 use crate::weapons::{Turret, WeaponsPlugin};
 
@@ -50,7 +54,16 @@ fn main() {
     App::default()
         // Plugins
         .insert_resource(Lobby::default())
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            window: WindowDescriptor {
+                title: "Spaaace Server".to_string(),
+                width: 320.,
+                height: 240.,
+                present_mode: PresentMode::AutoVsync,
+                ..default()
+            },
+            ..default()
+        }))
         .add_plugin(GizmosPlugin)
         .add_system(draw_player_gizmos)
         .add_startup_system(init)
