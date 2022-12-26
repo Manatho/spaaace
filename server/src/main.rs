@@ -227,7 +227,7 @@ fn update_players_system(
         let thrust_lateral = (input.thrust_left as i8 - input.thrust_right as i8) as f32;
         let thrust_vertical = (input.thrust_down as i8 - input.thrust_up as i8) as f32;
 
-        let longitudal_force = thrust_longitudal * PLAYER_MOVE_SPEED * 10.0 * transform.forward();
+        let longitudal_force = thrust_longitudal * PLAYER_MOVE_SPEED * 20.0 * transform.forward();
         let lateral_force = thrust_lateral * PLAYER_MOVE_SPEED * 5.0 * transform.right();
         let vertical_force = thrust_vertical * PLAYER_MOVE_SPEED * 10.0 * transform.down();
 

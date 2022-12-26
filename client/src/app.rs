@@ -37,6 +37,7 @@ use bevy_renet::{
     renet::{ClientAuthentication, DefaultChannel, RenetClient, RenetConnectionConfig},
     run_if_client_connected, RenetClientPlugin,
 };
+use rand::Rng;
 use spaaaace_shared::{
     Lobby, PlayerInput, ServerMessages, TranslationRotation, PROTOCOL_ID, SERVER_TICKRATE,
 };
@@ -75,7 +76,7 @@ pub fn run() {
         .run();
 }
 
-fn init(mut commands: Commands, mut ambient_light: ResMut<AmbientLight>) {
+fn init(mut commands: Commands, mut ambient_light: ResMut<AmbientLight>, ass: Res<AssetServer>) {
     commands
         .spawn(Camera3dBundle {
             camera: Camera {
@@ -107,6 +108,19 @@ fn init(mut commands: Commands, mut ambient_light: ResMut<AmbientLight>) {
 
     ambient_light.color = Color::hsl(180.0, 1.0, 1.0);
     ambient_light.brightness = 0.01;
+
+    let mut rng = rand::thread_rng();
+    for i in 0..100 {
+        commands.spawn(SceneBundle {
+            scene: ass.load("asteroid.glb#Scene0"),
+            transform: Transform::from_translation(Vec3 {
+                x: rng.gen::<f32>() * 250.0,
+                y: rng.gen::<f32>() * 250.0,
+                z: rng.gen::<f32>() * 250.0,
+            }),
+            ..default()
+        });
+    }
 }
 
 fn new_renet_client() -> RenetClient {
@@ -271,7 +285,7 @@ fn spawn_gltf_objects(
     for (entity, handle) in query.iter() {
         if let Some(gltf) = assets_gltf.get(&handle.0) {
             let mut gradient = Gradient::new();
-            gradient.add_key(0.0, Vec4::new(0.0, 1.0, 1.0, 1.0) * 2.0);
+            gradient.add_key(0.0, Vec4::new(0.0, 1.0, 1.0, 1.0) * 3.0);
             gradient.add_key(1.0, Vec4::new(0.0, 1.0, 1.0, 0.0));
 
             println!("TEST");

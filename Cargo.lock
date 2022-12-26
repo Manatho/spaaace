@@ -3407,6 +3407,7 @@ dependencies = [
  "bevy_renet",
  "bincode",
  "cfg-if",
+ "rand",
  "spaaaace_shared",
  "wasm-bindgen",
 ]
