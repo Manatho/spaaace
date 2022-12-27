@@ -1,6 +1,7 @@
 use bevy::{
+    math::vec3,
     prelude::{App, Commands, Plugin, Transform},
-    transform::TransformBundle, math::vec3,
+    transform::TransformBundle,
 };
 
 use spaaaace_shared::team::team_enum::Team;
@@ -27,7 +28,33 @@ fn init(mut commands: Commands) {
             ..Default::default()
         })
         .insert(CaptureSphere {
-            radius: 3.,
+            radius: 50.,
+            progress: 0.0,
+            owner: Team::Neutral,
+        });
+    commands
+        .spawn(TransformBundle {
+            local: Transform {
+                translation: vec3(50.0, 50.0, 100.0),
+                ..Default::default()
+            },
+            ..Default::default()
+        })
+        .insert(CaptureSphere {
+            radius: 50.,
+            progress: 0.0,
+            owner: Team::Neutral,
+        });
+    commands
+        .spawn(TransformBundle {
+            local: Transform {
+                translation: vec3(-100.0, 10.0, 200.0),
+                ..Default::default()
+            },
+            ..Default::default()
+        })
+        .insert(CaptureSphere {
+            radius: 50.,
             progress: 0.0,
             owner: Team::Neutral,
         });

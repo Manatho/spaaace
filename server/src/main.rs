@@ -1,15 +1,15 @@
 use std::{net::UdpSocket, time::SystemTime};
 
 use bevy::{
+    math::vec3,
     prelude::{
         default, info, App, BuildChildren, Camera3dBundle, Color, Commands, Component, CoreStage,
-        EventReader, GlobalTransform, PluginGroup, Query, Res, ResMut, StageLabel, SystemStage,
-        Transform, Vec3,
+        EventReader, PluginGroup, Query, Res, ResMut, StageLabel, SystemStage, Transform, Vec3,
+        With,
     },
     time::{FixedTimestep, Time},
     transform::TransformBundle,
     utils::HashMap,
-    DefaultPlugins, math::vec3,
     window::{PresentMode, WindowDescriptor, WindowPlugin},
     DefaultPlugins,
 };
@@ -28,7 +28,6 @@ use bevy_renet::{
     },
     RenetServerPlugin,
 };
-
 
 use capture_point::capture_point::CaptureSphere;
 
@@ -141,6 +140,7 @@ fn server_update_system(
     mut commands: Commands,
     mut lobby: ResMut<Lobby>,
     mut server: ResMut<RenetServer>,
+    mut capture_point_query: Query<&Transform, With<CaptureSphere>>,
 ) {
     for event in server_events.iter() {
         match event {
@@ -185,6 +185,15 @@ fn server_update_system(
                     let message =
                         bincode::serialize(&ServerMessages::PlayerConnected { id: player_id })
                             .unwrap();
+                    server.send_message(*id, DefaultChannel::Reliable, message);
+                }
+
+                for &capture_point_transform in capture_point_query.iter() {
+                    let message = bincode::serialize(&ServerMessages::CapturePointSpawned {
+                        position: capture_point_transform.translation,
+                        rotation: capture_point_transform.rotation,
+                    })
+                    .unwrap();
                     server.send_message(*id, DefaultChannel::Reliable, message);
                 }
 

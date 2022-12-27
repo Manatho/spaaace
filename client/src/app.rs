@@ -2,27 +2,24 @@ use std::{f32::consts::PI, net::UdpSocket, time::SystemTime};
 
 use app::{
     capture_point::capture_point::ForceFieldMaterial,
-    particles::ThrusterModifier,
     utils::{lerp_transform_targets, LerpTransformTarget},
 };
 use bevy::{
     app::App,
-    core_pipeline::bloom::BloomSettings,
-    gltf::Gltf,
-    math::vec3,
+    core_pipeline::{bloom::BloomSettings, fxaa::Fxaa},
+    gltf::{Gltf, GltfNode},
     pbr::NotShadowCaster,
     prelude::{
-        default, shape, AmbientLight, AssetServer, Assets, Camera, Camera3d, Camera3dBundle, Color,
+        default, shape, AmbientLight, AssetServer, Assets, Camera, Camera3dBundle, Color,
         Commands, Component, DirectionalLight, DirectionalLightBundle, Handle, Input,
         IntoSystemDescriptor, KeyCode, MaterialMeshBundle, MaterialPlugin, Mesh, PbrBundle, Quat,
-        Query, Res, ResMut, Resource, StandardMaterial, Transform, Vec3, With, Without,
+        Query, Res, ResMut, StandardMaterial, Transform, Vec3, With, Without, PluginGroup, ClearColor, SpatialBundle, EventReader, Vec2, Entity, Vec4, BuildChildren,
 
     },
     scene::SceneBundle,
-    time::Time,
     utils::HashMap,
     window::{PresentMode, WindowDescriptor, WindowPlugin, Windows},
-    DefaultPlugins,
+    DefaultPlugins, input::mouse::{MouseMotion, MouseWheel},
 };
 
 use bevy_hanabi::{
@@ -110,7 +107,7 @@ fn init(mut commands: Commands, mut ambient_light: ResMut<AmbientLight>, ass: Re
     ambient_light.brightness = 0.01;
 
     let mut rng = rand::thread_rng();
-    for i in 0..100 {
+    for _ in 0..100 {
         commands.spawn(SceneBundle {
             scene: ass.load("asteroid.glb#Scene0"),
             transform: Transform::from_translation(Vec3 {
@@ -211,7 +208,7 @@ fn client_sync_players(
                     .spawn(MaterialMeshBundle {
                         mesh: meshes.add(
                             shape::Icosphere {
-                                radius: 3.,
+                                radius: 50.,
                                 subdivisions: 8,
                             }
                             .into(),
