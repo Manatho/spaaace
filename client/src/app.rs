@@ -164,6 +164,7 @@ fn client_sync_players(
     mut force_field_materials: ResMut<Assets<ForceFieldMaterial>>,
     mut client: ResMut<RenetClient>,
     mut lobby: ResMut<Lobby>,
+    query: Query<&Handle<ForceFieldMaterial>>,
     ass: Res<AssetServer>,
 ) {
     while let Some(message) = client.receive_message(DefaultChannel::Reliable) {
@@ -247,23 +248,18 @@ fn client_sync_players(
                 progress,
             } => {
                 if let Some(entity) = lobby.capture_points.get(&id) {
-                    commands.entity(*entity).insert(MaterialMeshBundle {
-                        mesh: meshes.add(
-                            shape::Icosphere {
-                                radius: 50.,
-                                subdivisions: 8,
+                    match query.get(*entity) {
+                        Ok(material) => {
+                            if let Some(material) = force_field_materials.get_mut(material) {
+                                material.color = match owner {
+                                    Team::Neutral => Color::WHITE,
+                                    Team::Red => Color::RED,
+                                    Team::Blue => Color::BLUE,
+                                };
                             }
-                            .into(),
-                        ),
-                        material: force_field_materials.add(ForceFieldMaterial {
-                            color: match owner {
-                                Team::Neutral => Color::WHITE,
-                                Team::Red => Color::RED,
-                                Team::Blue => Color::BLUE,
-                            },
-                        }),
-                        ..default()
-                    });
+                        }
+                        _ => (),
+                    }
                 }
             }
         }
