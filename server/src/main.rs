@@ -3,12 +3,15 @@ use std::{net::UdpSocket, time::SystemTime};
 use bevy::{
     prelude::{
         default, info, App, BuildChildren, Camera3dBundle, Color, Commands, Component, CoreStage,
-        EventReader, GlobalTransform, Query, Res, ResMut, StageLabel, SystemStage, Transform, Vec3,
+        EventReader, GlobalTransform, PluginGroup, Query, Res, ResMut, StageLabel, SystemStage,
+        Transform, Vec3,
     },
     time::{FixedTimestep, Time},
     transform::TransformBundle,
     utils::HashMap,
     DefaultPlugins, math::vec3,
+    window::{PresentMode, WindowDescriptor, WindowPlugin},
+    DefaultPlugins,
 };
 
 use bevy_mod_gizmos::{draw_gizmo, Gizmo, GizmosPlugin};
@@ -26,7 +29,9 @@ use bevy_renet::{
     RenetServerPlugin,
 };
 
+
 use capture_point::capture_point::CaptureSphere;
+
 use spaaaace_shared::{
     Lobby, PlayerInput, ServerMessages, TranslationRotation, PROTOCOL_ID, SERVER_TICKRATE,
 };
@@ -56,7 +61,16 @@ fn main() {
     App::default()
         // Plugins
         .insert_resource(Lobby::default())
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            window: WindowDescriptor {
+                title: "Spaaace Server".to_string(),
+                width: 320.,
+                height: 240.,
+                present_mode: PresentMode::AutoVsync,
+                ..default()
+            },
+            ..default()
+        }))
         .add_plugin(GizmosPlugin)
         .add_system(draw_player_gizmos)
         .add_startup_system(init)
@@ -231,7 +245,7 @@ fn update_players_system(
         let thrust_lateral = (input.thrust_left as i8 - input.thrust_right as i8) as f32;
         let thrust_vertical = (input.thrust_down as i8 - input.thrust_up as i8) as f32;
 
-        let longitudal_force = thrust_longitudal * PLAYER_MOVE_SPEED * 10.0 * transform.forward();
+        let longitudal_force = thrust_longitudal * PLAYER_MOVE_SPEED * 20.0 * transform.forward();
         let lateral_force = thrust_lateral * PLAYER_MOVE_SPEED * 5.0 * transform.right();
         let vertical_force = thrust_vertical * PLAYER_MOVE_SPEED * 10.0 * transform.down();
 
