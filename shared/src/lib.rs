@@ -8,6 +8,7 @@ use bevy_ecs::{
 };
 use bevy_math::{Quat, Vec3};
 use serde::{Deserialize, Serialize};
+use team::team_enum::Team;
 
 #[derive(Debug, Default, Serialize, Deserialize, Component, Resource)]
 pub struct PlayerInput {
@@ -34,7 +35,8 @@ pub enum ServerMessages {
     PlayerConnected { id: u64 },
     PlayerDisconnected { id: u64 },
     BulletSpawned { position: Vec3, rotation: Quat },
-    CapturePointSpawned { position: Vec3, rotation: Quat },
+    CapturePointSpawned {id: u64, owner: Team, progress: f32, position: Vec3, rotation: Quat },
+    CapturePointUpdate { id: u64, owner: Team, attacker: Team, progress: f32, },
 }
 
 #[derive(Component)]

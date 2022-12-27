@@ -5,10 +5,21 @@
 // @group(1) @binding(0)
 // var<uniform> material: ForceFieldMaterial;
 
+
+struct CustomMaterial {
+    color: vec4<f32>,
+};
+
+@group(1) @binding(0)
+var<uniform> material: CustomMaterial;
+
+
 @fragment
 fn fragment(
     #import bevy_pbr::mesh_vertex_output
 ) -> @location(0) vec4<f32> {
+
+    
 
     var Normal = normalize(world_normal);
     var V = normalize(view.world_position.xyz - world_position.xyz);
@@ -20,5 +31,5 @@ fn fragment(
 
 
 
-    return vec4(1., 1., 1., fresnel);
+    return material.color * vec4(1.,1.,1., fresnel);
 }

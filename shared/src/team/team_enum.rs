@@ -1,6 +1,8 @@
 use std::fmt::Display;
 
-#[derive(Clone, Hash, PartialEq, Eq)]
+use serde::{Serialize, Deserialize};
+
+#[derive(Clone, Hash, PartialEq, Eq, Serialize, Deserialize, Debug)]
 pub enum Team {
     Neutral,
     Red,

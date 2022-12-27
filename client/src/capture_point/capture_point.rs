@@ -1,6 +1,6 @@
 use bevy::{
     prelude::{
-        AlphaMode, Material,
+        AlphaMode, Material, Color,
     },
     reflect::TypeUuid,
     render::render_resource::{AsBindGroup, ShaderRef},
@@ -12,14 +12,18 @@ use bevy::{
 pub struct ForceFieldMaterial {
     // #[uniform(0)]
     // pub selection: Vec4,
+
+    #[uniform(0)]
+    pub color: Color,
 }
 
 impl Material for ForceFieldMaterial {
     fn fragment_shader() -> ShaderRef {
         "shaders/forcefield.wgsl".into()
     }
-
+ 
     fn alpha_mode(&self) -> AlphaMode {
         AlphaMode::Blend
     }
 }
+

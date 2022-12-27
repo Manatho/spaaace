@@ -7,6 +7,7 @@ use crate::Player;
 
 #[derive(Component, Clone)]
 pub struct CaptureSphere {
+    pub id: u64,
     pub radius: f32,
     pub progress: f32,
     pub owner: Team,

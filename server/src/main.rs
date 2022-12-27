@@ -141,7 +141,7 @@ fn server_update_system(
     mut commands: Commands,
     mut lobby: ResMut<Lobby>,
     mut server: ResMut<RenetServer>,
-    mut capture_point_query: Query<&Transform, With<CaptureSphere>>,
+    mut capture_point_query: Query<(&Transform, &CaptureSphere), >,
 ) {
     for event in server_events.iter() {
         match event {
@@ -189,10 +189,13 @@ fn server_update_system(
                     server.send_message(*id, DefaultChannel::Reliable, message);
                 }
 
-                for &capture_point_transform in capture_point_query.iter() {
+                for (&transform, capture_point ) in capture_point_query.iter() {
                     let message = bincode::serialize(&ServerMessages::CapturePointSpawned {
-                        position: capture_point_transform.translation,
-                        rotation: capture_point_transform.rotation,
+                        position: transform.translation,
+                        rotation: transform.rotation,
+                        id: capture_point.id,
+                        owner: capture_point.owner.clone(),
+                        progress: capture_point.progress
                     })
                     .unwrap();
                     server.send_message(*id, DefaultChannel::Reliable, message);

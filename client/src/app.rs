@@ -8,18 +8,19 @@ use bevy::{
     app::App,
     core_pipeline::{bloom::BloomSettings, fxaa::Fxaa},
     gltf::{Gltf, GltfNode},
+    input::mouse::{MouseMotion, MouseWheel},
     pbr::NotShadowCaster,
     prelude::{
-        default, shape, AmbientLight, AssetServer, Assets, Camera, Camera3dBundle, Color,
-        Commands, Component, DirectionalLight, DirectionalLightBundle, Handle, Input,
-        IntoSystemDescriptor, KeyCode, MaterialMeshBundle, MaterialPlugin, Mesh, PbrBundle, Quat,
-        Query, Res, ResMut, StandardMaterial, Transform, Vec3, With, Without, PluginGroup, ClearColor, SpatialBundle, EventReader, Vec2, Entity, Vec4, BuildChildren,
-
+        default, shape, AmbientLight, AssetServer, Assets, BuildChildren, Camera, Camera3dBundle,
+        ClearColor, Color, Commands, Component, DirectionalLight, DirectionalLightBundle, Entity,
+        EventReader, Handle, Input, IntoSystemDescriptor, KeyCode, MaterialMeshBundle,
+        MaterialPlugin, Mesh, PbrBundle, PluginGroup, Quat, Query, Res, ResMut, SpatialBundle,
+        StandardMaterial, Transform, Vec2, Vec3, Vec4, With, Without,
     },
     scene::SceneBundle,
     utils::HashMap,
     window::{PresentMode, WindowDescriptor, WindowPlugin, Windows},
-    DefaultPlugins, input::mouse::{MouseMotion, MouseWheel},
+    DefaultPlugins,
 };
 
 use bevy_hanabi::{
@@ -35,7 +36,8 @@ use bevy_renet::{
 };
 use rand::Rng;
 use spaaaace_shared::{
-    Lobby, PlayerInput, ServerMessages, TranslationRotation, PROTOCOL_ID, SERVER_TICKRATE,
+    team::team_enum::Team, Lobby, PlayerInput, ServerMessages, TranslationRotation, PROTOCOL_ID,
+    SERVER_TICKRATE,
 };
 
 #[derive(Component)]
@@ -203,7 +205,13 @@ fn client_sync_players(
                     ..Default::default()
                 });
             }
-            ServerMessages::CapturePointSpawned { position, rotation } => {
+            ServerMessages::CapturePointSpawned {
+                position,
+                rotation,
+                id,
+                owner,
+                progress,
+            } => {
                 commands
                     .spawn(MaterialMeshBundle {
                         mesh: meshes.add(
@@ -213,7 +221,13 @@ fn client_sync_players(
                             }
                             .into(),
                         ),
-                        material: force_field_materials.add(ForceFieldMaterial {}),
+                        material: force_field_materials.add(ForceFieldMaterial {
+                            color: match owner {
+                                Team::Neutral => Color::WHITE,
+                                Team::Red => Color::RED,
+                                Team::Blue => Color::BLUE,
+                            },
+                        }),
                         transform: Transform {
                             rotation: rotation,
                             translation: position,
@@ -223,6 +237,12 @@ fn client_sync_players(
                     })
                     .insert(NotShadowCaster);
             }
+            ServerMessages::CapturePointUpdate {
+                id,
+                owner,
+                attacker,
+                progress,
+            } => todo!(),
         }
     }
 

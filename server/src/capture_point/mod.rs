@@ -33,8 +33,9 @@ fn init(mut commands: Commands) {
         .insert(CaptureSphere {
             radius: 50.,
             progress: 0.0,
-            owner: Team::Neutral,
+            owner: Team::Blue,
             attackers: HashSet::default(),
+            id: 1,
         });
     commands
         .spawn(TransformBundle {
@@ -49,6 +50,7 @@ fn init(mut commands: Commands) {
             progress: 0.0,
             owner: Team::Neutral,
             attackers: HashSet::default(),
+            id: 2,
         });
     commands
         .spawn(TransformBundle {
@@ -61,7 +63,8 @@ fn init(mut commands: Commands) {
         .insert(CaptureSphere {
             radius: 50.,
             progress: 0.0,
-            owner: Team::Neutral,
+            owner: Team::Red,
             attackers: HashSet::default(),
+            id: 3,
         });
 }
