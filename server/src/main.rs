@@ -32,7 +32,7 @@ use bevy_renet::{
 use capture_point::capture_point::CaptureSphere;
 
 use spaaaace_shared::{
-    Lobby, PlayerInput, ServerMessages, TranslationRotation, PROTOCOL_ID, SERVER_TICKRATE,
+    Lobby, PlayerInput, ServerMessages, TranslationRotation, PROTOCOL_ID, SERVER_TICKRATE, team::team_enum::Team,
 };
 
 use crate::{
@@ -46,9 +46,10 @@ mod weapons;
 #[derive(Debug, Hash, PartialEq, Eq, Clone, StageLabel)]
 struct FixedUpdateStage;
 
-#[derive(Debug, Component)]
+#[derive(Component, Clone, Hash, PartialEq, Eq)]
 pub struct Player {
     id: u64,
+    team: Team
 }
 
 const PLAYER_MOVE_SPEED: f32 = 2.0;
@@ -156,7 +157,7 @@ fn server_update_system(
                         ..Default::default()
                     })
                     .insert(PlayerInput::default())
-                    .insert(Player { id: *id })
+                    .insert(Player { id: *id, team: Team::Blue })
                     .insert(Collider::cuboid(1.0, 1.0, 1.0))
                     .insert(RigidBody::Dynamic)
                     .insert(GravityScale(0.0))
