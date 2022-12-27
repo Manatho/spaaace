@@ -1,6 +1,7 @@
 pub mod particles;
 pub mod utils;
 pub mod capture_point;
+pub mod debug;
 
 #[macro_use]
 extern crate cfg_if;

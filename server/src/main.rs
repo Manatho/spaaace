@@ -11,7 +11,7 @@ use bevy::{
     transform::TransformBundle,
     utils::HashMap,
     window::{PresentMode, WindowDescriptor, WindowPlugin},
-    DefaultPlugins,
+    DefaultPlugins, diagnostic::{LogDiagnosticsPlugin, FrameTimeDiagnosticsPlugin},
 };
 
 use bevy_mod_gizmos::{draw_gizmo, Gizmo, GizmosPlugin};
@@ -74,6 +74,10 @@ fn main() {
         .add_plugin(GizmosPlugin)
         .add_system(draw_player_gizmos)
         .add_startup_system(init)
+        
+        .add_plugin(FrameTimeDiagnosticsPlugin::default())
+        
+        .add_plugin(LogDiagnosticsPlugin::default())
         // .add_plugin(CorePlugin::default())
         // .add_plugin(TimePlugin::default())
         // .add_plugin(HierarchyPlugin::default())

@@ -2,11 +2,12 @@ use std::{f32::consts::PI, net::UdpSocket, time::SystemTime};
 
 use app::{
     capture_point::capture_point::ForceFieldMaterial,
-    utils::{lerp_transform_targets, LerpTransformTarget},
+    utils::{lerp_transform_targets, LerpTransformTarget}, debug::fps::fps_gui,
 };
 use bevy::{
     app::App,
     core_pipeline::{bloom::BloomSettings, fxaa::Fxaa},
+    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
     gltf::{Gltf, GltfNode},
     input::mouse::{MouseMotion, MouseWheel},
     pbr::NotShadowCaster,
@@ -23,6 +24,7 @@ use bevy::{
     DefaultPlugins,
 };
 
+use bevy_egui::EguiPlugin;
 use bevy_hanabi::{
     BillboardModifier, ColorOverLifetimeModifier, EffectAsset, Gradient, HanabiPlugin,
     ParticleEffectBundle, ParticleLifetimeModifier, PositionSphereModifier, ShapeDimension,
@@ -46,6 +48,7 @@ struct LocalPlayer;
 pub fn run() {
     App::default()
         // Plugins
+        .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             window: WindowDescriptor {
                 title: "Spaaace Client".to_string(),
@@ -58,7 +61,8 @@ pub fn run() {
         }))
         .add_plugin(HanabiPlugin)
         .insert_resource(Lobby::default())
-        .add_plugin(WorldInspectorPlugin::new())
+        //.add_plugin(WorldInspectorPlugin::new())
+        .add_plugin(EguiPlugin)
         .add_plugin(RenetClientPlugin::default())
         .add_startup_system(init)
         .insert_resource(new_renet_client())
@@ -71,6 +75,7 @@ pub fn run() {
         .add_plugin(MaterialPlugin::<ForceFieldMaterial>::default())
         .add_system(spawn_gltf_objects)
         .insert_resource(ClearColor(Color::rgb(0.01, 0.01, 0.01)))
+        .add_system(fps_gui)
         // Run App
         .run();
 }
