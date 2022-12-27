@@ -1,7 +1,10 @@
 use bevy::{
-    prelude::{Bundle, Component, PbrBundle, Query, Res, Transform}, time::Time, utils::{HashMap, HashSet},
+    prelude::{Bundle, Component, PbrBundle, Query, Res, Transform, ResMut},
+    time::Time,
+    utils::{HashMap, HashSet},
 };
-use spaaaace_shared::team::team_enum::Team;
+use bevy_renet::renet::{DefaultChannel, RenetServer};
+use spaaaace_shared::{team::team_enum::Team, ServerMessages};
 
 use crate::Player;
 
@@ -19,7 +22,6 @@ pub struct CapturePoint {
     pub capture: CaptureSphere,
     pub pbr_bundle: PbrBundle,
 }
-
 
 pub fn capture_arena(
     mut query_capture_spheres: Query<(&Transform, &mut CaptureSphere)>,
@@ -40,7 +42,11 @@ pub fn capture_arena(
     }
 }
 
-pub fn capture_progress(mut query_capture_spheres: Query<&mut CaptureSphere>, time: Res<Time>) {
+pub fn capture_progress(
+    mut query_capture_spheres: Query<&mut CaptureSphere>,
+    time: Res<Time>,
+    mut server: ResMut<RenetServer>,
+) {
     for mut capture_sphere in query_capture_spheres.iter_mut() {
         let old_progress = capture_sphere.progress;
         let mut attackers_by_team = HashMap::<Team, u8>::new();
@@ -79,15 +85,19 @@ pub fn capture_progress(mut query_capture_spheres: Query<&mut CaptureSphere>, ti
                 (capture_sphere.progress + capture_rate * time.delta_seconds()).clamp(0.0, 1.0);
         } else if capture_sphere.progress > 0.0 && capture_sphere.owner == Team::Neutral {
             capture_sphere.progress =
-            (capture_sphere.progress - capture_rate * time.delta_seconds()).clamp(0.0, 1.0);
+                (capture_sphere.progress - capture_rate * time.delta_seconds()).clamp(0.0, 1.0);
         }
-        
-        
+
         if old_progress != capture_sphere.progress {
             println!("Q {} {}", capture_sphere.progress, capture_sphere.owner);
-
+            let message = bincode::serialize(&ServerMessages::CapturePointUpdate {
+                id: capture_sphere.id,
+                owner: capture_sphere.owner.clone(),
+                attacker: capture_sphere.owner.clone(),
+                progress: capture_sphere.progress,
+            })
+            .unwrap();
+            server.broadcast_message(DefaultChannel::Reliable, message);
         }
-
-        
     }
 }

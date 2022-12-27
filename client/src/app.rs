@@ -212,7 +212,7 @@ fn client_sync_players(
                 owner,
                 progress,
             } => {
-                commands
+                let capture_entity = commands
                     .spawn(MaterialMeshBundle {
                         mesh: meshes.add(
                             shape::Icosphere {
@@ -235,14 +235,37 @@ fn client_sync_players(
                         },
                         ..default()
                     })
-                    .insert(NotShadowCaster);
+                    .insert(NotShadowCaster)
+                    .id();
+
+                lobby.capture_points.insert(id, capture_entity);
             }
             ServerMessages::CapturePointUpdate {
                 id,
                 owner,
                 attacker,
                 progress,
-            } => todo!(),
+            } => {
+                if let Some(entity) = lobby.capture_points.get(&id) {
+                    commands.entity(*entity).insert(MaterialMeshBundle {
+                        mesh: meshes.add(
+                            shape::Icosphere {
+                                radius: 50.,
+                                subdivisions: 8,
+                            }
+                            .into(),
+                        ),
+                        material: force_field_materials.add(ForceFieldMaterial {
+                            color: match owner {
+                                Team::Neutral => Color::WHITE,
+                                Team::Red => Color::RED,
+                                Team::Blue => Color::BLUE,
+                            },
+                        }),
+                        ..default()
+                    });
+                }
+            }
         }
     }
 

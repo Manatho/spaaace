@@ -28,6 +28,7 @@ pub const PROTOCOL_ID: u64 = 7;
 #[derive(Debug, Default, Resource)]
 pub struct Lobby {
     pub players: HashMap<u64, Entity>,
+    pub capture_points: HashMap<u64, Entity>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Component)]
