@@ -11,7 +11,7 @@ use bevy_math::{Quat, Vec3};
 use serde::{Deserialize, Serialize};
 use team::team_enum::Team;
 
-#[derive(Debug, Default, Serialize, Deserialize, Component, Resource)]
+#[derive(Debug, Default, Serialize, Deserialize, Component, Resource, Clone, Copy)]
 pub struct PlayerInput {
     pub thrust_forward: bool,
     pub thrust_reverse: bool,
@@ -24,6 +24,12 @@ pub struct PlayerInput {
     pub primary_fire: bool,
 }
 
+#[derive(Debug, Serialize, Deserialize, Component)]
+pub enum ClientMessages {
+    PlayerInput { input: PlayerInput },
+    Command { command: String },
+}
+
 pub const PROTOCOL_ID: u64 = 7;
 
 #[derive(Debug, Default, Resource)]
@@ -34,11 +40,29 @@ pub struct Lobby {
 
 #[derive(Debug, Serialize, Deserialize, Component)]
 pub enum ServerMessages {
-    PlayerConnected { id: u64 },
-    PlayerDisconnected { id: u64 },
-    BulletSpawned { position: Vec3, rotation: Quat },
-    CapturePointSpawned {id: u64, owner: Team, progress: f32, position: Vec3, rotation: Quat },
-    CapturePointUpdate { id: u64, owner: Team, attacker: Team, progress: f32, },
+    PlayerConnected {
+        id: u64,
+    },
+    PlayerDisconnected {
+        id: u64,
+    },
+    BulletSpawned {
+        position: Vec3,
+        rotation: Quat,
+    },
+    CapturePointSpawned {
+        id: u64,
+        owner: Team,
+        progress: f32,
+        position: Vec3,
+        rotation: Quat,
+    },
+    CapturePointUpdate {
+        id: u64,
+        owner: Team,
+        attacker: Team,
+        progress: f32,
+    },
 }
 
 #[derive(Component)]

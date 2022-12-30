@@ -4,6 +4,7 @@ pub mod capture_point;
 pub mod debug;
 pub mod camera;
 pub mod ui;
+pub mod controls;
 
 #[macro_use]
 extern crate cfg_if;

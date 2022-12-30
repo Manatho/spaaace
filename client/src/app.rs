@@ -1,32 +1,30 @@
-use std::{f32::consts::PI, fmt::Display, net::UdpSocket, time::SystemTime};
+use std::{f32::consts::PI, net::UdpSocket, time::SystemTime};
 
 use app::{
     camera::{OrbitCamera, OrbitCameraPlugin, OrbitCameraTarget},
     capture_point::capture_point::ForceFieldMaterial,
-    debug::fps::fps_gui,
+    controls::player_input,
+    debug::fps::{fps_gui, team_swap_gui},
     ui::GameUIPlugin,
     utils::{lerp_transform_targets, LerpTransformTarget},
 };
 use bevy::{
     app::App,
     core_pipeline::{bloom::BloomSettings, fxaa::Fxaa},
-    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
+    diagnostic::FrameTimeDiagnosticsPlugin,
     gltf::{Gltf, GltfNode},
-    input::mouse::{MouseMotion, MouseWheel},
     pbr::NotShadowCaster,
     prelude::{
         default, shape, AmbientLight, AssetServer, Assets, BuildChildren, Camera, Camera3dBundle,
         ClearColor, Color, Commands, Component, DirectionalLight, DirectionalLightBundle, Entity,
-        EventReader, Handle, Input, IntoSystemDescriptor, KeyCode, MaterialMeshBundle,
-        MaterialPlugin, Mesh, PbrBundle, PluginGroup, Quat, Query, Res, ResMut, SpatialBundle,
-        StandardMaterial, Transform, Vec2, Vec3, Vec4, With, Without,
+        Handle, IntoSystemDescriptor, MaterialMeshBundle, MaterialPlugin, Mesh, PbrBundle,
+        PluginGroup, Quat, Query, Res, ResMut, SpatialBundle, StandardMaterial, Transform, Vec2,
+        Vec3, Vec4,
     },
     scene::SceneBundle,
     time::Time,
     utils::HashMap,
-    window::{
-        CompositeAlphaMode, PresentMode, WindowDescriptor, WindowMode, WindowPlugin, Windows,
-    },
+    window::{WindowDescriptor, WindowPlugin},
     DefaultPlugins,
 };
 
@@ -36,7 +34,6 @@ use bevy_hanabi::{
     ParticleEffectBundle, ParticleLifetimeModifier, PositionSphereModifier, ShapeDimension,
     SizeOverLifetimeModifier, Spawner,
 };
-use bevy_inspector_egui::WorldInspectorPlugin;
 
 use bevy_renet::{
     renet::{ClientAuthentication, DefaultChannel, RenetClient, RenetConnectionConfig},
@@ -44,8 +41,8 @@ use bevy_renet::{
 };
 use rand::Rng;
 use spaaaace_shared::{
-    team::team_enum::Team, util::Random, Lobby, PlayerInput, ServerMessages, TranslationRotation,
-    PROTOCOL_ID, SERVER_TICKRATE,
+    team::team_enum::Team, util::Random, ClientMessages, Lobby, PlayerInput, ServerMessages,
+    TranslationRotation, PROTOCOL_ID, SERVER_TICKRATE,
 };
 
 pub fn run() {
@@ -77,6 +74,7 @@ pub fn run() {
         .add_system(spawn_gltf_objects)
         .insert_resource(ClearColor(Color::rgb(0.01, 0.01, 0.01)))
         .add_system(fps_gui)
+        .add_system(team_swap_gui)
         // Run App
         .add_plugin(OrbitCameraPlugin)
         .add_plugin(GameUIPlugin)
@@ -153,21 +151,11 @@ fn new_renet_client() -> RenetClient {
     RenetClient::new(current_time, socket, connection_config, authentication).unwrap()
 }
 
-fn player_input(k_input: Res<Input<KeyCode>>, mut player_input: ResMut<PlayerInput>) {
-    player_input.rotate_left = k_input.pressed(KeyCode::A);
-    player_input.rotate_right = k_input.pressed(KeyCode::D);
-    player_input.thrust_forward = k_input.pressed(KeyCode::W);
-    player_input.thrust_reverse = k_input.pressed(KeyCode::S);
-    player_input.thrust_left = k_input.pressed(KeyCode::Q);
-    player_input.thrust_right = k_input.pressed(KeyCode::E);
-    player_input.thrust_up = k_input.pressed(KeyCode::Space);
-    player_input.thrust_down = k_input.pressed(KeyCode::LControl);
-    player_input.primary_fire = k_input.pressed(KeyCode::Return);
-}
-
 fn client_send_input(player_input: Res<PlayerInput>, mut client: ResMut<RenetClient>) {
-    let input_message = bincode::serialize(&*player_input).unwrap();
-
+    let client_message = ClientMessages::PlayerInput {
+        input: *player_input,
+    };
+    let input_message = bincode::serialize(&client_message).unwrap();
     client.send_message(DefaultChannel::Reliable, input_message);
 }
 
@@ -244,7 +232,7 @@ fn client_sync_players(
                 rotation,
                 id,
                 owner,
-                progress,
+                progress: _,
             } => {
                 let capture_entity = commands
                     .spawn(MaterialMeshBundle {
@@ -279,8 +267,8 @@ fn client_sync_players(
             ServerMessages::CapturePointUpdate {
                 id,
                 owner,
-                attacker,
-                progress,
+                attacker: _,
+                progress: _,
             } => {
                 if let Some(entity) = lobby.capture_points.get(&id) {
                     match query.get(*entity) {

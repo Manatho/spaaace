@@ -27,16 +27,15 @@ pub fn capture_arena(
     mut query_capture_spheres: Query<(&Transform, &mut CaptureSphere)>,
     query_space_ship: Query<(&Transform, &Player)>,
 ) {
-    for (ship_transform, player) in query_space_ship.iter() {
-        for (capture_transform, mut capture_sphere) in query_capture_spheres.iter_mut() {
+    for (capture_transform, mut capture_sphere) in query_capture_spheres.iter_mut() {
+        capture_sphere.attackers.clear();
+        for (ship_transform, player) in query_space_ship.iter() {
             let distance = ship_transform
                 .translation
                 .distance(capture_transform.translation);
 
             if capture_sphere.radius > distance {
                 capture_sphere.attackers.insert(player.clone());
-            } else {
-                capture_sphere.attackers.remove(player);
             }
         }
     }
@@ -89,7 +88,11 @@ pub fn capture_progress(
         }
 
         if old_progress != capture_sphere.progress {
-            // println!("Q {} {}", capture_sphere.progress, capture_sphere.owner);
+            //println!(
+            //    "Q {} {} {}",
+            //    capture_sphere.progress,
+            //    capture_sphere.owner
+            //);
             let message = bincode::serialize(&ServerMessages::CapturePointUpdate {
                 id: capture_sphere.id,
                 owner: capture_sphere.owner.clone(),
