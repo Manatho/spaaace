@@ -1,6 +1,7 @@
 use std::{net::UdpSocket, time::SystemTime};
 
 use bevy::{
+    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
     math::vec3,
     prelude::{
         default, info, App, BuildChildren, Camera3dBundle, Color, Commands, Component, CoreStage,
@@ -32,7 +33,8 @@ use bevy_renet::{
 use capture_point::capture_point::CaptureSphere;
 
 use spaaaace_shared::{
-    Lobby, PlayerInput, ServerMessages, TranslationRotation, PROTOCOL_ID, SERVER_TICKRATE, team::team_enum::Team,
+    team::team_enum::Team, ClientMessages, Lobby, PlayerInput, ServerMessages, TranslationRotation,
+    PROTOCOL_ID, SERVER_TICKRATE,
 };
 
 use crate::{
@@ -49,7 +51,7 @@ struct FixedUpdateStage;
 #[derive(Component, Clone, Hash, PartialEq, Eq)]
 pub struct Player {
     id: u64,
-    team: Team
+    team: Team,
 }
 
 const PLAYER_MOVE_SPEED: f32 = 2.0;
@@ -74,6 +76,8 @@ fn main() {
         .add_plugin(GizmosPlugin)
         .add_system(draw_player_gizmos)
         .add_startup_system(init)
+        //  .add_plugin(FrameTimeDiagnosticsPlugin::default())
+        //.add_plugin(LogDiagnosticsPlugin::default())
         // .add_plugin(CorePlugin::default())
         // .add_plugin(TimePlugin::default())
         // .add_plugin(HierarchyPlugin::default())
@@ -141,7 +145,8 @@ fn server_update_system(
     mut commands: Commands,
     mut lobby: ResMut<Lobby>,
     mut server: ResMut<RenetServer>,
-    mut capture_point_query: Query<(&Transform, &CaptureSphere), >,
+    mut capture_point_query: Query<(&Transform, &CaptureSphere)>,
+    mut player_query: Query<&mut Player>,
 ) {
     for event in server_events.iter() {
         match event {
@@ -157,7 +162,10 @@ fn server_update_system(
                         ..Default::default()
                     })
                     .insert(PlayerInput::default())
-                    .insert(Player { id: *id, team: Team::Blue })
+                    .insert(Player {
+                        id: *id,
+                        team: Team::Red,
+                    })
                     .insert(Collider::cuboid(1.0, 1.0, 1.0))
                     .insert(RigidBody::Dynamic)
                     .insert(GravityScale(0.0))
@@ -189,13 +197,13 @@ fn server_update_system(
                     server.send_message(*id, DefaultChannel::Reliable, message);
                 }
 
-                for (&transform, capture_point ) in capture_point_query.iter() {
+                for (&transform, capture_point) in capture_point_query.iter() {
                     let message = bincode::serialize(&ServerMessages::CapturePointSpawned {
                         position: transform.translation,
                         rotation: transform.rotation,
                         id: capture_point.id,
                         owner: capture_point.owner.clone(),
-                        progress: capture_point.progress
+                        progress: capture_point.progress,
                     })
                     .unwrap();
                     server.send_message(*id, DefaultChannel::Reliable, message);
@@ -222,9 +230,33 @@ fn server_update_system(
 
     for client_id in server.clients_id().into_iter() {
         while let Some(message) = server.receive_message(client_id, DefaultChannel::Reliable) {
-            let player_input: PlayerInput = bincode::deserialize(&message).unwrap();
-            if let Some(player_entity) = lobby.players.get(&client_id) {
-                commands.entity(*player_entity).insert(player_input);
+            let client_message: ClientMessages = bincode::deserialize(&message).unwrap();
+            match client_message {
+                ClientMessages::PlayerInput { input } => {
+                    if let Some(player_entity) = lobby.players.get(&client_id) {
+                        commands.entity(*player_entity).insert(input);
+                    }
+                }
+                ClientMessages::Command { command } => {
+                    let args_split = command.split(" ");
+                    let args: Vec<&str> = args_split.collect();
+                    
+                    match args[0] {
+                        "swap_team" => {
+                            let entity = lobby.players[&client_id];
+
+                            match player_query.get_mut(entity) {
+                                Ok(mut player) => match args[1] {
+                                    "1" => player.team = Team::Red,
+                                    "2" => player.team = Team::Blue,
+                                    _ => (),
+                                },
+                                Err(_) => (),
+                            }
+                        }
+                        _ => (),
+                    }
+                }
             }
         }
     }
