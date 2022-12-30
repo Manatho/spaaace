@@ -3533,6 +3533,7 @@ dependencies = [
  "bevy_math",
  "cfg-if",
  "log",
+ "rand",
  "serde",
 ]
 

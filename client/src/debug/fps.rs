@@ -10,9 +10,9 @@ pub fn fps_gui(mut egui_context: ResMut<EguiContext>, diagnostics: Res<Diagnosti
         ui.label(format!(
             "{}",
             diagnostics
-                .get(FrameTimeDiagnosticsPlugin::FPS)
-                .and_then(|fps| fps.average()).unwrap_or(0.0)
-                
+                .get(FrameTimeDiagnosticsPlugin::FRAME_TIME)
+                .and_then(|fps| fps.smoothed())
+                .unwrap_or(0.0)
         ));
     });
 }

@@ -1,8 +1,11 @@
-use std::{f32::consts::PI, net::UdpSocket, time::SystemTime};
+use std::{f32::consts::PI, fmt::Display, net::UdpSocket, time::SystemTime};
 
 use app::{
+    camera::{OrbitCamera, OrbitCameraPlugin, OrbitCameraTarget},
     capture_point::capture_point::ForceFieldMaterial,
-    utils::{lerp_transform_targets, LerpTransformTarget}, debug::fps::fps_gui,
+    debug::fps::fps_gui,
+    ui::GameUIPlugin,
+    utils::{lerp_transform_targets, LerpTransformTarget},
 };
 use bevy::{
     app::App,
@@ -19,8 +22,11 @@ use bevy::{
         StandardMaterial, Transform, Vec2, Vec3, Vec4, With, Without,
     },
     scene::SceneBundle,
+    time::Time,
     utils::HashMap,
-    window::{PresentMode, WindowDescriptor, WindowPlugin, Windows},
+    window::{
+        CompositeAlphaMode, PresentMode, WindowDescriptor, WindowMode, WindowPlugin, Windows,
+    },
     DefaultPlugins,
 };
 
@@ -38,12 +44,9 @@ use bevy_renet::{
 };
 use rand::Rng;
 use spaaaace_shared::{
-    team::team_enum::Team, Lobby, PlayerInput, ServerMessages, TranslationRotation, PROTOCOL_ID,
-    SERVER_TICKRATE,
+    team::team_enum::Team, util::Random, Lobby, PlayerInput, ServerMessages, TranslationRotation,
+    PROTOCOL_ID, SERVER_TICKRATE,
 };
-
-#[derive(Component)]
-struct LocalPlayer;
 
 pub fn run() {
     App::default()
@@ -54,7 +57,6 @@ pub fn run() {
                 title: "Spaaace Client".to_string(),
                 width: 640.,
                 height: 320.,
-                present_mode: PresentMode::AutoVsync,
                 ..default()
             },
             ..default()
@@ -70,13 +72,15 @@ pub fn run() {
         .add_system(player_input)
         .add_system(client_send_input.with_run_criteria(run_if_client_connected))
         .add_system(client_sync_players.with_run_criteria(run_if_client_connected))
-        .add_system(camera_follow_local_player)
         .add_system(lerp_transform_targets)
         .add_plugin(MaterialPlugin::<ForceFieldMaterial>::default())
         .add_system(spawn_gltf_objects)
         .insert_resource(ClearColor(Color::rgb(0.01, 0.01, 0.01)))
         .add_system(fps_gui)
         // Run App
+        .add_plugin(OrbitCameraPlugin)
+        .add_plugin(GameUIPlugin)
+        .add_system(move_bullet)
         .run();
 }
 
@@ -117,11 +121,16 @@ fn init(mut commands: Commands, mut ambient_light: ResMut<AmbientLight>, ass: Re
     for _ in 0..100 {
         commands.spawn(SceneBundle {
             scene: ass.load("asteroid.glb#Scene0"),
-            transform: Transform::from_translation(Vec3 {
-                x: rng.gen::<f32>() * 250.0,
-                y: rng.gen::<f32>() * 250.0,
-                z: rng.gen::<f32>() * 250.0,
-            }),
+            transform: Transform {
+                translation: Vec3 {
+                    x: rng.gen::<f32>() * 250.0,
+                    y: rng.gen::<f32>() * 250.0,
+                    z: rng.gen::<f32>() * 250.0,
+                },
+                scale: Vec3::splat(2.0 + rng.gen::<f32>() * 8.0),
+                rotation: Quat::random(),
+                ..default()
+            },
             ..default()
         });
     }
@@ -162,6 +171,16 @@ fn client_send_input(player_input: Res<PlayerInput>, mut client: ResMut<RenetCli
     client.send_message(DefaultChannel::Reliable, input_message);
 }
 
+#[derive(Component)]
+struct Bullet {}
+
+fn move_bullet(mut query: Query<(&Bullet, &mut Transform)>, time: Res<Time>) {
+    for (_, mut transform) in query.iter_mut() {
+        let dir = transform.forward();
+        transform.translation += dir * time.delta_seconds() * 20.;
+    }
+}
+
 fn client_sync_players(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -171,6 +190,7 @@ fn client_sync_players(
     mut lobby: ResMut<Lobby>,
     query: Query<&Handle<ForceFieldMaterial>>,
     ass: Res<AssetServer>,
+    time: Res<Time>,
 ) {
     while let Some(message) = client.receive_message(DefaultChannel::Reliable) {
         let server_message = bincode::deserialize(&message).unwrap();
@@ -183,7 +203,7 @@ fn client_sync_players(
                     commands.spawn((SpatialBundle { ..default() }, ShipModelLoadHandle(my_gltf)));
 
                 if id == client.client_id() {
-                    cmd.insert(LocalPlayer {});
+                    cmd.insert(OrbitCameraTarget {});
                 }
 
                 let player_entity = cmd.id();
@@ -197,19 +217,27 @@ fn client_sync_players(
                 }
             }
             ServerMessages::BulletSpawned { position, rotation } => {
-                commands.spawn(PbrBundle {
-                    mesh: meshes.add(Mesh::from(shape::Icosphere {
-                        radius: 0.2,
+                commands
+                    .spawn(PbrBundle {
+                        mesh: meshes.add(Mesh::from(shape::Capsule {
+                            depth: 0.5,
+                            radius: 0.01,
+                            ..Default::default()
+                        })),
+                        material: materials.add(StandardMaterial {
+                            base_color: Color::BLACK,
+                            perceptual_roughness: 1.,
+                            emissive: Color::rgb(1., 0.2, 0.2) * 5.,
+                            ..default()
+                        }),
+                        transform: Transform {
+                            translation: position,
+                            rotation: rotation,
+                            ..Default::default()
+                        },
                         ..Default::default()
-                    })),
-                    material: materials.add(Color::rgb(1.0, 0.2, 0.2).into()),
-                    transform: Transform {
-                        translation: position,
-                        rotation: rotation,
-                        ..Default::default()
-                    },
-                    ..Default::default()
-                });
+                    })
+                    .insert(Bullet {});
             }
             ServerMessages::CapturePointSpawned {
                 position,
@@ -233,6 +261,8 @@ fn client_sync_players(
                                 Team::Red => Color::RED,
                                 Team::Blue => Color::BLUE,
                             },
+                            prev_color: Color::WHITE,
+                            last_color_change: time.elapsed_seconds(),
                         }),
                         transform: Transform {
                             rotation: rotation,
@@ -256,11 +286,23 @@ fn client_sync_players(
                     match query.get(*entity) {
                         Ok(material) => {
                             if let Some(material) = force_field_materials.get_mut(material) {
-                                material.color = match owner {
+                                let next_color = match owner {
                                     Team::Neutral => Color::WHITE,
                                     Team::Red => Color::RED,
                                     Team::Blue => Color::BLUE,
                                 };
+                                if material.color != next_color {
+                                    material.prev_color = material.color;
+                                    material.color = next_color;
+                                    material.last_color_change = time.elapsed_seconds();
+
+                                    println!(
+                                        "{:?} {:?} {:?}",
+                                        material.color,
+                                        material.prev_color,
+                                        material.last_color_change
+                                    );
+                                }
                             }
                         }
                         _ => (),
@@ -285,53 +327,6 @@ fn client_sync_players(
             }
         }
     }
-}
-
-fn camera_follow_local_player(
-    mut camera_query: Query<(&mut Transform, &mut OrbitCamera), Without<LocalPlayer>>,
-    local_player_query: Query<&Transform, With<LocalPlayer>>,
-    mut motion_evr: EventReader<MouseMotion>,
-    mut scroll_evr: EventReader<MouseWheel>,
-    windows: Res<Windows>,
-) {
-    let mut rotation_move = Vec2::ZERO;
-
-    for ev in motion_evr.iter() {
-        rotation_move += ev.delta * 10.0;
-    }
-
-    let scroll_zoom = scroll_evr.iter().map(|x| x.y).sum::<f32>();
-
-    for (mut transform, mut orbit_camera) in camera_query.iter_mut() {
-        orbit_camera.zoom += scroll_zoom;
-        match local_player_query.get_single() {
-            Ok(local_player_transform) => {
-                if rotation_move.length_squared() > 0.0 {
-                    let window = get_primary_window_size(&windows);
-                    let delta = (rotation_move / window) / PI;
-                    let yaw = Quat::from_rotation_y(-delta.x);
-                    let pitch = Quat::from_rotation_x(-delta.y);
-                    transform.rotation = yaw * transform.rotation; // rotate around global y axis
-                    transform.rotation = transform.rotation * pitch; // rotate around local x axis
-                }
-                transform.translation =
-                    local_player_transform.translation + transform.back() * orbit_camera.zoom;
-                // transform.rotation *= Rot
-            }
-            Err(_) => {}
-        }
-    }
-}
-
-fn get_primary_window_size(windows: &Res<Windows>) -> Vec2 {
-    let window = windows.get_primary().unwrap();
-    let window = Vec2::new(window.width() as f32, window.height() as f32);
-    window
-}
-
-#[derive(Component)]
-pub struct OrbitCamera {
-    pub zoom: f32,
 }
 
 #[derive(Component)]
@@ -381,17 +376,9 @@ fn spawn_gltf_objects(
                     ..Default::default()
                 })
                 .id();
-
-            // for node_handle in gltf.nodes.iter() {
-            //     if let Some(node) = assets_gltfnode.get(node_handle) {
-            //         node.
-            //     }
-            // }
-
             let mut thruster_points: Vec<Entity> = vec![];
 
             for node_name in gltf.named_nodes.keys().into_iter() {
-                println!("NODE NAME: {}", node_name);
                 if node_name.contains("forward_thrusters") {
                     if let Some(node) = assets_gltfnode.get(&gltf.named_nodes[node_name]) {
                         let thruster = commands
@@ -408,15 +395,6 @@ fn spawn_gltf_objects(
                 .push_children(&[model])
                 .push_children(&thruster_points)
                 .remove::<ShipModelLoadHandle>();
-
-            // spawn the scene named "YellowCar"
-            // commands.spawn(SceneBundle {
-            //     scene: gltf.named_scenes["YellowCar"].clone(),
-            //     transform: Transform::from_xyz(1.0, 2.0, 3.0),
-            //     ..Default::default()
-            // });
-
-            // PERF: the `.clone()`s are just for asset handles, don't worry :)
         }
     }
 }

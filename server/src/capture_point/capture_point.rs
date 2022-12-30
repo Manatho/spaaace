@@ -1,5 +1,5 @@
 use bevy::{
-    prelude::{Bundle, Component, PbrBundle, Query, Res, Transform, ResMut},
+    prelude::{Bundle, Component, PbrBundle, Query, Res, ResMut, Transform},
     time::Time,
     utils::{HashMap, HashSet},
 };
@@ -89,7 +89,7 @@ pub fn capture_progress(
         }
 
         if old_progress != capture_sphere.progress {
-            println!("Q {} {}", capture_sphere.progress, capture_sphere.owner);
+            // println!("Q {} {}", capture_sphere.progress, capture_sphere.owner);
             let message = bincode::serialize(&ServerMessages::CapturePointUpdate {
                 id: capture_sphere.id,
                 owner: capture_sphere.owner.clone(),
