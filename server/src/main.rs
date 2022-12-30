@@ -1,23 +1,26 @@
-use std::{net::UdpSocket, time::SystemTime};
+use std::{f32::consts::PI, net::UdpSocket, time::SystemTime};
 
 use bevy::{
+    diagnostic::FrameTimeDiagnosticsPlugin,
     math::vec3,
     prelude::{
         default, info, App, BuildChildren, Camera3dBundle, Color, Commands, Component, CoreStage,
-        EventReader, PluginGroup, Query, Res, ResMut, StageLabel, SystemStage, Transform, Vec3,
-        With,
+        DespawnRecursiveExt, EventReader, PluginGroup, Quat, Query, Res, ResMut, StageLabel,
+        SystemStage, Transform, Vec3,
     },
     time::{FixedTimestep, Time},
     transform::TransformBundle,
     utils::HashMap,
     window::{PresentMode, WindowDescriptor, WindowPlugin},
-    DefaultPlugins, diagnostic::{LogDiagnosticsPlugin, FrameTimeDiagnosticsPlugin},
+    DefaultPlugins,
 };
 
+use bevy_inspector_egui::WorldInspectorPlugin;
 use bevy_mod_gizmos::{draw_gizmo, Gizmo, GizmosPlugin};
 use bevy_rapier3d::{
     prelude::{
-        Collider, Damping, ExternalForce, GravityScale, NoUserData, RapierPhysicsPlugin, RigidBody,
+        Collider, Damping, ExternalForce, GravityScale, LockedAxes, NoUserData,
+        RapierPhysicsPlugin, RigidBody,
     },
     render::RapierDebugRenderPlugin,
 };
@@ -32,7 +35,8 @@ use bevy_renet::{
 use capture_point::capture_point::CaptureSphere;
 
 use spaaaace_shared::{
-    Lobby, PlayerInput, ServerMessages, TranslationRotation, PROTOCOL_ID, SERVER_TICKRATE, team::team_enum::Team,
+    team::team_enum::Team, Lobby, PlayerInput, ServerMessages, TranslationRotation, PROTOCOL_ID,
+    SERVER_TICKRATE,
 };
 
 use crate::{
@@ -49,7 +53,7 @@ struct FixedUpdateStage;
 #[derive(Component, Clone, Hash, PartialEq, Eq)]
 pub struct Player {
     id: u64,
-    team: Team
+    team: Team,
 }
 
 const PLAYER_MOVE_SPEED: f32 = 2.0;
@@ -74,10 +78,9 @@ fn main() {
         .add_plugin(GizmosPlugin)
         .add_system(draw_player_gizmos)
         .add_startup_system(init)
-        
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
-        
-        .add_plugin(LogDiagnosticsPlugin::default())
+        // .add_plugin(LogDiagnosticsPlugin::default())
+        .add_plugin(WorldInspectorPlugin::new())
         // .add_plugin(CorePlugin::default())
         // .add_plugin(TimePlugin::default())
         // .add_plugin(HierarchyPlugin::default())
@@ -145,7 +148,7 @@ fn server_update_system(
     mut commands: Commands,
     mut lobby: ResMut<Lobby>,
     mut server: ResMut<RenetServer>,
-    mut capture_point_query: Query<(&Transform, &CaptureSphere), >,
+    mut capture_point_query: Query<(&Transform, &CaptureSphere)>,
 ) {
     for event in server_events.iter() {
         match event {
@@ -156,14 +159,19 @@ fn server_update_system(
                     .spawn(TransformBundle {
                         local: Transform {
                             translation: vec3(0.0, 0.5, 0.0),
+                            rotation: Quat::from_rotation_x(0.5),
                             ..Default::default()
                         },
                         ..Default::default()
                     })
                     .insert(PlayerInput::default())
-                    .insert(Player { id: *id, team: Team::Blue })
+                    .insert(Player {
+                        id: *id,
+                        team: Team::Blue,
+                    })
                     .insert(Collider::cuboid(1.0, 1.0, 1.0))
                     .insert(RigidBody::Dynamic)
+                    // .insert(LockedAxes::ROTATION_LOCKED_Z)
                     .insert(GravityScale(0.0))
                     .insert(ExternalForce::default())
                     .insert(Damping {
@@ -193,13 +201,13 @@ fn server_update_system(
                     server.send_message(*id, DefaultChannel::Reliable, message);
                 }
 
-                for (&transform, capture_point ) in capture_point_query.iter() {
+                for (&transform, capture_point) in capture_point_query.iter() {
                     let message = bincode::serialize(&ServerMessages::CapturePointSpawned {
                         position: transform.translation,
                         rotation: transform.rotation,
                         id: capture_point.id,
                         owner: capture_point.owner.clone(),
-                        progress: capture_point.progress
+                        progress: capture_point.progress,
                     })
                     .unwrap();
                     server.send_message(*id, DefaultChannel::Reliable, message);
@@ -214,7 +222,7 @@ fn server_update_system(
             ServerEvent::ClientDisconnected(id) => {
                 println!("Player {} disconnected.", id);
                 if let Some(player_entity) = lobby.players.remove(id) {
-                    commands.entity(player_entity).despawn();
+                    commands.entity(player_entity).despawn_recursive();
                 }
 
                 let message =
@@ -258,17 +266,46 @@ fn update_players_system(
 ) {
     for (mut rigidbody, transform, input) in query.iter_mut() {
         let rotation = (input.rotate_right as i8 - input.rotate_left as i8) as f32;
-        let thrust_longitudal = (input.thrust_reverse as i8 - input.thrust_forward as i8) as f32;
+        let thrust_longitudal = (input.thrust_forward as i8 - input.thrust_reverse as i8) as f32;
         let thrust_lateral = (input.thrust_left as i8 - input.thrust_right as i8) as f32;
-        let thrust_vertical = (input.thrust_down as i8 - input.thrust_up as i8) as f32;
+        let thrust_vertical = (input.thrust_up as i8 - input.thrust_down as i8) as f32;
 
-        let longitudal_force = thrust_longitudal * PLAYER_MOVE_SPEED * 20.0 * transform.forward();
-        let lateral_force = thrust_lateral * PLAYER_MOVE_SPEED * 5.0 * transform.right();
-        let vertical_force = thrust_vertical * PLAYER_MOVE_SPEED * 10.0 * transform.down();
+        let forward = transform.forward();
+        let projected_forward = (forward - Vec3::new(0.0, forward.y, 0.0)).normalize();
+        let rotated_forward =
+            (Quat::from_axis_angle(transform.left(), -0.6 * thrust_vertical)) * projected_forward;
+
+        let left = transform.left();
+        let projected_left = (left - Vec3::new(0.0, left.y, 0.0)).normalize();
+
+        let longitudal_force = thrust_longitudal * PLAYER_MOVE_SPEED * 20.0 * projected_forward;
+        let lateral_force = thrust_lateral * PLAYER_MOVE_SPEED * 5.0 * projected_left;
+        let vertical_force = thrust_vertical * PLAYER_MOVE_SPEED * 10.0 * Vec3::Y;
+
+        draw_gizmo(Gizmo::cubiod(
+            transform.translation + rotated_forward * 2.0,
+            vec3(0.3, 0.3, 0.3),
+            Color::PURPLE,
+        ));
+
+        draw_gizmo(Gizmo::cubiod(
+            transform.translation + transform.forward() * 2.5,
+            vec3(0.3, 0.3, 0.3),
+            Color::GREEN,
+        ));
 
         rigidbody.force = longitudal_force + lateral_force + vertical_force;
-        rigidbody.torque = rotation * transform.down() * PLAYER_MOVE_SPEED * 2.0;
-        // transform.translation.x += x * PLAYER_MOVE_SPEED * time.delta_seconds();
-        // transform.translation.z += y * PLAYER_MOVE_SPEED * time.delta_seconds();
+        rigidbody.torque = rotation * Vec3::NEG_Y * PLAYER_MOVE_SPEED * 2.0;
+
+        {
+            let (axis, angle) =
+                Quat::from_rotation_arc(transform.forward(), rotated_forward).to_axis_angle();
+            rigidbody.torque += axis.normalize_or_zero() * angle;
+        }
+
+        {
+            let (axis, angle) = Quat::from_rotation_arc(transform.up(), Vec3::Y).to_axis_angle();
+            rigidbody.torque += axis.normalize_or_zero() * angle * 10.0;
+        }
     }
 }
