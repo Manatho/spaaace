@@ -1,7 +1,8 @@
 use bevy::{
     math::vec3,
     prelude::{
-        App, Color, Component, CoreStage, Plugin, Quat, Query, ResMut, SystemStage, Transform, Vec3,
+        App, Color, Component, CoreStage, EventReader, Plugin, Quat, Query, ResMut, SystemStage,
+        Transform, Vec3, Commands,
     },
     time::FixedTimestep,
     utils::HashMap,
@@ -10,15 +11,19 @@ use bevy_mod_gizmos::{draw_gizmo, Gizmo};
 use bevy_rapier3d::prelude::ExternalForce;
 
 use bevy_renet::renet::{DefaultChannel, RenetServer};
-use spaaaace_shared::{team::team_enum::Team, PlayerInput, TranslationRotation, SERVER_TICKRATE};
+use spaaaace_shared::{
+    team::team_enum::Team, ClientMessages, Lobby, PlayerInput, TranslationRotation, SERVER_TICKRATE,
+};
 
-use crate::FixedUpdateStage;
+use crate::{ClientEvent, FixedUpdateStage};
 
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_system(update_players_system)
+            .add_system(swap_team_command)
+            .add_system(player_input)
             .add_system(draw_player_gizmos)
             .add_stage_after(
                 CoreStage::Update,
@@ -99,6 +104,55 @@ fn server_sync_players(mut server: ResMut<RenetServer>, query: Query<(&Transform
 
     let sync_message = bincode::serialize(&players).unwrap();
     server.broadcast_message(DefaultChannel::Unreliable, sync_message);
+}
+
+fn swap_team_command(
+    mut client_message_event_reader: EventReader<ClientEvent>,
+    lobby: ResMut<Lobby>,
+    mut player_query: Query<&mut Player>,
+) {
+    for event in client_message_event_reader.iter() {
+        match event.message.clone() {
+            ClientMessages::Command { command } => {
+                let args_split = command.split(" ");
+                let args: Vec<&str> = args_split.collect();
+
+                match args[0] {
+                    "swap_team" => {
+                        let entity = lobby.players[&event.client_id];
+
+                        match player_query.get_mut(entity) {
+                            Ok(mut player) => match args[1] {
+                                "1" => player.team = Team::Red,
+                                "2" => player.team = Team::Blue,
+                                _ => (),
+                            },
+                            Err(_) => (),
+                        }
+                    }
+                    _ => (),
+                }
+            }
+            _ => (),
+        }
+    }
+}
+
+fn player_input(
+    mut client_message_event_reader: EventReader<ClientEvent>,
+    mut commands: Commands,
+    lobby: ResMut<Lobby>,
+) {
+    for event in client_message_event_reader.iter() {
+        match event.message.clone() {
+            ClientMessages::PlayerInput { input } => {
+                if let Some(player_entity) = lobby.players.get(&event.client_id) {
+                    commands.entity(*player_entity).insert(input);
+                }
+            }
+            _ => (),
+        }
+    }
 }
 
 fn draw_player_gizmos(query: Query<(&Player, &Transform)>) {

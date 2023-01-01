@@ -79,7 +79,7 @@ fn main() {
         .add_plugin(WeaponsPlugin {})
         .add_plugin(PlayerPlugin)
         .add_plugin(CapturePointPlugin)
-        .add_event::<ClientMessages>()
+        .add_event::<ClientEvent>()
         .add_system(client_connected)
         .add_system(client_disconnected)
         // Server UI for debugging
@@ -215,42 +215,20 @@ fn client_disconnected(
     }
 }
 
+#[derive(Clone)]
+struct ClientEvent {
+    pub message: ClientMessages,
+    pub client_id: u64,
+}
+
 fn server_update_system(
-    mut commands: Commands,
-    lobby: ResMut<Lobby>,
     mut server: ResMut<RenetServer>,
-    mut player_query: Query<&mut Player>,
+    mut client_message_event_writer: EventWriter<ClientEvent>,
 ) {
     for client_id in server.clients_id().into_iter() {
         while let Some(message) = server.receive_message(client_id, DefaultChannel::Reliable) {
-            let client_message: ClientMessages = bincode::deserialize(&message).unwrap();
-            match client_message {
-                ClientMessages::PlayerInput { input } => {
-                    if let Some(player_entity) = lobby.players.get(&client_id) {
-                        commands.entity(*player_entity).insert(input);
-                    }
-                }
-                ClientMessages::Command { command } => {
-                    let args_split = command.split(" ");
-                    let args: Vec<&str> = args_split.collect();
-
-                    match args[0] {
-                        "swap_team" => {
-                            let entity = lobby.players[&client_id];
-
-                            match player_query.get_mut(entity) {
-                                Ok(mut player) => match args[1] {
-                                    "1" => player.team = Team::Red,
-                                    "2" => player.team = Team::Blue,
-                                    _ => (),
-                                },
-                                Err(_) => (),
-                            }
-                        }
-                        _ => (),
-                    }
-                }
-            }
+            let message: ClientMessages = bincode::deserialize(&message).unwrap();
+            client_message_event_writer.send(ClientEvent { message, client_id });
         }
     }
 }
