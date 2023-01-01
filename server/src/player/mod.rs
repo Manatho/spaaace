@@ -1,21 +1,23 @@
 use bevy::{
     math::vec3,
     prelude::{
-        App, Color, Component, CoreStage, EventReader, Plugin, Quat, Query, ResMut, SystemStage,
-        Transform, Vec3, Commands,
+        App, BuildChildren, Color, Commands, Component, CoreStage, DespawnRecursiveExt,
+        EventReader, Plugin, Quat, Query, ResMut, SystemStage, Transform, Vec3,
     },
     time::FixedTimestep,
+    transform::TransformBundle,
     utils::HashMap,
 };
 use bevy_mod_gizmos::{draw_gizmo, Gizmo};
-use bevy_rapier3d::prelude::ExternalForce;
+use bevy_rapier3d::prelude::{Collider, Damping, ExternalForce, GravityScale, RigidBody};
 
-use bevy_renet::renet::{DefaultChannel, RenetServer};
+use bevy_renet::renet::{DefaultChannel, RenetServer, ServerEvent};
 use spaaaace_shared::{
-    team::team_enum::Team, ClientMessages, Lobby, PlayerInput, TranslationRotation, SERVER_TICKRATE,
+    team::team_enum::Team, ClientMessages, Lobby, PlayerInput, ServerMessages, TranslationRotation,
+    SERVER_TICKRATE,
 };
 
-use crate::{ClientEvent, FixedUpdateStage};
+use crate::{weapons::Turret, ClientEvent, FixedUpdateStage};
 
 pub struct PlayerPlugin;
 
@@ -24,6 +26,8 @@ impl Plugin for PlayerPlugin {
         app.add_system(update_players_system)
             .add_system(swap_team_command)
             .add_system(player_input)
+            .add_system(on_client_disconnected)
+            .add_system(on_client_connected)
             .add_system(draw_player_gizmos)
             .add_stage_after(
                 CoreStage::Update,
@@ -149,6 +153,97 @@ fn player_input(
                 if let Some(player_entity) = lobby.players.get(&event.client_id) {
                     commands.entity(*player_entity).insert(input);
                 }
+            }
+            _ => (),
+        }
+    }
+}
+
+fn on_client_disconnected(
+    mut event_reader: EventReader<ServerEvent>,
+    mut commands: Commands,
+    mut lobby: ResMut<Lobby>,
+    mut server: ResMut<RenetServer>,
+) {
+    for event in event_reader.iter() {
+        match event {
+            ServerEvent::ClientDisconnected(id) => {
+                println!("Player {} disconnected.", id);
+                if let Some(player_entity) = lobby.players.remove(id) {
+                    commands.entity(player_entity).despawn_recursive();
+                }
+
+                let message =
+                    bincode::serialize(&ServerMessages::PlayerDisconnected { id: *id }).unwrap();
+                server.broadcast_message(DefaultChannel::Reliable, message);
+            }
+            _ => (),
+        }
+    }
+}
+
+fn on_client_connected(
+    mut event_reader: EventReader<ServerEvent>,
+    mut commands: Commands,
+    mut lobby: ResMut<Lobby>,
+    mut server: ResMut<RenetServer>,
+) {
+    for event in event_reader.iter() {
+        match event {
+            ServerEvent::ClientConnected(id, _) => {
+                println!("Player {} connected.", id);
+                // Spawn player cube
+                let player_entity = commands
+                    .spawn(TransformBundle {
+                        local: Transform {
+                            translation: vec3(0.0, 0.5, 0.0),
+                            rotation: Quat::from_rotation_x(0.5),
+                            ..Default::default()
+                        },
+                        ..Default::default()
+                    })
+                    .insert(PlayerInput::default())
+                    .insert(Player {
+                        id: *id,
+                        team: Team::Red,
+                    })
+                    .insert(Collider::cuboid(1.0, 1.0, 1.0))
+                    .insert(RigidBody::Dynamic)
+                    // .insert(LockedAxes::ROTATION_LOCKED_Z)
+                    .insert(GravityScale(0.0))
+                    .insert(ExternalForce::default())
+                    .insert(Damping {
+                        linear_damping: 0.5,
+                        angular_damping: 1.0,
+                    })
+                    .with_children(|parent| {
+                        println!("spawning turret");
+                        parent
+                            .spawn(TransformBundle {
+                                ..Default::default()
+                            })
+                            .insert(Turret {
+                                cooldown: 0.0,
+                                fire_rate: 1.0 / 5.0,
+                                trigger: false,
+                            });
+                    })
+                    .id();
+
+                // We could send an InitState with all the players id and positions for the client
+                // but this is easier to do.
+                for &player_id in lobby.players.keys() {
+                    let message =
+                        bincode::serialize(&ServerMessages::PlayerConnected { id: player_id })
+                            .unwrap();
+                    server.send_message(*id, DefaultChannel::Reliable, message);
+                }
+
+                lobby.players.insert(*id, player_entity);
+
+                let message =
+                    bincode::serialize(&ServerMessages::PlayerConnected { id: *id }).unwrap();
+                server.broadcast_message(DefaultChannel::Reliable, message);
             }
             _ => (),
         }

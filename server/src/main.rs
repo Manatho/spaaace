@@ -1,48 +1,31 @@
 use std::{net::UdpSocket, time::SystemTime};
 
 use bevy::{
-    math::vec3,
     prelude::{
-        default, info, App, BuildChildren, Camera3dBundle, Color, Commands, Component, CoreStage,
-        DespawnRecursiveExt, EventReader, EventWriter, PluginGroup, Quat, Query, Res, ResMut,
-        StageLabel, SystemStage, Transform, Vec3,
+        default, info, App, Camera3dBundle, Commands, EventWriter, PluginGroup, ResMut, StageLabel,
+        Transform, Vec3,
     },
-    time::{FixedTimestep, Time},
-    transform::TransformBundle,
-    utils::HashMap,
     window::{PresentMode, WindowDescriptor, WindowPlugin},
     DefaultPlugins,
 };
 
 use bevy_inspector_egui::WorldInspectorPlugin;
-use bevy_mod_gizmos::{draw_gizmo, Gizmo, GizmosPlugin};
+use bevy_mod_gizmos::GizmosPlugin;
 use bevy_rapier3d::{
-    prelude::{
-        Collider, Damping, ExternalForce, GravityScale, NoUserData, RapierPhysicsPlugin, RigidBody,
-    },
+    prelude::{NoUserData, RapierPhysicsPlugin},
     render::RapierDebugRenderPlugin,
 };
 use bevy_renet::{
     renet::{
         DefaultChannel, RenetConnectionConfig, RenetServer, ServerAuthentication, ServerConfig,
-        ServerEvent,
     },
     RenetServerPlugin,
 };
 
-use capture_point::capture_point::CaptureSphere;
-
 use player::Player;
-use spaaaace_shared::{
-    team::team_enum::Team, ClientMessages, Lobby, PlayerInput, ServerMessages, TranslationRotation,
-    PROTOCOL_ID, SERVER_TICKRATE,
-};
+use spaaaace_shared::{ClientMessages, Lobby, PROTOCOL_ID};
 
-use crate::{
-    capture_point::CapturePointPlugin,
-    player::PlayerPlugin,
-    weapons::{Turret, WeaponsPlugin},
-};
+use crate::{capture_point::CapturePointPlugin, player::PlayerPlugin, weapons::WeaponsPlugin};
 
 pub mod capture_point;
 pub mod player;
@@ -80,8 +63,6 @@ fn main() {
         .add_plugin(PlayerPlugin)
         .add_plugin(CapturePointPlugin)
         .add_event::<ClientEvent>()
-        .add_system(client_connected)
-        .add_system(client_disconnected)
         // Server UI for debugging
         // .add_plugin(InputPlugin::default())
         // .add_plugin(ScenePlugin::default())
@@ -109,110 +90,6 @@ fn new_renet_server() -> RenetServer {
         .duration_since(SystemTime::UNIX_EPOCH)
         .unwrap();
     RenetServer::new(current_time, server_config, connection_config, socket).unwrap()
-}
-
-fn client_connected(
-    mut event_reader: EventReader<ServerEvent>,
-    mut commands: Commands,
-    mut lobby: ResMut<Lobby>,
-    mut server: ResMut<RenetServer>,
-    capture_point_query: Query<(&Transform, &CaptureSphere)>,
-) {
-    for event in event_reader.iter() {
-        match event {
-            ServerEvent::ClientConnected(id, _) => {
-                println!("Player {} connected.", id);
-                // Spawn player cube
-                let player_entity = commands
-                    .spawn(TransformBundle {
-                        local: Transform {
-                            translation: vec3(0.0, 0.5, 0.0),
-                            rotation: Quat::from_rotation_x(0.5),
-                            ..Default::default()
-                        },
-                        ..Default::default()
-                    })
-                    .insert(PlayerInput::default())
-                    .insert(Player {
-                        id: *id,
-                        team: Team::Red,
-                    })
-                    .insert(Collider::cuboid(1.0, 1.0, 1.0))
-                    .insert(RigidBody::Dynamic)
-                    // .insert(LockedAxes::ROTATION_LOCKED_Z)
-                    .insert(GravityScale(0.0))
-                    .insert(ExternalForce::default())
-                    .insert(Damping {
-                        linear_damping: 0.5,
-                        angular_damping: 1.0,
-                    })
-                    .with_children(|parent| {
-                        println!("spawning turret");
-                        parent
-                            .spawn(TransformBundle {
-                                ..Default::default()
-                            })
-                            .insert(Turret {
-                                cooldown: 0.0,
-                                fire_rate: 1.0 / 5.0,
-                                trigger: false,
-                            });
-                    })
-                    .id();
-
-                // We could send an InitState with all the players id and positions for the client
-                // but this is easier to do.
-                for &player_id in lobby.players.keys() {
-                    let message =
-                        bincode::serialize(&ServerMessages::PlayerConnected { id: player_id })
-                            .unwrap();
-                    server.send_message(*id, DefaultChannel::Reliable, message);
-                }
-
-                for (&transform, capture_point) in capture_point_query.iter() {
-                    let message = bincode::serialize(&ServerMessages::CapturePointSpawned {
-                        position: transform.translation,
-                        rotation: transform.rotation,
-                        id: capture_point.id,
-                        owner: capture_point.owner.clone(),
-                        progress: capture_point.progress,
-                    })
-                    .unwrap();
-                    server.send_message(*id, DefaultChannel::Reliable, message);
-                }
-
-                lobby.players.insert(*id, player_entity);
-
-                let message =
-                    bincode::serialize(&ServerMessages::PlayerConnected { id: *id }).unwrap();
-                server.broadcast_message(DefaultChannel::Reliable, message);
-            }
-            _ => (),
-        }
-    }
-}
-
-fn client_disconnected(
-    mut event_reader: EventReader<ServerEvent>,
-    mut commands: Commands,
-    mut lobby: ResMut<Lobby>,
-    mut server: ResMut<RenetServer>,
-) {
-    for event in event_reader.iter() {
-        match event {
-            ServerEvent::ClientDisconnected(id) => {
-                println!("Player {} disconnected.", id);
-                if let Some(player_entity) = lobby.players.remove(id) {
-                    commands.entity(player_entity).despawn_recursive();
-                }
-
-                let message =
-                    bincode::serialize(&ServerMessages::PlayerDisconnected { id: *id }).unwrap();
-                server.broadcast_message(DefaultChannel::Reliable, message);
-            }
-            _ => (),
-        }
-    }
 }
 
 #[derive(Clone)]

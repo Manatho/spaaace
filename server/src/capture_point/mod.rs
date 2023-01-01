@@ -1,12 +1,13 @@
 use bevy::{
     math::vec3,
-    prelude::{App, Color, Commands, Plugin, Query, Transform},
+    prelude::{App, Color, Commands, EventReader, Plugin, Query, ResMut, Transform},
     transform::TransformBundle,
     utils::HashSet,
 };
 
 use bevy_mod_gizmos::{draw_gizmo, Gizmo};
-use spaaaace_shared::team::team_enum::Team;
+use bevy_renet::renet::{DefaultChannel, RenetServer, ServerEvent};
+use spaaaace_shared::{team::team_enum::Team, ServerMessages};
 
 use self::capture_point::{capture_arena, capture_progress, CaptureSphere};
 
@@ -18,8 +19,35 @@ impl Plugin for CapturePointPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(init)
             .add_system(capture_arena)
+            .add_system(on_client_connected)
             .add_system(draw_capture_sphere_gizmos)
             .add_system(capture_progress);
+    }
+}
+
+fn on_client_connected(
+    mut event_reader: EventReader<ServerEvent>,
+    mut server: ResMut<RenetServer>,
+    capture_point_query: Query<(&Transform, &CaptureSphere)>,
+) {
+    for event in event_reader.iter() {
+        match event {
+            ServerEvent::ClientConnected(id, _) => {
+                for (&transform, capture_point) in capture_point_query.iter() {
+                    let message = bincode::serialize(&ServerMessages::CapturePointSpawned {
+                        position: transform.translation,
+                        rotation: transform.rotation,
+                        id: capture_point.id,
+                        owner: capture_point.owner.clone(),
+                        progress: capture_point.progress,
+                    })
+                    .unwrap();
+                    server.send_message(*id, DefaultChannel::Reliable, message);
+                }
+            }
+
+            _ => (),
+        }
     }
 }
 
