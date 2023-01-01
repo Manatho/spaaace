@@ -135,8 +135,12 @@ fn init(mut commands: Commands, mut ambient_light: ResMut<AmbientLight>, ass: Re
 }
 
 fn new_renet_client() -> RenetClient {
-    let server_addr = "127.0.0.1:5000".parse().unwrap();
-    let socket = UdpSocket::bind("127.0.0.1:0").unwrap();
+    let server_addr = "192.168.87.158:5000".parse().unwrap();
+    let socket = UdpSocket::bind("0.0.0.0:0").unwrap();
+    /* let server_addr = "85.218.139.0:5000".parse().unwrap();
+    let socket = UdpSocket::bind("0.0.0.0:0").unwrap(); */
+   /*  let server_addr = "127.0.0.1:5000".parse().unwrap();
+    let socket = UdpSocket::bind("127.0.0.1:0").unwrap(); */
     let connection_config = RenetConnectionConfig::default();
     let current_time = SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)
