@@ -24,7 +24,7 @@ pub struct PlayerInput {
     pub primary_fire: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize, Component)]
+#[derive(Debug, Serialize, Deserialize, Component, Clone)]
 pub enum ClientMessages {
     PlayerInput { input: PlayerInput },
     Command { command: String },

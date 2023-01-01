@@ -1,7 +1,7 @@
 use bevy::{
     prelude::{
-        App, Children, Commands, Component, GlobalTransform, IntoSystemDescriptor, Parent, Plugin,
-        Quat, Query, Res, ResMut, Transform, With,
+        App, Commands, Component, GlobalTransform, IntoSystemDescriptor, Parent, Plugin, Quat,
+        Query, Res, ResMut, Transform, With,
     },
     time::Time,
     transform::TransformBundle,

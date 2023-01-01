@@ -1,5 +1,4 @@
 use bevy::{
-    asset::diagnostic,
     diagnostic::{Diagnostics, FrameTimeDiagnosticsPlugin},
     prelude::{Res, ResMut},
 };
