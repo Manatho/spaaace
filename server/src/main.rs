@@ -112,7 +112,7 @@ fn init(mut commands: Commands) {
 }
 
 fn new_renet_server() -> RenetServer {
-    let server_addr = "127.0.0.1:5000".parse().unwrap();
+    let server_addr = "192.168.87.158:5000".parse().unwrap();
     let socket = UdpSocket::bind(server_addr).unwrap();
     let connection_config = RenetConnectionConfig::default();
     let server_config =
@@ -291,7 +291,7 @@ fn update_players_system(
         let forward = transform.forward();
         let projected_forward = (forward - Vec3::new(0.0, forward.y, 0.0)).normalize();
         let rotated_forward =
-            (Quat::from_axis_angle(transform.left(), -0.6 * thrust_vertical)) * projected_forward;
+            (Quat::from_axis_angle(transform.left(), -2.0 * thrust_vertical)) * projected_forward;
 
         let left = transform.left();
         let projected_left = (left - Vec3::new(0.0, left.y, 0.0)).normalize();

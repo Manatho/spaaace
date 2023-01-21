@@ -24,7 +24,7 @@ use bevy::{
     scene::SceneBundle,
     time::Time,
     utils::HashMap,
-    window::{WindowDescriptor, WindowPlugin},
+    window::{CursorGrabMode, WindowDescriptor, WindowPlugin},
     DefaultPlugins,
 };
 
@@ -54,6 +54,7 @@ pub fn run() {
                 title: "Spaaace Client".to_string(),
                 width: 640.,
                 height: 320.,
+                cursor_grab_mode: CursorGrabMode::Confined,
                 ..default()
             },
             ..default()
@@ -135,8 +136,8 @@ fn init(mut commands: Commands, mut ambient_light: ResMut<AmbientLight>, ass: Re
 }
 
 fn new_renet_client() -> RenetClient {
-    let server_addr = "127.0.0.1:5000".parse().unwrap();
-    let socket = UdpSocket::bind("127.0.0.1:0").unwrap();
+    let server_addr = "192.168.87.158:5000".parse().unwrap();
+    let socket = UdpSocket::bind("0.0.0.0:0").unwrap();
     let connection_config = RenetConnectionConfig::default();
     let current_time = SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)
@@ -186,7 +187,7 @@ fn client_sync_players(
             ServerMessages::PlayerConnected { id } => {
                 println!("Player {} connected.", id);
 
-                let my_gltf = ass.load("test_ship.glb");
+                let my_gltf = ass.load("ships/test_ship/test_ship.gltf");
                 let mut cmd =
                     commands.spawn((SpatialBundle { ..default() }, ShipModelLoadHandle(my_gltf)));
 
@@ -251,6 +252,7 @@ fn client_sync_players(
                             },
                             prev_color: Color::WHITE,
                             last_color_change: time.elapsed_seconds(),
+                            color_texture: Some(ass.load("hex_grid.jpg")),
                         }),
                         transform: Transform {
                             rotation: rotation,
@@ -330,8 +332,8 @@ fn spawn_gltf_objects(
     for (entity, handle) in query.iter() {
         if let Some(gltf) = assets_gltf.get(&handle.0) {
             let mut gradient = Gradient::new();
-            gradient.add_key(0.0, Vec4::new(0.0, 1.0, 1.0, 1.0) * 3.0);
-            gradient.add_key(1.0, Vec4::new(0.0, 1.0, 1.0, 0.0));
+            gradient.add_key(0.0, Vec4::new(1.0, 1.0, 1.0, 1.0) * 3.0);
+            gradient.add_key(1.0, Vec4::new(1.0, 1.0, 1.0, 0.0));
 
             println!("TEST");
             let spawner = Spawner::rate(100.0.into());
@@ -367,7 +369,7 @@ fn spawn_gltf_objects(
             let mut thruster_points: Vec<Entity> = vec![];
 
             for node_name in gltf.named_nodes.keys().into_iter() {
-                if node_name.contains("forward_thrusters") {
+                if node_name.contains("thruster_forward") {
                     if let Some(node) = assets_gltfnode.get(&gltf.named_nodes[node_name]) {
                         let thruster = commands
                             .spawn(ParticleEffectBundle::new(effect.clone()))
