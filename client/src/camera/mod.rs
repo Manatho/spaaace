@@ -52,7 +52,7 @@ fn camera_follow_local_player(
                     transform.rotation = transform.rotation * pitch; // rotate around local x axis
                 }
                 transform.translation = local_player_transform.translation
-                    + Vec3::Y * orbit_camera.zoom / 4.0
+                    + Vec3::Y * 10.0
                     + transform.back() * orbit_camera.zoom;
                 // transform.rotation *= Rot
             }
