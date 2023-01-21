@@ -7,7 +7,7 @@ use bevy::{
     transform::TransformBundle,
 };
 use bevy_renet::renet::{DefaultChannel, RenetServer};
-use spaaaace_shared::{PlayerInput, ServerMessages};
+use spaaaace_shared::{player::player_input::PlayerInput, ServerMessages};
 
 use crate::Player;
 

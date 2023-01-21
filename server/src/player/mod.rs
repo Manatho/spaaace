@@ -13,8 +13,8 @@ use bevy_rapier3d::prelude::{Collider, Damping, ExternalForce, GravityScale, Rig
 
 use bevy_renet::renet::{DefaultChannel, RenetServer, ServerEvent};
 use spaaaace_shared::{
-    team::team_enum::Team, ClientMessages, Lobby, PlayerInput, ServerMessages, TranslationRotation,
-    SERVER_TICKRATE,
+    player::player_input::PlayerInput, team::team_enum::Team, ClientMessages, Lobby,
+    ServerMessages, TranslationRotation, SERVER_TICKRATE,
 };
 
 use crate::{weapons::Turret, ClientEvent, FixedUpdateStage};

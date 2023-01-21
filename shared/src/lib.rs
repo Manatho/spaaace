@@ -1,3 +1,4 @@
+pub mod player;
 pub mod team;
 pub mod util;
 
@@ -8,21 +9,9 @@ use bevy_ecs::{
     system::Resource,
 };
 use bevy_math::{Quat, Vec3};
+use player::player_input::PlayerInput;
 use serde::{Deserialize, Serialize};
 use team::team_enum::Team;
-
-#[derive(Debug, Default, Serialize, Deserialize, Component, Resource, Clone, Copy)]
-pub struct PlayerInput {
-    pub thrust_forward: bool,
-    pub thrust_reverse: bool,
-    pub thrust_left: bool,
-    pub thrust_right: bool,
-    pub thrust_up: bool,
-    pub thrust_down: bool,
-    pub rotate_left: bool,
-    pub rotate_right: bool,
-    pub primary_fire: bool,
-}
 
 #[derive(Debug, Serialize, Deserialize, Component, Clone)]
 pub enum ClientMessages {

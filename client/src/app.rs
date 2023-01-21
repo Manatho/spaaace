@@ -41,8 +41,8 @@ use bevy_renet::{
 };
 use rand::Rng;
 use spaaaace_shared::{
-    team::team_enum::Team, util::Random, ClientMessages, Lobby, PlayerInput, ServerMessages,
-    TranslationRotation, PROTOCOL_ID, SERVER_TICKRATE,
+    team::team_enum::Team, util::Random, ClientMessages, Lobby, ServerMessages,
+    TranslationRotation, PROTOCOL_ID, SERVER_TICKRATE, player::player_input::PlayerInput,
 };
 
 pub fn run() {
