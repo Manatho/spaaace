@@ -2,7 +2,7 @@ use bevy::{
     prelude::{
         default, App, AssetServer, BuildChildren, Commands, ImageBundle, NodeBundle, Plugin, Res,
     },
-    ui::{AlignContent, AlignItems, JustifyContent, Size, Style, Val},
+    ui::{AlignItems, JustifyContent, Size, Style, Val},
 };
 
 pub struct GameUIPlugin;
