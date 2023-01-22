@@ -187,7 +187,7 @@ fn client_sync_players(
             ServerMessages::PlayerConnected { id } => {
                 println!("Player {} connected.", id);
 
-                let my_gltf = ass.load("ships/test_ship/test_ship.gltf");
+                let my_gltf = ass.load("../../shared/assets/ships/test_ship/test_ship.gltf");
                 let mut cmd =
                     commands.spawn((SpatialBundle { ..default() }, ShipModelLoadHandle(my_gltf)));
 
