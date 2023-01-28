@@ -14,11 +14,12 @@ use bevy::{
         system::{CommandQueue, SystemState},
     },
     prelude::{
-        default, info, AmbientLight, AppTypeRegistry, AssetServer, Camera, Camera3dBundle, Color,
-        Commands, DirectionalLight, DirectionalLightBundle, Entity, EventReader, EventWriter, Name,
-        PluginGroup, Quat, Query, Res, ResMut, Resource, Transform, Vec3, World,
+        default, info, AmbientLight, AppTypeRegistry, AssetServer, BuildChildren, Camera,
+        Camera3dBundle, Color, Commands, DirectionalLight, DirectionalLightBundle, Entity,
+        EventReader, EventWriter, Name, PluginGroup, Quat, Query, Res, ResMut, Resource, Transform,
+        Vec3, World,
     },
-    scene::{DynamicScene, DynamicSceneBundle},
+    scene::{DynamicScene, DynamicSceneBundle, SceneBundle},
     tasks::IoTaskPool,
     window::{CursorGrabMode, WindowDescriptor, WindowPlugin},
     DefaultPlugins,
@@ -29,7 +30,12 @@ use bevy_egui::{egui, EguiContext, EguiPlugin};
 use rand::Rng;
 use rfd::FileDialog;
 
-use bevy_inspector_egui::prelude::*;
+use bevy_inspector_egui::{
+    bevy_inspector::{
+        hierarchy::SelectedEntities, ui_for_entities_shared_components, ui_for_entity_with_children,
+    },
+    prelude::*,
+};
 
 pub fn run() {
     App::default()
@@ -46,9 +52,10 @@ pub fn run() {
         }))
         .add_plugin(EguiPlugin)
         .add_plugins(bevy_mod_picking::DefaultPickingPlugins)
-        .add_system(menu_bar)
+        .add_system(gui)
         // .add_system(hierarchy)
         .insert_resource(ShipSaveLoadState { current_file: None })
+        .insert_resource(Selection { entities: vec![] })
         .add_event::<SaveEvent>()
         .add_system(save_scene_system)
         .run();
@@ -95,7 +102,12 @@ struct ShipSaveLoadState {
 
 struct SaveEvent;
 
-fn menu_bar(
+#[derive(Resource)]
+struct Selection {
+    entities: Vec<Entity>,
+}
+
+fn gui(
     world: &mut World,
     // mut egui_context: ResMut<EguiContext>,
     // mut state: ResMut<ShipSaveLoadState>,
@@ -114,6 +126,7 @@ fn menu_bar(
         ResMut<ShipSaveLoadState>,
         ResMut<AssetServer>,
         EventWriter<SaveEvent>,
+        ResMut<Selection>,
     )>::new(world);
     let (
         //
@@ -121,6 +134,7 @@ fn menu_bar(
         mut state,
         mut asset_server,
         mut save_events,
+        mut selection,
     ) = world_state.get_mut(world);
 
     egui::TopBottomPanel::top("menu_bar").show(&egui_context, |ui| {
@@ -134,12 +148,32 @@ fn menu_bar(
                     .pick_file();
                 state.current_file = file.clone();
 
-                commands
-                    .spawn(DynamicSceneBundle {
-                        scene: asset_server.load(file.unwrap()),
-                        ..Default::default()
-                    })
-                    .insert(bevy_mod_picking::PickableBundle::default());
+                let my_gltf =
+                    asset_server.load("../../shared/assets/ships/test_ship/test_shsip.gltf#Scene0");
+
+                // to position our 3d model, simply use the Transform
+                // in the SceneBundle
+                commands.spawn(SceneBundle {
+                    scene: my_gltf,
+                    transform: Transform::from_xyz(2.0, 0.0, -5.0),
+                    ..Default::default()
+                });
+
+                // let entity = commands
+                //     .spawn(DynamicSceneBundle {
+                //         scene: asset_server.load(file.unwrap()),
+                //         ..Default::default()
+                //     })
+                //     .insert(bevy_mod_picking::PickableBundle::default())
+                //     .insert(Transform {
+                //         ..Default::default()
+                //     })
+                //     .with_children(|builder| {
+                //         builder.spawn(Name::new("name"));
+                //     })
+                //     .id();
+
+                // selection.entities.push(entity);
             }
 
             let save_btn =
@@ -151,14 +185,46 @@ fn menu_bar(
         })
     });
 
+    let selected_entities = selection.entities.clone();
+
     egui::SidePanel::left("hierarchy").show(&egui_context, |ui| {
-        bevy_inspector_egui::bevy_inspector::ui_for_world_entities(world, ui);
+        ui.label(format!("{}", selected_entities.len()));
+        bevy_inspector_egui::bevy_inspector::ui_for_entities_shared_components(
+            world,
+            &selected_entities,
+            ui,
+        );
     });
 
     // egui::SidePanel::right("inspector").show(&egui_context, |ui| {
-    //     bevy_inspector_egui::bevy_inspector::ui_for_world_entities(world, ui);
+    //     match selected_entities.as_slice() {
+    //         &[entity] => ui_for_entity_with_children(world, entity, ui),
+    //         entities => ui_for_entities_shared_components(world, entities, ui),
+    //     }
     // });
 }
+
+// fn handle_pick_events(
+//     mut selected_entities: ResMut<Selection>,
+//     mut click_events: EventReader<PointerClick>,
+//     mut egui: ResMut<EguiContext>,
+//     egui_entity: Query<&EguiPointer>,
+// ) {
+//     let egui_context = egui.ctx_mut();
+
+//     for click in click_events.iter() {
+//         if egui_entity.get(click.target()).is_ok() {
+//             continue;
+//         };
+
+//         let modifiers = egui_context.input().modifiers;
+//         let add = modifiers.ctrl || modifiers.shift;
+
+//         ui_state
+//             .selected_entities
+//             .select_maybe_add(click.target(), add);
+//     }
+// }
 
 fn save_scene_system(
     mut save_events: EventReader<SaveEvent>,
