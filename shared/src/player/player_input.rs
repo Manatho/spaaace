@@ -1,5 +1,5 @@
 use bevy_ecs::{prelude::Component, system::Resource};
-use bevy_math::Vec2;
+use bevy_math::Vec3;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Default, Serialize, Deserialize, Component, Resource, Clone, Copy)]
@@ -13,5 +13,5 @@ pub struct PlayerInput {
     pub rotate_left: bool,
     pub rotate_right: bool,
     pub primary_fire: bool,
-    pub aim_dir: Vec2
+    pub aim_point: Vec3
 }

@@ -1,8 +1,9 @@
 use bevy::{
     math::vec3,
     prelude::{
-        App, BuildChildren, Color, Commands, Component, CoreStage, DespawnRecursiveExt,
-        EventReader, Plugin, Quat, Query, ResMut, SystemStage, Transform, Vec3,
+        default, shape, App, Assets, BuildChildren, Color, Commands, Component, CoreStage,
+        DespawnRecursiveExt, EventReader, Mesh, PbrBundle, Plugin, Quat, Query, ResMut,
+        StandardMaterial, SystemStage, Transform, Vec2, Vec3,
     },
     time::FixedTimestep,
     transform::TransformBundle,
@@ -17,7 +18,10 @@ use spaaaace_shared::{
     ServerMessages, TranslationRotation, SERVER_TICKRATE,
 };
 
-use crate::{weapons::Turret, ClientEvent, FixedUpdateStage};
+use crate::{
+    weapons::{Barrel, Turret},
+    ClientEvent, FixedUpdateStage,
+};
 
 pub struct PlayerPlugin;
 
@@ -28,7 +32,7 @@ impl Plugin for PlayerPlugin {
             .add_system(player_input)
             .add_system(on_client_disconnected)
             .add_system(on_client_connected)
-            .add_system(draw_player_gizmos)
+            /* .add_system(draw_player_gizmos) */
             .add_stage_after(
                 CoreStage::Update,
                 FixedUpdateStage,
@@ -186,6 +190,8 @@ fn on_client_connected(
     mut event_reader: EventReader<ServerEvent>,
     mut commands: Commands,
     mut lobby: ResMut<Lobby>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
     mut server: ResMut<RenetServer>,
 ) {
     for event in event_reader.iter() {
@@ -216,16 +222,69 @@ fn on_client_connected(
                         linear_damping: 0.5,
                         angular_damping: 1.0,
                     })
+                    .insert(PbrBundle { ..default() })
                     .with_children(|parent| {
-                        println!("spawning turret");
                         parent
                             .spawn(TransformBundle {
+                                local: Transform {
+                                    translation: vec3(0.0, 0.0, 40.0),
+                                    ..Default::default()
+                                },
                                 ..Default::default()
                             })
                             .insert(Turret {
                                 cooldown: 0.0,
-                                fire_rate: 1.0 / 5.0,
+                                fire_rate: 1.0 / 5.05,
                                 trigger: false,
+                                aim_dir: Quat::IDENTITY,
+                            })
+                            .insert(PbrBundle {
+                                mesh: meshes.add(Mesh::from(shape::Box::new(1., 0.5, 1.))),
+                                material: materials.add(Color::RED.into()),
+                                ..default()
+                            })
+                            .with_children(|parent| {
+                                parent
+                                    .spawn(TransformBundle {
+                                        ..Default::default()
+                                    })
+                                    .insert(Barrel {})
+                                    .insert(PbrBundle {
+                                        mesh: meshes.add(Mesh::from(shape::Box::new(0.1, 0.1, 2.))),
+                                        material: materials.add(Color::GOLD.into()),
+                                        ..default()
+                                    });
+                            });
+                        parent
+                            .spawn(TransformBundle {
+                                local: Transform {
+                                    translation: vec3(0.0, 0.0, -40.0),
+                                    ..Default::default()
+                                },
+                                ..Default::default()
+                            })
+                            .insert(Turret {
+                                cooldown: 0.0,
+                                fire_rate: 1.0 / 5.,
+                                trigger: false,
+                                aim_dir: Quat::IDENTITY,
+                            })
+                            .insert(PbrBundle {
+                                mesh: meshes.add(Mesh::from(shape::Box::new(1., 0.5, 1.))),
+                                material: materials.add(Color::RED.into()),
+                                ..default()
+                            })
+                            .with_children(|parent| {
+                                parent
+                                    .spawn(TransformBundle {
+                                        ..Default::default()
+                                    })
+                                    .insert(Barrel {})
+                                    .insert(PbrBundle {
+                                        mesh: meshes.add(Mesh::from(shape::Box::new(0.1, 0.1, 2.))),
+                                        material: materials.add(Color::GOLD.into()),
+                                        ..default()
+                                    });
                             });
                     })
                     .id();

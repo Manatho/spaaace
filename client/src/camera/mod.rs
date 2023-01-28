@@ -22,6 +22,7 @@ pub struct OrbitCameraTarget;
 #[derive(Component)]
 pub struct OrbitCamera {
     pub zoom: f32,
+    pub offset: Vec3,
 }
 
 fn camera_follow_local_player(
@@ -52,7 +53,7 @@ fn camera_follow_local_player(
                     transform.rotation = transform.rotation * pitch; // rotate around local x axis
                 }
                 transform.translation = local_player_transform.translation
-                    + Vec3::Y * 10.0
+                    + orbit_camera.offset
                     + transform.back() * orbit_camera.zoom;
                 // transform.rotation *= Rot
             }

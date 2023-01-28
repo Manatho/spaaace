@@ -1,9 +1,9 @@
-use std::{net::UdpSocket, time::SystemTime};
+use std::{f32::consts::PI, net::UdpSocket, time::SystemTime};
 
 use bevy::{
     prelude::{
-        default, info, App, Camera3dBundle, Commands, EventWriter, PluginGroup, ResMut, StageLabel,
-        Transform, Vec3,
+        default, info, App, Camera3dBundle, Commands, DirectionalLight, DirectionalLightBundle,
+        EventWriter, PluginGroup, Quat, ResMut, StageLabel, Transform, Vec3, Assets, Mesh, StandardMaterial, PbrBundle, shape, Color, PointLightBundle, PointLight,
     },
     window::{PresentMode, WindowDescriptor, WindowPlugin},
     DefaultPlugins,
@@ -52,7 +52,7 @@ fn main() {
             ..default()
         }))
         .add_plugin(GizmosPlugin)
-        .add_startup_system(init)
+        .add_startup_system(setup)
         .add_plugin(WorldInspectorPlugin::new())
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugin(RapierDebugRenderPlugin::default())
@@ -76,6 +76,55 @@ fn main() {
 fn init(mut commands: Commands) {
     commands.spawn(Camera3dBundle {
         transform: Transform::from_xyz(0.0, 6., -12.0).looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
+        ..default()
+    });
+
+    commands.spawn(DirectionalLightBundle {
+        directional_light: DirectionalLight {
+            illuminance: 10000.0,
+            shadows_enabled: true,
+            ..default()
+        },
+        transform: Transform {
+            translation: Vec3::new(0.0, 2.0, 0.0),
+            rotation: Quat::from_rotation_x(-PI / 4.),
+            ..default()
+        },
+        ..default()
+    });
+}
+
+fn setup(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    // plane
+    commands.spawn(PbrBundle {
+        mesh: meshes.add(Mesh::from(shape::Plane { size: 5.0 })),
+        material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
+        ..default()
+    });
+    // cube
+/*     commands.spawn(PbrBundle {
+        mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
+        material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
+        transform: Transform::from_xyz(0.0, 0.5, 0.0),
+        ..default()
+    }); */
+    // light
+    commands.spawn(PointLightBundle {
+        point_light: PointLight {
+            intensity: 1500.0,
+            shadows_enabled: true,
+            ..default()
+        },
+        transform: Transform::from_xyz(4.0, 8.0, 4.0),
+        ..default()
+    });
+    // camera
+    commands.spawn(Camera3dBundle {
+        transform: Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
         ..default()
     });
 }

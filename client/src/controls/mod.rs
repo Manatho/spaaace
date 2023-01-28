@@ -1,10 +1,17 @@
-use bevy::{
-    math::vec2,
-    prelude::{Input, KeyCode, Res, ResMut},
+use bevy::prelude::{
+    Color, Entity, Input, KeyCode, Query, Res, ResMut, Transform, Vec3, With, Without,
 };
+use bevy_mod_gizmos::{draw_gizmo, Gizmo};
 use spaaaace_shared::player::player_input::PlayerInput;
 
-pub fn player_input(k_input: Res<Input<KeyCode>>, mut player_input: ResMut<PlayerInput>) {
+use crate::camera::{OrbitCamera, OrbitCameraTarget};
+
+pub fn player_input(
+    k_input: Res<Input<KeyCode>>,
+    mut player_input: ResMut<PlayerInput>,
+    camera_query: Query<(&Transform, &OrbitCamera)>,
+    camera_target_query: Query<&Transform, With<OrbitCameraTarget>>,
+) {
     player_input.rotate_left = k_input.pressed(KeyCode::A);
     player_input.rotate_right = k_input.pressed(KeyCode::D);
     player_input.thrust_forward = k_input.pressed(KeyCode::W);
@@ -14,5 +21,21 @@ pub fn player_input(k_input: Res<Input<KeyCode>>, mut player_input: ResMut<Playe
     player_input.thrust_up = k_input.pressed(KeyCode::Space);
     player_input.thrust_down = k_input.pressed(KeyCode::LControl);
     player_input.primary_fire = k_input.pressed(KeyCode::Return);
-    player_input.aim_dir = vec2(0.0, 0.0);
+
+    match camera_query.get_single() {
+        Ok((transform, orbit_camera)) => {
+            let target_transform_result = camera_target_query.get_single();
+            match target_transform_result {
+                Ok(target_transform) => {
+                    player_input.aim_point = target_transform.translation
+                        + orbit_camera.offset
+                        + (transform.forward() * 50.0)
+                }
+                Err(_) => (),
+            }
+
+            draw_gizmo(Gizmo::sphere(player_input.aim_point, 1.0, Color::GREEN));
+        }
+        Err(_) => {}
+    }
 }

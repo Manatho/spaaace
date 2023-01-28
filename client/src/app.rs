@@ -13,6 +13,7 @@ use bevy::{
     core_pipeline::{bloom::BloomSettings, fxaa::Fxaa},
     diagnostic::FrameTimeDiagnosticsPlugin,
     gltf::{Gltf, GltfNode},
+    math::vec3,
     pbr::NotShadowCaster,
     prelude::{
         default, shape, AmbientLight, AssetServer, Assets, BuildChildren, Camera, Camera3dBundle,
@@ -35,14 +36,15 @@ use bevy_hanabi::{
     SizeOverLifetimeModifier, Spawner,
 };
 
+use bevy_mod_gizmos::GizmosPlugin;
 use bevy_renet::{
     renet::{ClientAuthentication, DefaultChannel, RenetClient, RenetConnectionConfig},
     run_if_client_connected, RenetClientPlugin,
 };
 use rand::Rng;
 use spaaaace_shared::{
-    team::team_enum::Team, util::Random, ClientMessages, Lobby, ServerMessages,
-    TranslationRotation, PROTOCOL_ID, SERVER_TICKRATE, player::player_input::PlayerInput,
+    player::player_input::PlayerInput, team::team_enum::Team, util::Random, ClientMessages, Lobby,
+    ServerMessages, TranslationRotation, PROTOCOL_ID, SERVER_TICKRATE,
 };
 
 pub fn run() {
@@ -79,6 +81,8 @@ pub fn run() {
         .add_plugin(OrbitCameraPlugin)
         .add_plugin(GameUIPlugin)
         .add_system(move_bullet)
+        // Debug
+        .add_plugin(GizmosPlugin)
         .run();
 }
 
@@ -94,7 +98,10 @@ fn init(mut commands: Commands, mut ambient_light: ResMut<AmbientLight>, ass: Re
                 .looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
             ..default()
         })
-        .insert(OrbitCamera { zoom: 50.0 })
+        .insert(OrbitCamera {
+            zoom: 50.0,
+            offset: vec3(0., 10., 0.),
+        })
         .insert(BloomSettings { ..default() })
         .insert(Fxaa { ..default() });
 
@@ -113,7 +120,7 @@ fn init(mut commands: Commands, mut ambient_light: ResMut<AmbientLight>, ass: Re
     });
 
     ambient_light.color = Color::hsl(180.0, 1.0, 1.0);
-    ambient_light.brightness = 0.01;
+    ambient_light.brightness = 1.;
 
     let mut rng = rand::thread_rng();
     for _ in 0..100 {
