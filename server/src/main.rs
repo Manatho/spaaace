@@ -2,8 +2,9 @@ use std::{f32::consts::PI, net::UdpSocket, time::SystemTime};
 
 use bevy::{
     prelude::{
-        default, info, App, Camera3dBundle, Commands, DirectionalLight, DirectionalLightBundle,
-        EventWriter, PluginGroup, Quat, ResMut, StageLabel, Transform, Vec3, Assets, Mesh, StandardMaterial, PbrBundle, shape, Color, PointLightBundle, PointLight,
+        default, info, shape, App, Assets, Camera3dBundle, Color, Commands, DirectionalLight,
+        DirectionalLightBundle, EventWriter, Mesh, PbrBundle, PluginGroup, PointLight,
+        PointLightBundle, Quat, ResMut, StageLabel, StandardMaterial, Transform, Vec3, Camera3d, Query, With,
     },
     window::{PresentMode, WindowDescriptor, WindowPlugin},
     DefaultPlugins,
@@ -44,8 +45,8 @@ fn main() {
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             window: WindowDescriptor {
                 title: "Spaaace Server".to_string(),
-                width: 320.,
-                height: 240.,
+                width: 1280.,
+                height: 720.,
                 present_mode: PresentMode::AutoVsync,
                 ..default()
             },
@@ -106,7 +107,7 @@ fn setup(
         ..default()
     });
     // cube
-/*     commands.spawn(PbrBundle {
+    /*     commands.spawn(PbrBundle {
         mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
         material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
         transform: Transform::from_xyz(0.0, 0.5, 0.0),
@@ -156,5 +157,15 @@ fn server_update_system(
             let message: ClientMessages = bincode::deserialize(&message).unwrap();
             client_message_event_writer.send(ClientEvent { message, client_id });
         }
+    }
+}
+
+
+fn camera_follow_players(
+    mut query: Query<(&Camera3d, &mut Transform)>,
+    query_players: Query<&Transform, With<Player>>
+){
+    for player_transform in query_players.iter() {
+        
     }
 }

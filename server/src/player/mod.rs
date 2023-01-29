@@ -234,7 +234,7 @@ fn on_client_connected(
                             })
                             .insert(Turret {
                                 cooldown: 0.0,
-                                fire_rate: 1.0 / 5.05,
+                                fire_rate: 1.0 / 10.,
                                 trigger: false,
                                 aim_dir: Quat::IDENTITY,
                             })
@@ -265,7 +265,7 @@ fn on_client_connected(
                             })
                             .insert(Turret {
                                 cooldown: 0.0,
-                                fire_rate: 1.0 / 5.,
+                                fire_rate: 1.0 / 10.,
                                 trigger: false,
                                 aim_dir: Quat::IDENTITY,
                             })

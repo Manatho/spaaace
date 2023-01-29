@@ -106,7 +106,6 @@ fn fire_weapons(
             if turret.trigger {
                 let transform = global_transform.compute_transform();
 
-                print!(" {} ", transform.translation);
                 commands.spawn(TransformBundle::from_transform(transform));
 
                 let message = bincode::serialize(&ServerMessages::BulletSpawned {
@@ -121,7 +120,6 @@ fn fire_weapons(
             turret.cooldown -= time.delta_seconds();
         }
     }
-    println!("")
 }
 
 fn move_projectiles(mut query: Query<&mut Transform, With<Projectile>>, time: Res<Time>) {

@@ -102,8 +102,9 @@ fn init(mut commands: Commands, mut ambient_light: ResMut<AmbientLight>, ass: Re
             zoom: 50.0,
             offset: vec3(0., 10., 0.),
         })
-        .insert(BloomSettings { ..default() })
-        .insert(Fxaa { ..default() });
+        // .insert(BloomSettings { ..default() })
+        // .insert(Fxaa { ..default() })
+        ;
 
     commands.spawn(DirectionalLightBundle {
         directional_light: DirectionalLight {
@@ -172,7 +173,7 @@ struct Bullet {}
 fn move_bullet(mut query: Query<(&Bullet, &mut Transform)>, time: Res<Time>) {
     for (_, mut transform) in query.iter_mut() {
         let dir = transform.forward();
-        transform.translation += dir * time.delta_seconds() * 20.;
+        transform.translation += dir * time.delta_seconds() * 200.;
     }
 }
 

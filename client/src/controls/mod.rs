@@ -1,5 +1,5 @@
 use bevy::prelude::{
-    Color, Entity, Input, KeyCode, Query, Res, ResMut, Transform, Vec3, With, Without,
+    Color, Entity, Input, KeyCode, MouseButton, Query, Res, ResMut, Transform, Vec3, With, Without,
 };
 use bevy_mod_gizmos::{draw_gizmo, Gizmo};
 use spaaaace_shared::player::player_input::PlayerInput;
@@ -8,6 +8,7 @@ use crate::camera::{OrbitCamera, OrbitCameraTarget};
 
 pub fn player_input(
     k_input: Res<Input<KeyCode>>,
+    m_input: Res<Input<MouseButton>>,
     mut player_input: ResMut<PlayerInput>,
     camera_query: Query<(&Transform, &OrbitCamera)>,
     camera_target_query: Query<&Transform, With<OrbitCameraTarget>>,
@@ -20,7 +21,7 @@ pub fn player_input(
     player_input.thrust_right = k_input.pressed(KeyCode::E);
     player_input.thrust_up = k_input.pressed(KeyCode::Space);
     player_input.thrust_down = k_input.pressed(KeyCode::LControl);
-    player_input.primary_fire = k_input.pressed(KeyCode::Return);
+    player_input.primary_fire = m_input.pressed(MouseButton::Left);
 
     match camera_query.get_single() {
         Ok((transform, orbit_camera)) => {
