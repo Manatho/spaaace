@@ -31,20 +31,4 @@
 
   "files.autoSave": "afterDelay",
   "files.autoSaveDelay": 100,
-/*   "colorTabs.config": [
-    {
-      "regex": "client/.*",
-      "color": "#FF0000",
-      "label": "MOBILE"
-    },
-    {
-      "regex": "server/.*",
-      "color": "#00FF00",
-    }
-  ],
-  "colorTabs.titleBackground": true, */
-  /* "workbench.colorCustomizations": {
-    "tab.activeBackground": "#000000",
-    "tab.inactiveBackground": "ff00f00"
-  } */
 }
