@@ -32,7 +32,7 @@ impl Plugin for PlayerPlugin {
             .add_system(player_input)
             .add_system(on_client_disconnected)
             .add_system(on_client_connected)
-            /* .add_system(draw_player_gizmos) */
+            // .add_system(draw_player_gizmos)
             .add_stage_after(
                 CoreStage::Update,
                 FixedUpdateStage,
