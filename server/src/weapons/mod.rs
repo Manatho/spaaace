@@ -1,10 +1,7 @@
 use bevy::{
-    ecs::system::Command,
-    math::{vec2, vec3},
     prelude::{
-        default, shape, App, Assets, BuildChildren, Bundle, ChildBuilder, Color, Commands,
-        Component, EulerRot, GlobalTransform, IntoSystemDescriptor, Mesh, Parent, PbrBundle,
-        Plugin, Quat, Query, Res, ResMut, StandardMaterial, Transform, Vec2, Vec3, With, Without,
+        App, Color, Commands, Component, GlobalTransform, IntoSystemDescriptor, Parent, Plugin,
+        Quat, Query, Res, ResMut, Transform, With, Without,
     },
     time::Time,
     transform::TransformBundle,
@@ -69,7 +66,7 @@ fn turn_turrets(
         match player {
             Ok((_player, player_input)) => {
                 let direction =
-                    (transform.translation - player_input.aim_point).normalize_or_zero();
+                    (global_transform.translation() - player_input.aim_point).normalize_or_zero();
                 let off_by = global_transform.right().dot(direction) * time.delta_seconds() * 5.;
                 transform.rotate_local_y(off_by);
             }
@@ -84,7 +81,7 @@ fn turn_turrets(
         match player {
             Ok((_player, player_input)) => {
                 let direction =
-                    (transform.translation - player_input.aim_point).normalize_or_zero();
+                    (global_transform.translation() - player_input.aim_point).normalize_or_zero();
                 let off_by = global_transform.down().dot(direction) * time.delta_seconds() * 5.0;
                 transform.rotate_local_x(off_by);
             }
