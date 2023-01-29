@@ -2,9 +2,10 @@ use std::{f32::consts::PI, net::UdpSocket, time::SystemTime};
 
 use bevy::{
     prelude::{
-        default, info, shape, App, Assets, Camera3dBundle, Color, Commands, DirectionalLight,
-        DirectionalLightBundle, EventWriter, Mesh, PbrBundle, PluginGroup, PointLight,
-        PointLightBundle, Quat, ResMut, StageLabel, StandardMaterial, Transform, Vec3, Camera3d, Query, With,
+        default, info, shape, App, Assets, Camera3d, Camera3dBundle, Color, Commands,
+        DirectionalLight, DirectionalLightBundle, EventWriter, Mesh, PbrBundle, PluginGroup,
+        PointLight, PointLightBundle, Quat, Query, ResMut, StageLabel, StandardMaterial, Transform,
+        Vec3, With,
     },
     window::{PresentMode, WindowDescriptor, WindowPlugin},
     DefaultPlugins,
@@ -160,12 +161,9 @@ fn server_update_system(
     }
 }
 
-
 fn camera_follow_players(
     mut query: Query<(&Camera3d, &mut Transform)>,
-    query_players: Query<&Transform, With<Player>>
-){
-    for player_transform in query_players.iter() {
-        
-    }
+    query_players: Query<&Transform, With<Player>>,
+) {
+    for player_transform in query_players.iter() {}
 }
