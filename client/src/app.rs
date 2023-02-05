@@ -79,7 +79,6 @@ pub fn run() {
         // Run App
         .add_plugin(OrbitCameraPlugin)
         .add_plugin(GameUIPlugin)
-        .add_system(move_bullet)
         // Debug
         .add_plugin(GizmosPlugin)
         .run();
@@ -169,13 +168,6 @@ fn client_send_input(player_input: Res<PlayerInput>, mut client: ResMut<RenetCli
 #[derive(Component)]
 struct Bullet {}
 
-fn move_bullet(mut query: Query<(&Bullet, &mut Transform)>, time: Res<Time>) {
-    for (_, mut transform) in query.iter_mut() {
-        let dir = transform.forward();
-        transform.translation += dir * time.delta_seconds() * 200.;
-    }
-}
-
 fn client_sync_players(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -211,8 +203,12 @@ fn client_sync_players(
                     commands.entity(player_entity).despawn();
                 }
             }
-            ServerMessages::BulletSpawned { position, rotation } => {
-                commands
+            ServerMessages::BulletSpawned {
+                id,
+                position,
+                rotation,
+            } => {
+                let entity_id = commands
                     .spawn(PbrBundle {
                         mesh: meshes.add(Mesh::from(shape::Capsule {
                             depth: 0.5,
@@ -232,7 +228,15 @@ fn client_sync_players(
                         },
                         ..Default::default()
                     })
-                    .insert(Bullet {});
+                    .insert(Bullet {})
+                    .id();
+
+                lobby.networked_entities.insert(id, entity_id);
+            }
+            ServerMessages::EntityDespawn { id } => {
+                if let Some(entity) = lobby.networked_entities.remove(&id) {
+                    commands.entity(entity).despawn();
+                }
             }
             ServerMessages::CapturePointSpawned {
                 position,
@@ -308,10 +312,27 @@ fn client_sync_players(
     }
 
     while let Some(message) = client.receive_message(DefaultChannel::Unreliable) {
-        let players: HashMap<u64, TranslationRotation> = bincode::deserialize(&message).unwrap();
-        for (player_id, translation_rotation) in players.iter() {
-            if let Some(player_entity) = lobby.players.get(player_id) {
-                commands.entity(*player_entity).insert(LerpTransformTarget {
+        let networked_translation: HashMap<u64, TranslationRotation> =
+            bincode::deserialize(&message).unwrap();
+
+        println!("{}", networked_translation.len());
+
+        for (id, translation_rotation) in networked_translation.iter() {
+            if let Some(entity) = lobby.players.get(id) {
+                commands.entity(*entity).insert(LerpTransformTarget {
+                    target: Transform {
+                        translation: translation_rotation.translation,
+                        rotation: translation_rotation.rotation,
+                        ..Default::default()
+                    },
+                    speed: SERVER_TICKRATE / 1.2,
+                });
+            }
+        }
+
+        for (id, translation_rotation) in networked_translation.iter() {
+            if let Some(entity) = lobby.networked_entities.get(id) {
+                commands.entity(*entity).insert(LerpTransformTarget {
                     target: Transform {
                         translation: translation_rotation.translation,
                         rotation: translation_rotation.rotation,

@@ -1,15 +1,21 @@
+pub mod bullet;
+
+use std::time::{Instant, SystemTime, UNIX_EPOCH};
+
 use bevy::{
     prelude::{
-        App, Commands, Component, GlobalTransform, IntoSystemDescriptor, Parent, Plugin,
-        Quat, Query, Res, ResMut, Transform, With, Without,
+        App, Commands, Component, GlobalTransform, IntoSystemDescriptor, Parent, Plugin, Quat,
+        Query, Res, ResMut, Transform, With, Without,
     },
     time::Time,
     transform::TransformBundle,
 };
 use bevy_renet::renet::{DefaultChannel, RenetServer};
-use spaaaace_shared::{player::player_input::PlayerInput, ServerMessages};
+use spaaaace_shared::{player::player_input::PlayerInput, NetworkedId, ServerMessages};
 
 use crate::Player;
+
+use self::bullet::{Bullet, BulletPlugin};
 
 #[derive(Component)]
 pub struct Turret {
@@ -19,14 +25,11 @@ pub struct Turret {
     pub aim_dir: Quat,
 }
 
-#[derive(Component)]
-pub struct Projectile;
-
 pub struct WeaponsPlugin;
 
 impl Plugin for WeaponsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(move_projectiles)
+        app.add_plugin(BulletPlugin {})
             .add_system(trigger_weapons)
             .add_system(turn_turrets)
             .add_system(fire_weapons.after(trigger_weapons));
@@ -102,25 +105,30 @@ fn fire_weapons(
             if turret.trigger {
                 let transform = global_transform.compute_transform();
 
-                commands.spawn(TransformBundle::from_transform(transform));
+                let now = Instant::now();
+                let since_start = now.duration_since(time.startup());
+                let id = since_start.as_nanos();
+
+                commands
+                    .spawn(TransformBundle::from_transform(transform))
+                    .insert(Bullet { speed: 200., lifetime: time.elapsed_seconds() + 2.0 })
+                    .insert(NetworkedId {
+                        id: id.try_into().unwrap(),
+                        last_sent: 0,
+                    });
 
                 let message = bincode::serialize(&ServerMessages::BulletSpawned {
+                    id: id.try_into().unwrap(),
                     position: transform.translation,
                     rotation: transform.rotation,
                 })
                 .unwrap();
+
                 server.broadcast_message(DefaultChannel::Reliable, message);
             }
             turret.cooldown = turret.fire_rate;
         } else {
             turret.cooldown -= time.delta_seconds();
         }
-    }
-}
-
-fn move_projectiles(mut query: Query<&mut Transform, With<Projectile>>, time: Res<Time>) {
-    for mut transform in query.iter_mut() {
-        let forward = transform.forward();
-        transform.translation += forward * time.delta_seconds();
     }
 }

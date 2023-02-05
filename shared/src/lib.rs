@@ -23,6 +23,7 @@ pub const PROTOCOL_ID: u64 = 7;
 
 #[derive(Debug, Default, Resource)]
 pub struct Lobby {
+    pub networked_entities: HashMap<u64, Entity>,
     pub players: HashMap<u64, Entity>,
     pub capture_points: HashMap<u64, Entity>,
 }
@@ -36,8 +37,12 @@ pub enum ServerMessages {
         id: u64,
     },
     BulletSpawned {
+        id: u64,
         position: Vec3,
         rotation: Quat,
+    },
+    EntityDespawn {
+        id: u64,
     },
     CapturePointSpawned {
         id: u64,
@@ -57,6 +62,7 @@ pub enum ServerMessages {
 #[derive(Component)]
 pub struct NetworkedId {
     pub id: u64,
+    pub last_sent: u128
 }
 
 #[derive(Component)]
