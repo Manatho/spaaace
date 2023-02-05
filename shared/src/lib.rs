@@ -55,8 +55,12 @@ pub enum ServerMessages {
 }
 
 #[derive(Component)]
-pub struct NetworkedTransform {
+pub struct NetworkedId {
     pub id: u64,
+}
+
+#[derive(Component)]
+pub struct NetworkedTransform {
     pub send_rate: f32,
 }
 

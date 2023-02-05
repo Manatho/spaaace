@@ -14,8 +14,7 @@ use bevy_rapier3d::prelude::{Collider, Damping, ExternalForce, GravityScale, Rig
 
 use bevy_renet::renet::{DefaultChannel, RenetServer, ServerEvent};
 use spaaaace_shared::{
-    player::player_input::PlayerInput, team::team_enum::Team, ClientMessages, Lobby,
-    ServerMessages, TranslationRotation, SERVER_TICKRATE,
+    player::player_input::PlayerInput, team::team_enum::Team, ClientMessages, Lobby, NetworkedId, ServerMessages, TranslationRotation, SERVER_TICKRATE,
 };
 
 use crate::{
@@ -47,7 +46,6 @@ const PLAYER_MOVE_SPEED: f32 = 2.0;
 
 #[derive(Component, Clone, Hash, PartialEq, Eq)]
 pub struct Player {
-    pub id: u64,
     pub team: Team,
 }
 
@@ -98,11 +96,14 @@ fn update_players_system(mut query: Query<(&mut ExternalForce, &Transform, &Play
     }
 }
 
-fn server_sync_players(mut server: ResMut<RenetServer>, query: Query<(&Transform, &Player)>) {
+fn server_sync_players(
+    mut server: ResMut<RenetServer>,
+    query: Query<(&Transform, &NetworkedId)>,
+) {
     let mut players: HashMap<u64, TranslationRotation> = HashMap::new();
-    for (transform, player) in query.iter() {
+    for (transform, network_id) in query.iter() {
         players.insert(
-            player.id,
+            network_id.id,
             TranslationRotation {
                 translation: transform.translation,
                 rotation: transform.rotation,
@@ -209,10 +210,8 @@ fn on_client_connected(
                         ..Default::default()
                     })
                     .insert(PlayerInput::default())
-                    .insert(Player {
-                        id: *id,
-                        team: Team::Red,
-                    })
+                    .insert(NetworkedId { id: *id })
+                    .insert(Player { team: Team::Red })
                     .insert(Collider::cuboid(1.0, 1.0, 1.0))
                     .insert(RigidBody::Dynamic)
                     // .insert(LockedAxes::ROTATION_LOCKED_Z)
