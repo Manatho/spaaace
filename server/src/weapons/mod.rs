@@ -1,12 +1,11 @@
 use bevy::{
     prelude::{
-        App, Color, Commands, Component, GlobalTransform, IntoSystemDescriptor, Parent, Plugin,
+        App, Commands, Component, GlobalTransform, IntoSystemDescriptor, Parent, Plugin,
         Quat, Query, Res, ResMut, Transform, With, Without,
     },
     time::Time,
     transform::TransformBundle,
 };
-use bevy_mod_gizmos::{draw_gizmo, Gizmo};
 use bevy_renet::renet::{DefaultChannel, RenetServer};
 use spaaaace_shared::{player::player_input::PlayerInput, ServerMessages};
 

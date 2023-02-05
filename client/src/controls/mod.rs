@@ -1,5 +1,5 @@
 use bevy::prelude::{
-    Color, Entity, Input, KeyCode, MouseButton, Query, Res, ResMut, Transform, Vec3, With, Without,
+    Color, Input, KeyCode, MouseButton, Query, Res, ResMut, Transform, With,
 };
 use bevy_mod_gizmos::{draw_gizmo, Gizmo};
 use spaaaace_shared::player::player_input::PlayerInput;

@@ -3,7 +3,7 @@ use bevy::{
     prelude::{
         default, shape, App, Assets, BuildChildren, Color, Commands, Component, CoreStage,
         DespawnRecursiveExt, EventReader, Mesh, PbrBundle, Plugin, Quat, Query, ResMut,
-        StandardMaterial, SystemStage, Transform, Vec2, Vec3,
+        StandardMaterial, SystemStage, Transform, Vec3,
     },
     time::FixedTimestep,
     transform::TransformBundle,

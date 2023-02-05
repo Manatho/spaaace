@@ -1,10 +1,9 @@
-use std::{f32::consts::PI, net::UdpSocket, time::SystemTime};
+use std::{net::UdpSocket, time::SystemTime};
 
 use bevy::{
     prelude::{
-        default, info, shape, App, Assets, Camera3d, Camera3dBundle, Color, Commands,
-        DirectionalLight, DirectionalLightBundle, EventWriter, Mesh, PbrBundle, PluginGroup,
-        PointLight, PointLightBundle, Quat, Query, ResMut, StageLabel, StandardMaterial, Transform,
+        default, info, App, Camera3d, Camera3dBundle, Commands, EventWriter, PluginGroup,
+        PointLight, PointLightBundle, Query, ResMut, StageLabel, Transform,
         Vec3, With,
     },
     window::{PresentMode, WindowDescriptor, WindowPlugin},
