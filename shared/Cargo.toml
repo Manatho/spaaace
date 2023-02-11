@@ -16,3 +16,6 @@ cfg-if = { version = "1.0" }
 log = { version = "0.4" }
 rand = "0.8.5"
 serde = "1.0.151"
+
+[profile.dev.package."*"]
+opt-level = 3
