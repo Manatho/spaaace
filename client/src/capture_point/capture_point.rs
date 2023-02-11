@@ -1,5 +1,5 @@
 use bevy::{
-    prelude::{AlphaMode, Color, Material},
+    prelude::{AlphaMode, Color, Handle, Image, Material},
     reflect::TypeUuid,
     render::render_resource::{AsBindGroup, ShaderRef},
 };
@@ -14,6 +14,10 @@ pub struct ForceFieldMaterial {
     pub prev_color: Color,
     #[uniform(0)]
     pub last_color_change: f32,
+
+    #[texture(1)]
+    #[sampler(2)]
+    pub color_texture: Option<Handle<Image>>,
 }
 
 impl Material for ForceFieldMaterial {

@@ -5,6 +5,7 @@ use app::{
     capture_point::capture_point::ForceFieldMaterial,
     controls::player_input,
     debug::fps::{fps_gui, team_swap_gui},
+    skybox::cubemap::CubemapPlugin,
     ui::GameUIPlugin,
     utils::{lerp_transform_targets, LerpTransformTarget},
 };
@@ -13,6 +14,7 @@ use bevy::{
     core_pipeline::{bloom::BloomSettings, fxaa::Fxaa},
     diagnostic::FrameTimeDiagnosticsPlugin,
     gltf::{Gltf, GltfNode},
+    math::vec3,
     pbr::NotShadowCaster,
     prelude::{
         default, shape, AmbientLight, AssetServer, Assets, BuildChildren, Camera, Camera3dBundle,
@@ -35,14 +37,15 @@ use bevy_hanabi::{
     SizeOverLifetimeModifier, Spawner,
 };
 
+use bevy_mod_gizmos::GizmosPlugin;
 use bevy_renet::{
     renet::{ClientAuthentication, DefaultChannel, RenetClient, RenetConnectionConfig},
     run_if_client_connected, RenetClientPlugin,
 };
 use rand::Rng;
 use spaaaace_shared::{
-    team::team_enum::Team, util::Random, ClientMessages, Lobby, PlayerInput, ServerMessages,
-    TranslationRotation, PROTOCOL_ID, SERVER_TICKRATE,
+    player::player_input::PlayerInput, team::team_enum::Team, util::Random, ClientMessages, Lobby,
+    ServerMessages, TranslationRotation, PROTOCOL_ID, SERVER_TICKRATE,
 };
 
 pub fn run() {
@@ -78,7 +81,9 @@ pub fn run() {
         // Run App
         .add_plugin(OrbitCameraPlugin)
         .add_plugin(GameUIPlugin)
-        .add_system(move_bullet)
+        // Debug
+        .add_plugin(GizmosPlugin)
+        .add_plugin(CubemapPlugin)
         .run();
 }
 
@@ -94,7 +99,10 @@ fn init(mut commands: Commands, mut ambient_light: ResMut<AmbientLight>, ass: Re
                 .looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
             ..default()
         })
-        .insert(OrbitCamera { zoom: 50.0 })
+        .insert(OrbitCamera {
+            zoom: 50.0,
+            offset: vec3(0., 10., 0.),
+        })
         .insert(BloomSettings { ..default() })
         .insert(Fxaa { ..default() });
 
@@ -112,8 +120,8 @@ fn init(mut commands: Commands, mut ambient_light: ResMut<AmbientLight>, ass: Re
         ..default()
     });
 
-    ambient_light.color = Color::hsl(180.0, 1.0, 1.0);
-    ambient_light.brightness = 0.01;
+    ambient_light.color = Color::hsl(207.0, 0.5, 0.4);
+    ambient_light.brightness = 0.7;
 
     let mut rng = rand::thread_rng();
     for _ in 0..100 {
@@ -162,13 +170,6 @@ fn client_send_input(player_input: Res<PlayerInput>, mut client: ResMut<RenetCli
 #[derive(Component)]
 struct Bullet {}
 
-fn move_bullet(mut query: Query<(&Bullet, &mut Transform)>, time: Res<Time>) {
-    for (_, mut transform) in query.iter_mut() {
-        let dir = transform.forward();
-        transform.translation += dir * time.delta_seconds() * 20.;
-    }
-}
-
 fn client_sync_players(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -204,8 +205,12 @@ fn client_sync_players(
                     commands.entity(player_entity).despawn();
                 }
             }
-            ServerMessages::BulletSpawned { position, rotation } => {
-                commands
+            ServerMessages::BulletSpawned {
+                id,
+                position,
+                rotation,
+            } => {
+                let entity_id = commands
                     .spawn(PbrBundle {
                         mesh: meshes.add(Mesh::from(shape::Capsule {
                             depth: 0.5,
@@ -225,7 +230,15 @@ fn client_sync_players(
                         },
                         ..Default::default()
                     })
-                    .insert(Bullet {});
+                    .insert(Bullet {})
+                    .id();
+
+                lobby.networked_entities.insert(id, entity_id);
+            }
+            ServerMessages::EntityDespawn { id } => {
+                if let Some(entity) = lobby.networked_entities.remove(&id) {
+                    commands.entity(entity).despawn();
+                }
             }
             ServerMessages::CapturePointSpawned {
                 position,
@@ -251,6 +264,7 @@ fn client_sync_players(
                             },
                             prev_color: Color::WHITE,
                             last_color_change: time.elapsed_seconds(),
+                            color_texture: Some(ass.load("hex_grid.jpg")),
                         }),
                         transform: Transform {
                             rotation: rotation,
@@ -301,10 +315,25 @@ fn client_sync_players(
     }
 
     while let Some(message) = client.receive_message(DefaultChannel::Unreliable) {
-        let players: HashMap<u64, TranslationRotation> = bincode::deserialize(&message).unwrap();
-        for (player_id, translation_rotation) in players.iter() {
-            if let Some(player_entity) = lobby.players.get(player_id) {
-                commands.entity(*player_entity).insert(LerpTransformTarget {
+        let networked_translation: HashMap<u64, TranslationRotation> =
+            bincode::deserialize(&message).unwrap();
+
+        for (id, translation_rotation) in networked_translation.iter() {
+            if let Some(entity) = lobby.players.get(id) {
+                commands.entity(*entity).insert(LerpTransformTarget {
+                    target: Transform {
+                        translation: translation_rotation.translation,
+                        rotation: translation_rotation.rotation,
+                        ..Default::default()
+                    },
+                    speed: SERVER_TICKRATE / 1.2,
+                });
+            }
+        }
+
+        for (id, translation_rotation) in networked_translation.iter() {
+            if let Some(entity) = lobby.networked_entities.get(id) {
+                commands.entity(*entity).insert(LerpTransformTarget {
                     target: Transform {
                         translation: translation_rotation.translation,
                         rotation: translation_rotation.rotation,

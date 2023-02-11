@@ -2,8 +2,8 @@ use std::{net::UdpSocket, time::SystemTime};
 
 use bevy::{
     prelude::{
-        default, info, App, Camera3dBundle, Commands, EventWriter, PluginGroup, ResMut, StageLabel,
-        Transform, Vec3,
+        default, info, App, Camera3d, Camera3dBundle, Commands, EventWriter, PluginGroup,
+        PointLight, PointLightBundle, Query, ResMut, StageLabel, Transform, Vec3, With, Without,
     },
     window::{PresentMode, WindowDescriptor, WindowPlugin},
     DefaultPlugins,
@@ -44,15 +44,15 @@ fn main() {
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             window: WindowDescriptor {
                 title: "Spaaace Server".to_string(),
-                width: 320.,
-                height: 240.,
+                width: 1280.,
+                height: 720.,
                 present_mode: PresentMode::AutoVsync,
                 ..default()
             },
             ..default()
         }))
         .add_plugin(GizmosPlugin)
-        .add_startup_system(init)
+        .add_startup_system(setup)
         .add_plugin(WorldInspectorPlugin::new())
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugin(RapierDebugRenderPlugin::default())
@@ -63,6 +63,7 @@ fn main() {
         .add_plugin(PlayerPlugin)
         .add_plugin(CapturePointPlugin)
         .add_event::<ClientEvent>()
+        .add_system(camera_follow_players)
         // Server UI for debugging
         // .add_plugin(InputPlugin::default())
         // .add_plugin(ScenePlugin::default())
@@ -73,9 +74,20 @@ fn main() {
         .run();
 }
 
-fn init(mut commands: Commands) {
+fn setup(mut commands: Commands) {
+    // light
+    commands.spawn(PointLightBundle {
+        point_light: PointLight {
+            intensity: 1500.0,
+            shadows_enabled: true,
+            ..default()
+        },
+        transform: Transform::from_xyz(4.0, 8.0, 4.0),
+        ..default()
+    });
+    // camera
     commands.spawn(Camera3dBundle {
-        transform: Transform::from_xyz(0.0, 6., -12.0).looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
+        transform: Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
         ..default()
     });
 }
@@ -107,5 +119,36 @@ fn server_update_system(
             let message: ClientMessages = bincode::deserialize(&message).unwrap();
             client_message_event_writer.send(ClientEvent { message, client_id });
         }
+    }
+}
+
+fn camera_follow_players(
+    mut query_cam: Query<&mut Transform, (With<Camera3d>, Without<Player>)>,
+    query_players: Query<&Transform, With<Player>>,
+) {
+    if query_players.is_empty() {
+        return;
+    }
+    let mut player_count = 0;
+    let mut avg = Vec3::ZERO;
+    for player_transform in query_players.iter() {
+        avg += player_transform.translation;
+        player_count += 1;
+    }
+
+    avg /= Vec3::splat(player_count as f32);
+
+    let mut max_dist_from_avg: f32 = 0.0;
+
+    for player_transform in query_players.iter() {
+        let dist = player_transform.translation.distance(avg);
+        max_dist_from_avg = max_dist_from_avg.max(dist);
+    }
+
+    for mut transform in query_cam.iter_mut() {
+        transform.look_at(avg, Vec3::Y);
+
+        let back = transform.back();
+        transform.translation = avg + back * (max_dist_from_avg * 2.0 + 10.);
     }
 }
