@@ -5,6 +5,7 @@ use app::{
     capture_point::capture_point::ForceFieldMaterial,
     controls::player_input,
     debug::fps::{fps_gui, team_swap_gui},
+    game_state::ClientGameState,
     skybox::cubemap::CubemapPlugin,
     ui::GameUIPlugin,
     utils::{lerp_transform_targets, LerpTransformTarget},
@@ -26,7 +27,7 @@ use bevy::{
     scene::SceneBundle,
     time::Time,
     utils::HashMap,
-    window::{WindowDescriptor, WindowPlugin},
+    window::{WindowDescriptor, WindowMode, WindowPlugin},
     DefaultPlugins,
 };
 
@@ -55,12 +56,13 @@ pub fn run() {
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             window: WindowDescriptor {
                 title: "Spaaace Client".to_string(),
-                width: 640.,
-                height: 320.,
+                width: 1280.,
+                height: 640.,
                 ..default()
             },
             ..default()
         }))
+        .insert_resource(ClientGameState { is_paused: false })
         .add_plugin(HanabiPlugin)
         .insert_resource(Lobby::default())
         //.add_plugin(WorldInspectorPlugin::new())
@@ -214,7 +216,7 @@ fn client_sync_players(
                     .spawn(PbrBundle {
                         mesh: meshes.add(Mesh::from(shape::Capsule {
                             depth: 0.5,
-                            radius: 0.01,
+                            radius: 0.1,
                             ..Default::default()
                         })),
                         material: materials.add(StandardMaterial {
@@ -225,7 +227,7 @@ fn client_sync_players(
                         }),
                         transform: Transform {
                             translation: position,
-                            rotation: rotation,
+                            rotation: rotation * Quat::from_rotation_x(PI / 2.0),
                             ..Default::default()
                         },
                         ..Default::default()

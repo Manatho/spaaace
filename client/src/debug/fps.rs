@@ -11,17 +11,14 @@ pub fn fps_gui(mut egui_context: ResMut<EguiContext>, diagnostics: Res<Diagnosti
         ui.label(format!(
             "{}",
             diagnostics
-                .get(FrameTimeDiagnosticsPlugin::FRAME_TIME)
-                .and_then(|fps| fps.smoothed())
+                .get(FrameTimeDiagnosticsPlugin::FPS)
+                .and_then(|fps| fps.average())
                 .unwrap_or(0.0)
         ));
     });
 }
 
-pub fn team_swap_gui(
-    mut egui_context: ResMut<EguiContext>,
-    mut client: ResMut<RenetClient>,
-) {
+pub fn team_swap_gui(mut egui_context: ResMut<EguiContext>, mut client: ResMut<RenetClient>) {
     Window::new("Team GUI").show(egui_context.ctx_mut(), |ui| {
         if ui.button("1").clicked() {
             send_message(&mut client, 1);
