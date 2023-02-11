@@ -11,6 +11,7 @@ use app::{
 };
 use bevy::{
     app::App,
+    core_pipeline::{bloom::BloomSettings, fxaa::Fxaa},
     diagnostic::FrameTimeDiagnosticsPlugin,
     gltf::{Gltf, GltfNode},
     math::vec3,
