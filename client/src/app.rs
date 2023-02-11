@@ -318,8 +318,6 @@ fn client_sync_players(
         let networked_translation: HashMap<u64, TranslationRotation> =
             bincode::deserialize(&message).unwrap();
 
-        println!("{}", networked_translation.len());
-
         for (id, translation_rotation) in networked_translation.iter() {
             if let Some(entity) = lobby.players.get(id) {
                 commands.entity(*entity).insert(LerpTransformTarget {
