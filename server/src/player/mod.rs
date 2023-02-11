@@ -3,18 +3,18 @@ use bevy::{
     prelude::{
         default, shape, App, Assets, BuildChildren, Color, Commands, Component, CoreStage,
         DespawnRecursiveExt, EventReader, Mesh, PbrBundle, Plugin, Quat, Query, ResMut,
-        StandardMaterial, SystemStage, Transform, Vec2, Vec3,
+        StandardMaterial, SystemStage, Transform, Vec3, Res,
     },
-    time::FixedTimestep,
+    time::{FixedTimestep, Time},
     transform::TransformBundle,
-    utils::HashMap,
+    utils::{HashMap, Instant},
 };
 use bevy_mod_gizmos::{draw_gizmo, Gizmo};
 use bevy_rapier3d::prelude::{Collider, Damping, ExternalForce, GravityScale, RigidBody};
 
 use bevy_renet::renet::{DefaultChannel, RenetServer, ServerEvent};
 use spaaaace_shared::{
-    player::player_input::PlayerInput, team::team_enum::Team, ClientMessages, Lobby,
+    player::player_input::PlayerInput, team::team_enum::Team, ClientMessages, Lobby, NetworkedId,
     ServerMessages, TranslationRotation, SERVER_TICKRATE,
 };
 
@@ -47,7 +47,6 @@ const PLAYER_MOVE_SPEED: f32 = 2.0;
 
 #[derive(Component, Clone, Hash, PartialEq, Eq)]
 pub struct Player {
-    pub id: u64,
     pub team: Team,
 }
 
@@ -98,20 +97,43 @@ fn update_players_system(mut query: Query<(&mut ExternalForce, &Transform, &Play
     }
 }
 
-fn server_sync_players(mut server: ResMut<RenetServer>, query: Query<(&Transform, &Player)>) {
-    let mut players: HashMap<u64, TranslationRotation> = HashMap::new();
-    for (transform, player) in query.iter() {
-        players.insert(
-            player.id,
+fn server_sync_players(
+    mut server: ResMut<RenetServer>,
+    mut query: Query<(&Transform, &mut NetworkedId)>,
+    time: Res<Time>,
+) {
+    let mut entries: Vec<(&NetworkedId, TranslationRotation)> = Vec::new();
+
+    for (transform, network_id) in query.iter() {
+        entries.push((
+            network_id,
             TranslationRotation {
                 translation: transform.translation,
                 rotation: transform.rotation,
             },
-        );
+        ));
     }
 
-    let sync_message = bincode::serialize(&players).unwrap();
+    entries.sort_by(|(a, _), (b, _)| a.last_sent.cmp(&b.last_sent));
+    
+
+    let mut messages: HashMap<u64, TranslationRotation> = HashMap::new();
+    for (id, tr) in entries {
+        if messages.len() < 50 {
+            messages.insert(id.id, tr);
+        } else {
+            break;
+        }
+    }
+
+    let sync_message = bincode::serialize(&messages).unwrap();
     server.broadcast_message(DefaultChannel::Unreliable, sync_message);
+
+    for (_, mut network_id) in query.iter_mut() {
+        if messages.contains_key(&network_id.id) {
+            network_id.last_sent = Instant::now().duration_since(time.startup()).as_nanos();
+        }
+    }
 }
 
 fn swap_team_command(
@@ -209,10 +231,11 @@ fn on_client_connected(
                         ..Default::default()
                     })
                     .insert(PlayerInput::default())
-                    .insert(Player {
+                    .insert(NetworkedId {
                         id: *id,
-                        team: Team::Red,
+                        last_sent: 0,
                     })
+                    .insert(Player { team: Team::Red })
                     .insert(Collider::cuboid(1.0, 1.0, 1.0))
                     .insert(RigidBody::Dynamic)
                     // .insert(LockedAxes::ROTATION_LOCKED_Z)
