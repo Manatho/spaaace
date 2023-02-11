@@ -1,7 +1,7 @@
 pub mod player;
+pub mod ships;
 pub mod team;
 pub mod util;
-pub mod ships;
 
 use std::collections::HashMap;
 
@@ -58,12 +58,41 @@ pub enum ServerMessages {
         attacker: Team,
         progress: f32,
     },
+    AsteroidSpawned {
+        id: u64,
+        position: Vec3,
+        scale: Vec3,
+        rotation: Quat,
+    },
 }
 
 #[derive(Component)]
 pub struct NetworkedId {
     pub id: u64,
-    pub last_sent: u128
+    pub last_sent: u128,
+}
+
+#[derive(Resource, Debug, Clone)]
+#[repr(transparent)]
+pub struct NetworkIdProvider(u64);
+
+impl NetworkIdProvider {
+    pub fn new() -> Self {
+        Self(0)
+    }
+
+    /// Creates a new, unique [`NetworkId`].
+    pub fn new_id(&mut self) -> NetworkedId {
+        let id = NetworkedId {
+            id: self.0,
+            last_sent: 0,
+        };
+        self.0 = self
+            .0
+            .checked_add(1)
+            .expect("NetworkId has overflowed u32::MAX.");
+        id
+    }
 }
 
 #[derive(Component)]

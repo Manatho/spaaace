@@ -122,24 +122,6 @@ fn init(mut commands: Commands, mut ambient_light: ResMut<AmbientLight>, ass: Re
 
     ambient_light.color = Color::hsl(207.0, 0.5, 0.4);
     ambient_light.brightness = 0.7;
-
-    let mut rng = rand::thread_rng();
-    for _ in 0..100 {
-        commands.spawn(SceneBundle {
-            scene: ass.load("asteroid.glb#Scene0"),
-            transform: Transform {
-                translation: Vec3 {
-                    x: rng.gen::<f32>() * 250.0,
-                    y: rng.gen::<f32>() * 250.0,
-                    z: rng.gen::<f32>() * 250.0,
-                },
-                scale: Vec3::splat(2.0 + rng.gen::<f32>() * 8.0),
-                rotation: Quat::random(),
-                ..default()
-            },
-            ..default()
-        });
-    }
 }
 
 fn new_renet_client() -> RenetClient {
@@ -310,6 +292,28 @@ fn client_sync_players(
                         _ => (),
                     }
                 }
+            }
+            ServerMessages::AsteroidSpawned {
+                id,
+                position,
+                scale,
+                rotation,
+            } => {
+                println!("{} {} {} {}", id, position.x, position.y, position.z);
+                let x = commands
+                    .spawn(SceneBundle {
+                        scene: ass.load("asteroid.glb#Scene0"),
+                        transform: Transform {
+                            translation: position,
+                            scale: scale,
+                            rotation: rotation,
+                            ..default()
+                        },
+                        ..default()
+                    })
+                    .id();
+
+                lobby.networked_entities.insert(id, x);
             }
         }
     }

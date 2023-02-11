@@ -23,10 +23,14 @@ use bevy_renet::{
 };
 
 use player::Player;
-use spaaaace_shared::{ClientMessages, Lobby, PROTOCOL_ID};
+use spaaaace_shared::{ClientMessages, Lobby, NetworkIdProvider, PROTOCOL_ID};
 
-use crate::{capture_point::CapturePointPlugin, player::PlayerPlugin, weapons::WeaponsPlugin};
+use crate::{
+    asteroid::AsteroidPlugin, capture_point::CapturePointPlugin, player::PlayerPlugin,
+    weapons::WeaponsPlugin,
+};
 
+mod asteroid;
 pub mod capture_point;
 pub mod player;
 mod weapons;
@@ -41,6 +45,7 @@ fn main() {
     App::default()
         // Plugins
         .insert_resource(Lobby::default())
+        .insert_resource(NetworkIdProvider::new())
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             window: WindowDescriptor {
                 title: "Spaaace Server".to_string(),
@@ -60,6 +65,7 @@ fn main() {
         .insert_resource(new_renet_server())
         .add_system(server_update_system)
         .add_plugin(WeaponsPlugin {})
+        .add_plugin(AsteroidPlugin {})
         .add_plugin(PlayerPlugin)
         .add_plugin(CapturePointPlugin)
         .add_event::<ClientEvent>()

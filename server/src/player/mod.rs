@@ -3,14 +3,14 @@ use bevy::{
     prelude::{
         default, shape, App, Assets, BuildChildren, Color, Commands, Component, CoreStage,
         DespawnRecursiveExt, EventReader, Mesh, PbrBundle, Plugin, Quat, Query, ResMut,
-        StandardMaterial, SystemStage, Transform, Vec3, Res,
+        StandardMaterial, SystemStage, Transform, Vec3, Res, Without,
     },
     time::{FixedTimestep, Time},
     transform::TransformBundle,
     utils::{HashMap, Instant},
 };
 use bevy_mod_gizmos::{draw_gizmo, Gizmo};
-use bevy_rapier3d::prelude::{Collider, Damping, ExternalForce, GravityScale, RigidBody};
+use bevy_rapier3d::prelude::{Collider, Damping, ExternalForce, GravityScale, RigidBody, ColliderMassProperties, Sleeping};
 
 use bevy_renet::renet::{DefaultChannel, RenetServer, ServerEvent};
 use spaaaace_shared::{
@@ -82,7 +82,7 @@ fn update_players_system(mut query: Query<(&mut ExternalForce, &Transform, &Play
         ));
 
         rigidbody.force = longitudal_force + lateral_force + vertical_force;
-        rigidbody.torque = rotation * Vec3::NEG_Y * PLAYER_MOVE_SPEED * 2.0;
+        rigidbody.torque = rotation * Vec3::NEG_Y * PLAYER_MOVE_SPEED * 5.0;
 
         {
             let (axis, angle) =
@@ -99,7 +99,7 @@ fn update_players_system(mut query: Query<(&mut ExternalForce, &Transform, &Play
 
 fn server_sync_players(
     mut server: ResMut<RenetServer>,
-    mut query: Query<(&Transform, &mut NetworkedId)>,
+    mut query: Query<(&Transform, &mut NetworkedId), Without<Sleeping>>,
     time: Res<Time>,
 ) {
     let mut entries: Vec<(&NetworkedId, TranslationRotation)> = Vec::new();
@@ -224,7 +224,7 @@ fn on_client_connected(
                 let player_entity = commands
                     .spawn(TransformBundle {
                         local: Transform {
-                            translation: vec3(0.0, 0.5, 0.0),
+                            translation: vec3(0.0, 5.0, 0.0),
                             rotation: Quat::from_rotation_x(0.5),
                             ..Default::default()
                         },
@@ -235,8 +235,9 @@ fn on_client_connected(
                         id: *id,
                         last_sent: 0,
                     })
+                    .insert(ColliderMassProperties::Mass(3.0))
                     .insert(Player { team: Team::Red })
-                    .insert(Collider::cuboid(1.0, 1.0, 1.0))
+                    .insert(Collider::cuboid(2.0, 1.0, 4.0))
                     .insert(RigidBody::Dynamic)
                     // .insert(LockedAxes::ROTATION_LOCKED_Z)
                     .insert(GravityScale(0.0))

@@ -3660,6 +3660,7 @@ dependencies = [
  "bevy_rapier3d",
  "bevy_renet",
  "bincode",
+ "rand",
  "serde",
  "spaaaace_shared",
 ]
