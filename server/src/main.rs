@@ -5,7 +5,7 @@ use bevy::{
         default, info, shape, App, Assets, Camera3d, Camera3dBundle, Color, Commands,
         DirectionalLight, DirectionalLightBundle, EventWriter, Mesh, PbrBundle, PluginGroup,
         PointLight, PointLightBundle, Quat, Query, ResMut, StageLabel, StandardMaterial, Transform,
-        Vec3, With,
+        Vec3, With, Without,
     },
     window::{PresentMode, WindowDescriptor, WindowPlugin},
     DefaultPlugins,
@@ -65,6 +65,7 @@ fn main() {
         .add_plugin(PlayerPlugin)
         .add_plugin(CapturePointPlugin)
         .add_event::<ClientEvent>()
+        .add_system(camera_follow_players)
         // Server UI for debugging
         // .add_plugin(InputPlugin::default())
         // .add_plugin(ScenePlugin::default())
@@ -124,8 +125,32 @@ fn server_update_system(
 }
 
 fn camera_follow_players(
-    mut query: Query<(&Camera3d, &mut Transform)>,
+    mut query_cam: Query<&mut Transform, (With<Camera3d>, Without<Player>)>,
     query_players: Query<&Transform, With<Player>>,
 ) {
-    for player_transform in query_players.iter() {}
+    if query_players.is_empty() {
+        return;
+    }
+    let mut player_count = 0;
+    let mut avg = Vec3::ZERO;
+    for player_transform in query_players.iter() {
+        avg += player_transform.translation;
+        player_count += 1;
+    }
+
+    avg /= Vec3::splat(player_count as f32);
+
+    let mut max_dist_from_avg: f32 = 0.0;
+
+    for player_transform in query_players.iter() {
+        let dist = player_transform.translation.distance(avg);
+        max_dist_from_avg = max_dist_from_avg.max(dist);
+    }
+
+    for mut transform in query_cam.iter_mut() {
+        transform.look_at(avg, Vec3::Y);
+
+        let back = transform.back();
+        transform.translation = avg + back * (max_dist_from_avg * 2.0 + 10.);
+    }
 }

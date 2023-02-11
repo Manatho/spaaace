@@ -1,6 +1,7 @@
 pub mod player;
 pub mod team;
 pub mod util;
+pub mod ships;
 
 use std::collections::HashMap;
 

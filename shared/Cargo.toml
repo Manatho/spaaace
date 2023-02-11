@@ -14,6 +14,7 @@ bevy_ecs = { version = "0.9", default-features=false}
 bevy_math = { version = "0.9", default-features = false }
 cfg-if = { version = "1.0" }
 log = { version = "0.4" }
+phf = { version = "0.11", default-features = false, features = ["macros"] }
 rand = "0.8.5"
 serde = "1.0.151"
 
