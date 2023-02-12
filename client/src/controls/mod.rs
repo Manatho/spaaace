@@ -1,6 +1,4 @@
-use bevy::prelude::{
-    Color, Input, KeyCode, MouseButton, Query, Res, ResMut, Transform, With,
-};
+use bevy::prelude::{Color, Input, KeyCode, MouseButton, Query, Res, ResMut, Transform, With};
 use bevy_mod_gizmos::{draw_gizmo, Gizmo};
 use spaaaace_shared::player::player_input::PlayerInput;
 
@@ -35,7 +33,7 @@ pub fn player_input(
                 Err(_) => (),
             }
 
-            draw_gizmo(Gizmo::sphere(player_input.aim_point, 1.0, Color::GREEN));
+            draw_gizmo(Gizmo::new(player_input.aim_point, 1.0, Color::GREEN));
         }
         Err(_) => {}
     }
