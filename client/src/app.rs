@@ -45,8 +45,9 @@ use bevy_renet::{
 };
 use rand::Rng;
 use spaaaace_shared::{
-    player::player_input::PlayerInput, team::team_enum::Team, util::Random, ClientMessages, Lobby,
-    ServerMessages, TranslationRotation, PROTOCOL_ID, SERVER_TICKRATE,
+    player::player_input::PlayerInput, ships::ShipModelLoadHandle, team::team_enum::Team,
+    util::Random, ClientMessages, Lobby, ServerMessages, TranslationRotation, PROTOCOL_ID,
+    SERVER_TICKRATE,
 };
 
 pub fn run() {
@@ -171,7 +172,8 @@ fn client_sync_players(
             ServerMessages::PlayerConnected { id } => {
                 println!("Player {} connected.", id);
 
-                let my_gltf = ass.load("test_ship.glb");
+                let my_gltf = ass.load("../../shared/assets/ships/test_ship/test_ship.gltf");
+
                 let mut cmd =
                     commands.spawn((SpatialBundle { ..default() }, ShipModelLoadHandle(my_gltf)));
 
@@ -351,9 +353,6 @@ fn client_sync_players(
         }
     }
 }
-
-#[derive(Component)]
-struct ShipModelLoadHandle(Handle<Gltf>);
 
 fn spawn_gltf_objects(
     mut commands: Commands,

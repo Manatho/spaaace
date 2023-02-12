@@ -1,10 +1,14 @@
+use std::path::{self, Path};
+
 use bevy::{
+    gltf::{Gltf, GltfNode},
     math::vec3,
     prelude::{
-        default, shape, App, Assets, BuildChildren, Color, Commands, Component, CoreStage,
-        DespawnRecursiveExt, EventReader, Mesh, PbrBundle, Plugin, Quat, Query, Res, ResMut,
-        StandardMaterial, SystemStage, Transform, Vec3, Without,
+        default, shape, App, AssetServer, Assets, BuildChildren, Color, Commands, Component,
+        CoreStage, DespawnRecursiveExt, Entity, EventReader, Mesh, PbrBundle, Plugin, Quat, Query,
+        Res, ResMut, SpatialBundle, StandardMaterial, SystemStage, Transform, Vec3, Without,
     },
+    scene::SceneBundle,
     time::{FixedTimestep, Time},
     transform::TransformBundle,
     utils::{HashMap, Instant},
@@ -17,8 +21,10 @@ use bevy_rapier3d::prelude::{
 
 use bevy_renet::renet::{DefaultChannel, RenetServer, ServerEvent};
 use spaaaace_shared::{
-    player::player_input::PlayerInput, team::team_enum::Team, ClientMessages, Lobby, NetworkedId,
-    ServerMessages, TranslationRotation, SERVER_TICKRATE,
+    player::player_input::PlayerInput,
+    ships::{ShipModelLoadHandle, SHIP_TYPES},
+    team::team_enum::Team,
+    ClientMessages, Lobby, NetworkedId, ServerMessages, TranslationRotation, SERVER_TICKRATE,
 };
 
 use crate::{
@@ -35,6 +41,7 @@ impl Plugin for PlayerPlugin {
             .add_system(player_input)
             .add_system(on_client_disconnected)
             .add_system(on_client_connected)
+            .add_system(on_client_model_loaded)
             // .add_system(draw_player_gizmos)
             .add_stage_after(
                 CoreStage::Update,
@@ -72,15 +79,15 @@ fn update_players_system(mut query: Query<(&mut ExternalImpulse, &Transform, &Pl
         let lateral_force = thrust_lateral * PLAYER_MOVE_SPEED * 30.0 * projected_left;
         let vertical_force = thrust_vertical * PLAYER_MOVE_SPEED * 30.0 * Vec3::Y;
 
-        draw_gizmo(Gizmo::cubiod(
+        draw_gizmo(Gizmo::new(
             transform.translation + rotated_forward * 2.0,
-            vec3(0.3, 0.3, 0.3),
+            0.3,
             Color::PURPLE,
         ));
 
-        draw_gizmo(Gizmo::cubiod(
+        draw_gizmo(Gizmo::new(
             transform.translation + transform.forward() * 2.5,
-            vec3(0.3, 0.3, 0.3),
+            0.3,
             Color::GREEN,
         ));
 
@@ -102,12 +109,12 @@ fn update_players_system(mut query: Query<(&mut ExternalImpulse, &Transform, &Pl
 
 fn server_sync_players(
     mut server: ResMut<RenetServer>,
-    mut query: Query<(&Transform, &mut NetworkedId, Option<&Sleeping>)>,
+    mut query: Query<(Entity, &Transform, &mut NetworkedId, Option<&Sleeping>)>,
     time: Res<Time>,
 ) {
     let mut entries: Vec<(&NetworkedId, TranslationRotation)> = Vec::new();
 
-    for (transform, network_id, sleeping) in query.iter() {
+    for (entity, transform, network_id, sleeping) in query.iter() {
         if sleeping.is_some() && sleeping.unwrap().sleeping {
             continue;
         }
@@ -134,7 +141,7 @@ fn server_sync_players(
     let sync_message = bincode::serialize(&messages).unwrap();
     server.broadcast_message(DefaultChannel::Unreliable, sync_message);
 
-    for (_, mut network_id, sleeping) in query.iter_mut() {
+    for (_, _, mut network_id, sleeping) in query.iter_mut() {
         if sleeping.is_some() && sleeping.unwrap().sleeping {
             continue;
         }
@@ -223,21 +230,29 @@ fn on_client_connected(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut server: ResMut<RenetServer>,
+    ass: Res<AssetServer>,
 ) {
     for event in event_reader.iter() {
         match event {
             ServerEvent::ClientConnected(id, _) => {
+                let ship_type = SHIP_TYPES["TEST_SHIP"];
+
+                let ship_gltf_handle = ass.load(
+                    Path::new("../../shared/assets/ships").join(Path::new(ship_type.model_name)),
+                );
+
                 println!("Player {} connected.", id);
                 // Spawn player cube
                 let player_entity = commands
-                    .spawn(TransformBundle {
-                        local: Transform {
+                    .spawn(SpatialBundle {
+                        transform: Transform {
                             translation: vec3(0.0, 5.0, 0.0),
                             rotation: Quat::from_rotation_x(0.5),
                             ..Default::default()
                         },
                         ..Default::default()
                     })
+                    .insert(ShipModelLoadHandle(ship_gltf_handle))
                     .insert(PlayerInput::default())
                     .insert(NetworkedId {
                         id: *id,
@@ -255,70 +270,6 @@ fn on_client_connected(
                         angular_damping: 1.0,
                     })
                     .insert(PbrBundle { ..default() })
-                    .with_children(|parent| {
-                        parent
-                            .spawn(TransformBundle {
-                                local: Transform {
-                                    translation: vec3(0.0, 0.0, 40.0),
-                                    ..Default::default()
-                                },
-                                ..Default::default()
-                            })
-                            .insert(Turret {
-                                cooldown: 0.0,
-                                fire_rate: 1.0 / 10.,
-                                trigger: false,
-                                aim_dir: Quat::IDENTITY,
-                            })
-                            .insert(PbrBundle {
-                                mesh: meshes.add(Mesh::from(shape::Box::new(1., 0.5, 1.))),
-                                material: materials.add(Color::RED.into()),
-                                ..default()
-                            })
-                            .with_children(|parent| {
-                                parent
-                                    .spawn(TransformBundle {
-                                        ..Default::default()
-                                    })
-                                    .insert(Barrel {})
-                                    .insert(PbrBundle {
-                                        mesh: meshes.add(Mesh::from(shape::Box::new(0.1, 0.1, 2.))),
-                                        material: materials.add(Color::GOLD.into()),
-                                        ..default()
-                                    });
-                            });
-                        parent
-                            .spawn(TransformBundle {
-                                local: Transform {
-                                    translation: vec3(0.0, 0.0, -40.0),
-                                    ..Default::default()
-                                },
-                                ..Default::default()
-                            })
-                            .insert(Turret {
-                                cooldown: 0.0,
-                                fire_rate: 1.0 / 10.,
-                                trigger: false,
-                                aim_dir: Quat::IDENTITY,
-                            })
-                            .insert(PbrBundle {
-                                mesh: meshes.add(Mesh::from(shape::Box::new(1., 0.5, 1.))),
-                                material: materials.add(Color::RED.into()),
-                                ..default()
-                            })
-                            .with_children(|parent| {
-                                parent
-                                    .spawn(TransformBundle {
-                                        ..Default::default()
-                                    })
-                                    .insert(Barrel {})
-                                    .insert(PbrBundle {
-                                        mesh: meshes.add(Mesh::from(shape::Box::new(0.1, 0.1, 2.))),
-                                        material: materials.add(Color::GOLD.into()),
-                                        ..default()
-                                    });
-                            });
-                    })
                     .id();
 
                 // We could send an InitState with all the players id and positions for the client
@@ -337,6 +288,54 @@ fn on_client_connected(
                 server.broadcast_message(DefaultChannel::Reliable, message);
             }
             _ => (),
+        }
+    }
+}
+
+fn on_client_model_loaded(
+    mut commands: Commands,
+    query: Query<(Entity, &ShipModelLoadHandle)>,
+    assets_gltf: Res<Assets<Gltf>>,
+    assets_gltfnode: Res<Assets<GltfNode>>,
+) {
+    for (entity, handle) in query.iter() {
+        if let Some(gltf) = assets_gltf.get(&handle.0) {
+            println!("Loaded GLTF, spawning model and turrets");
+            // spawn the first scene in the file
+            let model = commands
+                .spawn(SceneBundle {
+                    scene: gltf.scenes[0].clone(),
+                    ..Default::default()
+                })
+                .id();
+            let mut turrets: Vec<Entity> = vec![];
+
+            for node_name in gltf.named_nodes.keys().into_iter() {
+                if node_name.contains("turret_pad_large") {
+                    if let Some(node) = assets_gltfnode.get(&gltf.named_nodes[node_name]) {
+                        println!("turret transform: {}", node.transform.translation);
+                        let thruster = commands
+                            .spawn((
+                                TransformBundle::from(node.transform),
+                                Turret {
+                                    fire_rate: 1.0 / 10.,
+                                    ..default()
+                                },
+                            ))
+                            .with_children(|parent| {
+                                parent.spawn((TransformBundle::default(), Barrel {}));
+                            })
+                            .id();
+                        turrets.push(thruster);
+                    }
+                }
+            }
+
+            commands
+                .entity(entity)
+                .push_children(&[model])
+                .push_children(&turrets)
+                .remove::<ShipModelLoadHandle>();
         }
     }
 }

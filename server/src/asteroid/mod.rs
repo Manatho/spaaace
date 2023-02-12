@@ -31,7 +31,7 @@ fn spawn_asteroids(
     mut id_provider: ResMut<NetworkIdProvider>,
 ) {
     let mut rng = rand::thread_rng();
-    for _ in 0..100 {
+    for _ in 0..20 {
         let x = Transform {
             translation: Vec3 {
                 x: rng.gen::<f32>() * 250.0,
@@ -67,8 +67,8 @@ fn spawn_asteroids(
                 linear_damping: 1.,
             })
             .insert(Sleeping {
-                angular_threshold: 10.0,
-                linear_threshold: 10.0,
+                angular_threshold: 100.0,
+                linear_threshold: 100.0,
                 sleeping: true,
             })
             .insert(ColliderMassProperties::Density(1.0))

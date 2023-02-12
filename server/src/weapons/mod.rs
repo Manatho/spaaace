@@ -24,6 +24,16 @@ pub struct Turret {
     pub trigger: bool,
     pub aim_dir: Quat,
 }
+impl Default for Turret {
+    fn default() -> Self {
+        Self {
+            fire_rate: 1.0,
+            cooldown: Default::default(),
+            trigger: Default::default(),
+            aim_dir: Default::default(),
+        }
+    }
+}
 
 pub struct WeaponsPlugin;
 

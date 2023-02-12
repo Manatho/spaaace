@@ -53,7 +53,7 @@ fn on_client_connected(
 
 fn draw_capture_sphere_gizmos(cap_query: Query<(&CaptureSphere, &Transform)>) {
     for (_, transform) in cap_query.iter() {
-        draw_gizmo(Gizmo::sphere(transform.translation, 1.0, Color::GREEN))
+        draw_gizmo(Gizmo::new(transform.translation, 1.0, Color::GREEN))
     }
 }
 

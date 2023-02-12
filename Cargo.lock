@@ -270,10 +270,37 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cd4c06a380d02588eac43f8a56d2d370614fe6b2e7467041e57b064e93ec7620"
 dependencies = [
  "bevy",
- "bevy-inspector-egui-derive",
+ "bevy-inspector-egui-derive 0.15.0",
  "bevy_egui 0.18.0",
  "image 0.24.5",
  "pretty-type-name",
+]
+
+[[package]]
+name = "bevy-inspector-egui"
+version = "0.17.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8be4f9fa859e4840e7cbcc0ddf2c8a1441ff8f663c317769c5ccc70cdf13bcf2"
+dependencies = [
+ "bevy-inspector-egui-derive 0.17.0",
+ "bevy_app",
+ "bevy_asset",
+ "bevy_core",
+ "bevy_core_pipeline",
+ "bevy_ecs",
+ "bevy_egui 0.19.0",
+ "bevy_hierarchy",
+ "bevy_log",
+ "bevy_math",
+ "bevy_pbr",
+ "bevy_reflect",
+ "bevy_render",
+ "bevy_utils",
+ "egui",
+ "image 0.24.5",
+ "once_cell",
+ "pretty-type-name",
+ "smallvec",
 ]
 
 [[package]]
@@ -281,6 +308,17 @@ name = "bevy-inspector-egui-derive"
 version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2c6a0ceb52115321ef304a5a875e975bba5bbf2ceb802e1dfa07221e8bbc8178"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "bevy-inspector-egui-derive"
+version = "0.17.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "97826e6225a5b56e77683e7b99418171f7531d48682b8531252dc6b8ef3e8113"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -666,42 +704,12 @@ dependencies = [
 
 [[package]]
 name = "bevy_mod_gizmos"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "290dc38ff4f6583f45b02925657c37c1303eb848e70ec153e0cf2033c54b3c2f"
-dependencies = [
- "bevy",
- "bevy_mod_picking",
- "lazy_static",
-]
-
-[[package]]
-name = "bevy_mod_gizmos"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0118a25d0ae53e6ebc6ad581054d364a4ac71df29c628a7a8f64011c4d089c0a"
 dependencies = [
  "bevy",
  "lazy_static",
-]
-
-[[package]]
-name = "bevy_mod_picking"
-version = "0.10.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f4b815c364e05f887421ad2f14dee74bf4c3e60f34be1878d634cb28fadf15d2"
-dependencies = [
- "bevy",
- "bevy_mod_raycast",
-]
-
-[[package]]
-name = "bevy_mod_raycast"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8a5813c0224e31350919e5fbf5a2099c3be4c7b8c04e8584ee4dba4e87795a19"
-dependencies = [
- "bevy",
 ]
 
 [[package]]
@@ -734,9 +742,9 @@ checksum = "8ec44f7655039546bc5d34d98de877083473f3e9b2b81d560c528d6d74d3eff4"
 
 [[package]]
 name = "bevy_rapier3d"
-version = "0.19.0"
+version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9e2805bef07b206854b417a544e32782677106c99f4e001d00d884f74ed4d37f"
+checksum = "77057d7ecde9cff3ad7f36faa362dd540c25a6316e160550e49915f3a765fc53"
 dependencies = [
  "bevy",
  "bitflags",
@@ -2606,9 +2614,9 @@ dependencies = [
 
 [[package]]
 name = "nalgebra"
-version = "0.31.4"
+version = "0.32.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "20bd243ab3dbb395b39ee730402d2e5405e448c75133ec49cc977762c4cba3d1"
+checksum = "f6515c882ebfddccaa73ead7320ca28036c4bc84c9bcca3cc0cbba8efe89223a"
 dependencies = [
  "approx",
  "glam",
@@ -2623,9 +2631,9 @@ dependencies = [
 
 [[package]]
 name = "nalgebra-macros"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "01fcc0b8149b4632adc89ac3b7b31a12fb6099a0317a4eb2ebff574ef7de7218"
+checksum = "d232c68884c0c99810a5a4d333ef7e47689cfd0edc85efc9e54e1e6bf5212766"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3055,9 +3063,9 @@ dependencies = [
 
 [[package]]
 name = "parry3d"
-version = "0.11.1"
+version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee763b47e68f62d578bcfc3f83cf75d9d970aed5df20b6d90287ca9b3195155d"
+checksum = "d2852a4cf8f65177e6f3755a725fdc0a433cca4fa6a97a07ae8c8abd7a4b52ea"
 dependencies = [
  "approx",
  "arrayvec",
@@ -3320,9 +3328,9 @@ checksum = "63e935c45e09cc6dcf00d2f0b2d630a58f4095320223d47fc68918722f0538b6"
 
 [[package]]
 name = "rapier3d"
-version = "0.16.1"
+version = "0.17.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e9cc332c8953b5a33e86cacda7466a433a38064825175be8ddd2bc631d858115"
+checksum = "33c3a4adb69feadac44d74be058aaaec4502f9c193ec20c0e629b07387ee61a2"
 dependencies = [
  "approx",
  "arrayvec",
@@ -3643,9 +3651,9 @@ checksum = "43b2853a4d09f215c24cc5489c992ce46052d359b5109343cbafbf26bc62f8a3"
 
 [[package]]
 name = "simba"
-version = "0.7.3"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2f3fd720c48c53cace224ae62bef1bbff363a70c68c4802a78b5cc6159618176"
+checksum = "50582927ed6f77e4ac020c057f37a268fc6aebc29225050365aacbb9deeeddc4"
 dependencies = [
  "approx",
  "num-complex",
@@ -3692,10 +3700,10 @@ name = "spaaaace"
 version = "0.1.0"
 dependencies = [
  "bevy",
- "bevy-inspector-egui",
+ "bevy-inspector-egui 0.15.0",
  "bevy_egui 0.19.0",
  "bevy_hanabi",
- "bevy_mod_gizmos 0.3.1",
+ "bevy_mod_gizmos",
  "bevy_renet",
  "bincode",
  "cfg-if",
@@ -3710,8 +3718,8 @@ name = "spaaaace_server"
 version = "0.1.0"
 dependencies = [
  "bevy",
- "bevy-inspector-egui",
- "bevy_mod_gizmos 0.2.0",
+ "bevy-inspector-egui 0.17.0",
+ "bevy_mod_gizmos",
  "bevy_rapier3d",
  "bevy_renet",
  "bincode",
@@ -3724,7 +3732,9 @@ dependencies = [
 name = "spaaaace_shared"
 version = "0.1.0"
 dependencies = [
+ "bevy_asset",
  "bevy_ecs",
+ "bevy_gltf",
  "bevy_math",
  "cfg-if",
  "log",

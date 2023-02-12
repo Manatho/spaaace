@@ -1,5 +1,9 @@
+use bevy_asset::Handle;
+use bevy_ecs::prelude::Component;
+use bevy_gltf::Gltf;
 use phf::phf_map;
 
+#[derive(Clone, Copy)]
 pub struct ShipType {
     // model_name is relative to the assets/ships/ folder
     pub model_name: &'static str,
@@ -9,10 +13,13 @@ pub struct ShipType {
 }
 
 pub static SHIP_TYPES: phf::Map<&'static str, ShipType> = phf_map! {
-    "DEBUG_SHIP" => ShipType{
+    "TEST_SHIP" => ShipType{
         model_name: "test_ship/test_ship.gltf",
         forward_thrust_force: 2000.,
         backward_thrust_force: 2000.,
         lateral_thrust_force: 2000.,
     },
 };
+
+#[derive(Component)]
+pub struct ShipModelLoadHandle(pub Handle<Gltf>);

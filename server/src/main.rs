@@ -9,7 +9,7 @@ use bevy::{
     DefaultPlugins,
 };
 
-use bevy_inspector_egui::WorldInspectorPlugin;
+use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_mod_gizmos::GizmosPlugin;
 use bevy_rapier3d::{
     prelude::{NoUserData, RapierPhysicsPlugin},
@@ -58,7 +58,7 @@ fn main() {
         }))
         .add_plugin(GizmosPlugin)
         .add_startup_system(setup)
-        .add_plugin(WorldInspectorPlugin::new())
+        .add_plugin(WorldInspectorPlugin)
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugin(RapierDebugRenderPlugin::default())
         .add_plugin(RenetServerPlugin::default())
@@ -155,6 +155,6 @@ fn camera_follow_players(
         transform.look_at(avg, Vec3::Y);
 
         let back = transform.back();
-        transform.translation = avg + back * (max_dist_from_avg * 2.0 + 10.);
+        transform.translation = avg + back * (max_dist_from_avg * 3.0 + 80.);
     }
 }
