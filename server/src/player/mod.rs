@@ -11,7 +11,8 @@ use bevy::{
 };
 use bevy_mod_gizmos::{draw_gizmo, Gizmo};
 use bevy_rapier3d::prelude::{
-    Collider, ColliderMassProperties, Damping, ExternalForce, GravityScale, RigidBody, Sleeping,
+    Collider, ColliderMassProperties, Damping, ExternalForce, ExternalImpulse, GravityScale,
+    RigidBody, Sleeping,
 };
 
 use bevy_renet::renet::{DefaultChannel, RenetServer, ServerEvent};
@@ -52,7 +53,7 @@ pub struct Player {
     pub team: Team,
 }
 
-fn update_players_system(mut query: Query<(&mut ExternalForce, &Transform, &PlayerInput)>) {
+fn update_players_system(mut query: Query<(&mut ExternalImpulse, &Transform, &PlayerInput)>) {
     for (mut rigidbody, transform, input) in query.iter_mut() {
         let rotation = (input.rotate_right as i8 - input.rotate_left as i8) as f32;
         let thrust_longitudal = (input.thrust_forward as i8 - input.thrust_reverse as i8) as f32;
@@ -67,9 +68,9 @@ fn update_players_system(mut query: Query<(&mut ExternalForce, &Transform, &Play
         let left = transform.left();
         let projected_left = (left - Vec3::new(0.0, left.y, 0.0)).normalize();
 
-        let longitudal_force = thrust_longitudal * PLAYER_MOVE_SPEED * 20.0 * projected_forward;
-        let lateral_force = thrust_lateral * PLAYER_MOVE_SPEED * 5.0 * projected_left;
-        let vertical_force = thrust_vertical * PLAYER_MOVE_SPEED * 10.0 * Vec3::Y;
+        let longitudal_force = thrust_longitudal * PLAYER_MOVE_SPEED * 50.0 * projected_forward;
+        let lateral_force = thrust_lateral * PLAYER_MOVE_SPEED * 30.0 * projected_left;
+        let vertical_force = thrust_vertical * PLAYER_MOVE_SPEED * 30.0 * Vec3::Y;
 
         draw_gizmo(Gizmo::cubiod(
             transform.translation + rotated_forward * 2.0,
@@ -83,30 +84,33 @@ fn update_players_system(mut query: Query<(&mut ExternalForce, &Transform, &Play
             Color::GREEN,
         ));
 
-        rigidbody.force = longitudal_force + lateral_force + vertical_force;
-        rigidbody.torque = rotation * Vec3::NEG_Y * PLAYER_MOVE_SPEED * 20.0;
+        rigidbody.impulse = longitudal_force + lateral_force + vertical_force;
+        rigidbody.torque_impulse = rotation * Vec3::NEG_Y * PLAYER_MOVE_SPEED * 60.0;
 
         {
             let (axis, angle) =
                 Quat::from_rotation_arc(transform.forward(), rotated_forward).to_axis_angle();
-            rigidbody.torque += axis.normalize_or_zero() * angle * 7.0;
+            rigidbody.torque_impulse += axis.normalize_or_zero() * angle * 100.0;
         }
 
         {
             let (axis, angle) = Quat::from_rotation_arc(transform.up(), Vec3::Y).to_axis_angle();
-            rigidbody.torque += axis.normalize_or_zero() * angle * 50.0;
+            rigidbody.torque_impulse += axis.normalize_or_zero() * angle * 100.0;
         }
     }
 }
 
 fn server_sync_players(
     mut server: ResMut<RenetServer>,
-    mut query: Query<(&Transform, &mut NetworkedId), Without<Sleeping>>,
+    mut query: Query<(&Transform, &mut NetworkedId, Option<&Sleeping>)>,
     time: Res<Time>,
 ) {
     let mut entries: Vec<(&NetworkedId, TranslationRotation)> = Vec::new();
 
-    for (transform, network_id) in query.iter() {
+    for (transform, network_id, sleeping) in query.iter() {
+        if sleeping.is_some() && sleeping.unwrap().sleeping {
+            continue;
+        }
         entries.push((
             network_id,
             TranslationRotation {
@@ -130,7 +134,10 @@ fn server_sync_players(
     let sync_message = bincode::serialize(&messages).unwrap();
     server.broadcast_message(DefaultChannel::Unreliable, sync_message);
 
-    for (_, mut network_id) in query.iter_mut() {
+    for (_, mut network_id, sleeping) in query.iter_mut() {
+        if sleeping.is_some() && sleeping.unwrap().sleeping {
+            continue;
+        }
         if messages.contains_key(&network_id.id) {
             network_id.last_sent = Instant::now().duration_since(time.startup()).as_nanos();
         }
@@ -236,13 +243,13 @@ fn on_client_connected(
                         id: *id,
                         last_sent: 0,
                     })
-                    .insert(ColliderMassProperties::Mass(3.0))
+                    .insert(ColliderMassProperties::Density(3.0))
                     .insert(Player { team: Team::Red })
                     .insert(Collider::cuboid(2.0, 1.0, 12.0))
                     .insert(RigidBody::Dynamic)
                     // .insert(LockedAxes::ROTATION_LOCKED_Z)
                     .insert(GravityScale(0.0))
-                    .insert(ExternalForce::default())
+                    .insert(ExternalImpulse::default())
                     .insert(Damping {
                         linear_damping: 0.5,
                         angular_damping: 1.0,

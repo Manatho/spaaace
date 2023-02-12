@@ -66,7 +66,12 @@ fn spawn_asteroids(
                 angular_damping: 1.,
                 linear_damping: 1.,
             })
-            .insert(ColliderMassProperties::Mass(1.0))
+            .insert(Sleeping {
+                angular_threshold: 10.0,
+                linear_threshold: 10.0,
+                sleeping: true,
+            })
+            .insert(ColliderMassProperties::Density(1.0))
             .insert(id_provider.new_id())
             .insert(Asteroid);
     }
