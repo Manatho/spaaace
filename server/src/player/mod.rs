@@ -82,7 +82,7 @@ fn update_players_system(mut query: Query<(&mut ExternalForce, &Transform, &Play
         ));
 
         rigidbody.force = longitudal_force + lateral_force + vertical_force;
-        rigidbody.torque = rotation * Vec3::NEG_Y * PLAYER_MOVE_SPEED * 5.0;
+        rigidbody.torque = rotation * Vec3::NEG_Y * PLAYER_MOVE_SPEED * 20.0;
 
         {
             let (axis, angle) =
@@ -92,7 +92,7 @@ fn update_players_system(mut query: Query<(&mut ExternalForce, &Transform, &Play
 
         {
             let (axis, angle) = Quat::from_rotation_arc(transform.up(), Vec3::Y).to_axis_angle();
-            rigidbody.torque += axis.normalize_or_zero() * angle * 10.0;
+            rigidbody.torque += axis.normalize_or_zero() * angle * 50.0;
         }
     }
 }
@@ -237,7 +237,7 @@ fn on_client_connected(
                     })
                     .insert(ColliderMassProperties::Mass(3.0))
                     .insert(Player { team: Team::Red })
-                    .insert(Collider::cuboid(2.0, 1.0, 4.0))
+                    .insert(Collider::cuboid(2.0, 1.0, 12.0))
                     .insert(RigidBody::Dynamic)
                     // .insert(LockedAxes::ROTATION_LOCKED_Z)
                     .insert(GravityScale(0.0))

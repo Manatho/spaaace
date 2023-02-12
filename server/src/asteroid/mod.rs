@@ -58,7 +58,7 @@ fn spawn_asteroids(
         // });
 
         commands
-            .spawn(Collider::cuboid(1.0, 1.0, 1.0))
+            .spawn(Collider::ball(1.0))
             .insert(RigidBody::Dynamic)
             .insert(GravityScale(0.0))
             .insert(TransformBundle::from(x))

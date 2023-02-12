@@ -17,6 +17,6 @@ pub fn lerp_transform_targets(
         let s = l.speed * time.delta_seconds();
         t.translation = t.translation.lerp(l.target.translation, s);
         t.rotation = t.rotation.lerp(l.target.rotation, s);
-        t.scale = t.scale.lerp(l.target.scale, s);
+        // t.scale = t.scale.lerp(l.target.scale, s); Removed since current scale is not sent
     }
 }
