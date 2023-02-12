@@ -1,6 +1,6 @@
 pub mod bullet;
 
-use std::time::{Instant, SystemTime, UNIX_EPOCH};
+use std::time::Instant;
 
 use bevy::{
     prelude::{
@@ -111,7 +111,10 @@ fn fire_weapons(
 
                 commands
                     .spawn(TransformBundle::from_transform(transform))
-                    .insert(Bullet { speed: 200., lifetime: time.elapsed_seconds() + 2.0 })
+                    .insert(Bullet {
+                        speed: 200.,
+                        lifetime: time.elapsed_seconds() + 2.0,
+                    })
                     .insert(NetworkedId {
                         id: id.try_into().unwrap(),
                         last_sent: 0,

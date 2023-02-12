@@ -1,10 +1,7 @@
 //! Load a cubemap texture onto a cube like a skybox and cycle through different compressed texture formats
 
-use std::f32::consts::PI;
-
 use bevy::{
     asset::LoadState,
-    input::mouse::MouseMotion,
     pbr::{MaterialPipeline, MaterialPipelineKey},
     prelude::*,
     reflect::TypeUuid,
@@ -19,7 +16,7 @@ use bevy::{
             TextureViewDescriptor, TextureViewDimension,
         },
         renderer::RenderDevice,
-        texture::{CompressedImageFormats, FallbackImage},
+        texture::FallbackImage,
     },
 };
 
@@ -39,12 +36,7 @@ impl Plugin for CubemapPlugin {
     }
 }
 
-fn setup(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut cubemap_materials: ResMut<Assets<CubemapMaterial>>,
-) {
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     let skybox_handle = asset_server.load("skybox/blue_red/skybox_lq.png");
 
     commands.insert_resource(Cubemap {
