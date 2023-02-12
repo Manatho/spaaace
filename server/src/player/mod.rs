@@ -2,15 +2,17 @@ use bevy::{
     math::vec3,
     prelude::{
         default, shape, App, Assets, BuildChildren, Color, Commands, Component, CoreStage,
-        DespawnRecursiveExt, EventReader, Mesh, PbrBundle, Plugin, Quat, Query, ResMut,
-        StandardMaterial, SystemStage, Transform, Vec3, Res, Without,
+        DespawnRecursiveExt, EventReader, Mesh, PbrBundle, Plugin, Quat, Query, Res, ResMut,
+        StandardMaterial, SystemStage, Transform, Vec3, Without,
     },
     time::{FixedTimestep, Time},
     transform::TransformBundle,
     utils::{HashMap, Instant},
 };
 use bevy_mod_gizmos::{draw_gizmo, Gizmo};
-use bevy_rapier3d::prelude::{Collider, Damping, ExternalForce, GravityScale, RigidBody, ColliderMassProperties, Sleeping};
+use bevy_rapier3d::prelude::{
+    Collider, ColliderMassProperties, Damping, ExternalForce, GravityScale, RigidBody, Sleeping,
+};
 
 use bevy_renet::renet::{DefaultChannel, RenetServer, ServerEvent};
 use spaaaace_shared::{
@@ -87,7 +89,7 @@ fn update_players_system(mut query: Query<(&mut ExternalForce, &Transform, &Play
         {
             let (axis, angle) =
                 Quat::from_rotation_arc(transform.forward(), rotated_forward).to_axis_angle();
-            rigidbody.torque += axis.normalize_or_zero() * angle;
+            rigidbody.torque += axis.normalize_or_zero() * angle * 7.0;
         }
 
         {
@@ -115,7 +117,6 @@ fn server_sync_players(
     }
 
     entries.sort_by(|(a, _), (b, _)| a.last_sent.cmp(&b.last_sent));
-    
 
     let mut messages: HashMap<u64, TranslationRotation> = HashMap::new();
     for (id, tr) in entries {
@@ -330,11 +331,5 @@ fn on_client_connected(
             }
             _ => (),
         }
-    }
-}
-
-fn draw_player_gizmos(query: Query<(&Player, &Transform)>) {
-    for (_, transform) in query.iter() {
-        draw_gizmo(Gizmo::sphere(transform.translation, 1.0, Color::RED))
     }
 }

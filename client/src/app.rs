@@ -27,7 +27,7 @@ use bevy::{
     scene::SceneBundle,
     time::Time,
     utils::HashMap,
-    window::{WindowDescriptor, WindowMode, WindowPlugin},
+    window::{WindowDescriptor, WindowPlugin},
     DefaultPlugins,
 };
 

@@ -2,17 +2,14 @@ use bevy::{
     prelude::{
         default, App, AssetServer, BuildChildren, Children, Color, Commands, Component,
         DespawnRecursiveExt, Entity, ImageBundle, Input, KeyCode, NodeBundle, Plugin, Query, Res,
-        ResMut, Resource, TextBundle, Visibility, With,
+        ResMut, TextBundle, Visibility, With,
     },
     text::TextStyle,
-    ui::{
-        AlignItems, BackgroundColor, FlexDirection, JustifyContent, Node, PositionType, Size,
-        Style, Val,
-    },
+    ui::{AlignItems, FlexDirection, JustifyContent, Node, PositionType, Size, Style, Val},
     window::{CursorGrabMode, Windows},
 };
-use bevy_inspector_egui::egui::plot::Text;
-use spaaaace_shared::{player, Lobby};
+
+use spaaaace_shared::Lobby;
 
 use crate::game_state::ClientGameState;
 
@@ -140,7 +137,7 @@ fn scoreboard(
     asset_server: Res<AssetServer>,
 ) {
     let lobby_players = lobby.players.clone();
-    for (node_ent, node, children, mut vis) in query.iter_mut() {
+    for (node_ent, _node, children, mut vis) in query.iter_mut() {
         vis.is_visible = keys.pressed(KeyCode::Tab);
 
         if lobby.is_changed() == false {
