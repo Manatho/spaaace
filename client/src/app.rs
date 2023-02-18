@@ -71,7 +71,8 @@ pub fn run() {
         .insert_resource(PlayerInput::default())
         .add_system(player_input)
         .add_system(client_send_input.with_run_criteria(run_if_client_connected))
-        .add_system(client_update_system.with_run_criteria(run_if_client_connected))
+        .add_system(client_reliable_message_handler.with_run_criteria(run_if_client_connected))
+        .add_system(client_unreliable_message_handler.with_run_criteria(run_if_client_connected))
         .add_system(lerp_transform_targets)
         .add_system(spawn_gltf_objects)
         .insert_resource(ClearColor(Color::rgb(0.01, 0.01, 0.01)))
@@ -91,7 +92,7 @@ pub fn run() {
         .run();
 }
 
-fn init(mut commands: Commands, mut ambient_light: ResMut<AmbientLight>, ass: Res<AssetServer>) {
+fn init(mut commands: Commands, mut ambient_light: ResMut<AmbientLight>) {
     commands
         .spawn(Camera3dBundle {
             camera: Camera {
@@ -153,12 +154,11 @@ fn client_send_input(player_input: Res<PlayerInput>, mut client: ResMut<RenetCli
     client.send_message(DefaultChannel::Reliable, input_message);
 }
 
-fn client_update_system(
+fn client_reliable_message_handler(
     mut commands: Commands,
     mut client: ResMut<RenetClient>,
     mut lobby: ResMut<Lobby>,
     mut server_message_event_writer: EventWriter<ServerMessages>,
-    ass: Res<AssetServer>,
 ) {
     while let Some(message) = client.receive_message(DefaultChannel::Reliable) {
         let server_message = bincode::deserialize(&message).unwrap();
@@ -171,32 +171,16 @@ fn client_update_system(
                 }
             }
 
-            ServerMessages::AsteroidSpawned {
-                id,
-                position,
-                scale,
-                rotation,
-            } => {
-                println!("{} {} {} {}", id, position.x, position.y, position.z);
-                let x = commands
-                    .spawn(SceneBundle {
-                        scene: ass.load("asteroid.glb#Scene0"),
-                        transform: Transform {
-                            translation: position,
-                            scale: scale,
-                            rotation: rotation,
-                            ..default()
-                        },
-                        ..default()
-                    })
-                    .id();
-
-                lobby.networked_entities.insert(id, x);
-            }
             _ => (),
         }
     }
+}
 
+fn client_unreliable_message_handler(
+    mut commands: Commands,
+    mut client: ResMut<RenetClient>,
+    lobby: ResMut<Lobby>,
+) {
     while let Some(message) = client.receive_message(DefaultChannel::Unreliable) {
         let networked_translation: HashMap<u64, TranslationRotation> =
             bincode::deserialize(&message).unwrap();
