@@ -6,6 +6,7 @@ use app::{
     controls::player_input,
     debug::fps::{fps_gui, team_swap_gui},
     game_state::ClientGameState,
+    player::{ClientPlayerPlugin, ShipModelLoadHandle},
     skybox::cubemap::CubemapPlugin,
     ui::GameUIPlugin,
     utils::{lerp_transform_targets, LerpTransformTarget},
@@ -20,9 +21,9 @@ use bevy::{
     prelude::{
         default, shape, AmbientLight, AssetServer, Assets, BuildChildren, Camera, Camera3dBundle,
         ClearColor, Color, Commands, Component, DirectionalLight, DirectionalLightBundle, Entity,
-        Handle, IntoSystemDescriptor, MaterialMeshBundle, MaterialPlugin, Mesh, PbrBundle,
-        PluginGroup, Quat, Query, Res, ResMut, SpatialBundle, StandardMaterial, Transform, Vec2,
-        Vec3, Vec4,
+        EventWriter, Handle, IntoSystemDescriptor, MaterialMeshBundle, MaterialPlugin, Mesh,
+        PbrBundle, PluginGroup, Quat, Query, Res, ResMut, SpatialBundle, StandardMaterial,
+        Transform, Vec2, Vec3, Vec4,
     },
     scene::SceneBundle,
     time::Time,
@@ -40,7 +41,9 @@ use bevy_hanabi::{
 
 use bevy_mod_gizmos::GizmosPlugin;
 use bevy_renet::{
-    renet::{ClientAuthentication, DefaultChannel, RenetClient, RenetConnectionConfig},
+    renet::{
+        ClientAuthentication, DefaultChannel, RenetClient, RenetConnectionConfig, ServerEvent,
+    },
     run_if_client_connected, RenetClientPlugin,
 };
 use rand::Rng;
@@ -80,6 +83,9 @@ pub fn run() {
         .insert_resource(ClearColor(Color::rgb(0.01, 0.01, 0.01)))
         .add_system(fps_gui)
         .add_system(team_swap_gui)
+        // .add_system(client_update_system)
+        .add_plugin(ClientPlayerPlugin {})
+        .add_event::<ServerMessages>()
         // Run App
         .add_plugin(OrbitCameraPlugin)
         .add_plugin(GameUIPlugin)
@@ -154,6 +160,16 @@ fn client_send_input(player_input: Res<PlayerInput>, mut client: ResMut<RenetCli
 #[derive(Component)]
 struct Bullet {}
 
+// fn client_update_system(
+//     mut client: ResMut<RenetClient>,
+//     mut server_message_event_writer: EventWriter<ServerMessages>,
+// ) {
+//     while let Some(message) = client.receive_message(DefaultChannel::Reliable) {
+//         let server_message = bincode::deserialize(&message).unwrap();
+//         server_message_event_writer.send(server_message);
+//     }
+// }
+
 fn client_sync_players(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -161,34 +177,16 @@ fn client_sync_players(
     mut force_field_materials: ResMut<Assets<ForceFieldMaterial>>,
     mut client: ResMut<RenetClient>,
     mut lobby: ResMut<Lobby>,
+    mut server_message_event_writer: EventWriter<ServerMessages>,
     query: Query<&Handle<ForceFieldMaterial>>,
     ass: Res<AssetServer>,
     time: Res<Time>,
 ) {
     while let Some(message) = client.receive_message(DefaultChannel::Reliable) {
         let server_message = bincode::deserialize(&message).unwrap();
+        server_message_event_writer.send(bincode::deserialize(&message).unwrap());
+
         match server_message {
-            ServerMessages::PlayerConnected { id } => {
-                println!("Player {} connected.", id);
-
-                let my_gltf = ass.load("test_ship.glb");
-                let mut cmd =
-                    commands.spawn((SpatialBundle { ..default() }, ShipModelLoadHandle(my_gltf)));
-
-                if id == client.client_id() {
-                    cmd.insert(OrbitCameraTarget {});
-                }
-
-                let player_entity = cmd.id();
-
-                lobby.players.insert(id, player_entity);
-            }
-            ServerMessages::PlayerDisconnected { id } => {
-                println!("Player {} disconnected.", id);
-                if let Some(player_entity) = lobby.players.remove(&id) {
-                    commands.entity(player_entity).despawn();
-                }
-            }
             ServerMessages::BulletSpawned {
                 id,
                 position,
@@ -317,6 +315,7 @@ fn client_sync_players(
 
                 lobby.networked_entities.insert(id, x);
             }
+            _ => (),
         }
     }
 
@@ -351,9 +350,6 @@ fn client_sync_players(
         }
     }
 }
-
-#[derive(Component)]
-struct ShipModelLoadHandle(Handle<Gltf>);
 
 fn spawn_gltf_objects(
     mut commands: Commands,
