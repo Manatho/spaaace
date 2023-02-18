@@ -34,16 +34,15 @@ impl Plugin for PlayerPlugin {
             .add_system(player_input)
             .add_system(on_client_disconnected)
             .add_system(on_client_connected)
-            .add_system(
-                server_sync_players, // .add_system(draw_player_gizmos)
+            .add_system(server_sync_players); // .add_system(draw_player_gizmos)
 
-                                     // .add_stage_after(
-                                     //     CoreStage::Update,
-                                     //     FixedUpdateStage,
-                                     //     SystemStage::parallel()
-                                     //         .with_run_criteria(FixedTimestep::step(1.0 / (SERVER_TICKRATE as f64)))
-                                     //         .with_system(),
-            );
+        // .add_stage_after(
+        //     CoreStage::Update,
+        //     FixedUpdateStage,
+        //     SystemStage::parallel()
+        //         .with_run_criteria(FixedTimestep::step(1.0 / (SERVER_TICKRATE as f64)))
+        //         .with_system(),
+        //);
     }
 }
 
