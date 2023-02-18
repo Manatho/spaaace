@@ -4,6 +4,7 @@ use bevy::{
     utils::default,
 };
 
+use bevy_rapier3d::prelude::Collider;
 use spaaaace_shared::{Lobby, ServerMessages};
 
 pub struct AsteroidPlugin;
@@ -38,6 +39,7 @@ fn on_asteroid_spawned(
                         },
                         ..default()
                     })
+                    .insert(Collider::ball(1.0))
                     .id();
 
                 lobby.networked_entities.insert(*id, x);
