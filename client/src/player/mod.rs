@@ -16,6 +16,7 @@ pub struct ClientPlayerPlugin;
 impl Plugin for ClientPlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_system(on_client_connected);
+        app.add_system(on_client_disconnected);
     }
 }
 
@@ -47,6 +48,19 @@ fn on_client_connected(
 
                 lobby.players.insert(*id, player_entity);
             }
+
+            _ => {}
+        }
+    }
+}
+
+fn on_client_disconnected(
+    mut commands: Commands,
+    mut lobby: ResMut<Lobby>,
+    mut event_reader: EventReader<ServerMessages>,
+) {
+    for event in event_reader.iter() {
+        match event {
             ServerMessages::PlayerDisconnected { id } => {
                 println!("Player {} disconnected.", id);
                 if let Some(player_entity) = lobby.players.remove(&id) {

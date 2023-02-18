@@ -7,6 +7,7 @@ use app::{
     debug::fps::{fps_gui, team_swap_gui},
     game_state::ClientGameState,
     player::{ClientPlayerPlugin, ShipModelLoadHandle},
+    weapons::{ClientWeaponsPlugin},
     skybox::cubemap::CubemapPlugin,
     ui::GameUIPlugin,
     utils::{lerp_transform_targets, LerpTransformTarget},
@@ -85,6 +86,7 @@ pub fn run() {
         .add_system(team_swap_gui)
         // .add_system(client_update_system)
         .add_plugin(ClientPlayerPlugin {})
+        .add_plugin(ClientWeaponsPlugin {})
         .add_event::<ServerMessages>()
         // Run App
         .add_plugin(OrbitCameraPlugin)
@@ -157,9 +159,6 @@ fn client_send_input(player_input: Res<PlayerInput>, mut client: ResMut<RenetCli
     client.send_message(DefaultChannel::Reliable, input_message);
 }
 
-#[derive(Component)]
-struct Bullet {}
-
 // fn client_update_system(
 //     mut client: ResMut<RenetClient>,
 //     mut server_message_event_writer: EventWriter<ServerMessages>,
@@ -187,36 +186,6 @@ fn client_sync_players(
         server_message_event_writer.send(bincode::deserialize(&message).unwrap());
 
         match server_message {
-            ServerMessages::BulletSpawned {
-                id,
-                position,
-                rotation,
-            } => {
-                let entity_id = commands
-                    .spawn(PbrBundle {
-                        mesh: meshes.add(Mesh::from(shape::Capsule {
-                            depth: 0.5,
-                            radius: 0.1,
-                            ..Default::default()
-                        })),
-                        material: materials.add(StandardMaterial {
-                            base_color: Color::BLACK,
-                            perceptual_roughness: 1.,
-                            emissive: Color::rgb(1., 0.2, 0.2) * 5.,
-                            ..default()
-                        }),
-                        transform: Transform {
-                            translation: position,
-                            rotation: rotation * Quat::from_rotation_x(PI / 2.0),
-                            ..Default::default()
-                        },
-                        ..Default::default()
-                    })
-                    .insert(Bullet {})
-                    .id();
-
-                lobby.networked_entities.insert(id, entity_id);
-            }
             ServerMessages::EntityDespawn { id } => {
                 if let Some(entity) = lobby.networked_entities.remove(&id) {
                     commands.entity(entity).despawn();

@@ -8,6 +8,7 @@ pub mod utils;
 pub mod skybox;
 pub mod game_state;
 pub mod player;
+pub mod weapons;
 
 #[macro_use]
 extern crate cfg_if;
