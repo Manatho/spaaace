@@ -1,18 +1,16 @@
 use bevy::{
-    math::vec3,
     prelude::{
-        default, App, Commands, Component, EventReader, GlobalTransform, PbrBundle, Plugin, Quat,
-        Query, ResMut, Transform, Vec2, Vec3, With,
+        App, Commands, Component, EventReader, Plugin, Quat,
+        Query, ResMut, Transform, Vec3, With,
     },
     transform::TransformBundle,
 };
 use bevy_rapier3d::prelude::{
-    Ccd, Collider, ColliderMassProperties, Damping, ExternalForce, Friction, GravityScale,
-    Restitution, RigidBody, Sensor, Sleeping, Velocity,
+    Collider, ColliderMassProperties, Damping, GravityScale, RigidBody, Sleeping,
 };
 use bevy_renet::renet::{DefaultChannel, RenetServer, ServerEvent};
 use rand::Rng;
-use spaaaace_shared::{util::Random, Lobby, NetworkIdProvider, NetworkedId, ServerMessages};
+use spaaaace_shared::{util::Random, NetworkIdProvider, NetworkedId, ServerMessages};
 
 #[derive(Component)]
 pub struct Asteroid;

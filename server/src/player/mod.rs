@@ -9,14 +9,13 @@ use bevy::{
         Res, ResMut, SpatialBundle, StandardMaterial, SystemStage, Transform, Vec3, Without,
     },
     scene::SceneBundle,
-    time::{FixedTimestep, Time},
+    time::Time,
     transform::TransformBundle,
     utils::{HashMap, Instant},
 };
 use bevy_mod_gizmos::{draw_gizmo, Gizmo};
 use bevy_rapier3d::prelude::{
-    Collider, ColliderMassProperties, Damping, ExternalForce, ExternalImpulse, GravityScale,
-    RigidBody, Sleeping,
+    Collider, ColliderMassProperties, Damping, ExternalImpulse, GravityScale, RigidBody, Sleeping,
 };
 
 use bevy_renet::renet::{DefaultChannel, RenetServer, ServerEvent};
@@ -24,12 +23,12 @@ use spaaaace_shared::{
     player::player_input::PlayerInput,
     ships::{ShipModelLoadHandle, SHIP_TYPES},
     team::team_enum::Team,
-    ClientMessages, Lobby, NetworkedId, ServerMessages, TranslationRotation, SERVER_TICKRATE,
+    ClientMessages, Lobby, NetworkedId, ServerMessages, TranslationRotation,
 };
 
 use crate::{
     weapons::{Barrel, Turret},
-    ClientEvent, FixedUpdateStage,
+    ClientEvent,
 };
 
 pub struct PlayerPlugin;
@@ -42,14 +41,7 @@ impl Plugin for PlayerPlugin {
             .add_system(on_client_disconnected)
             .add_system(on_client_connected)
             .add_system(on_client_model_loaded)
-            // .add_system(draw_player_gizmos)
-            .add_stage_after(
-                CoreStage::Update,
-                FixedUpdateStage,
-                SystemStage::parallel()
-                    .with_run_criteria(FixedTimestep::step(1.0 / (SERVER_TICKRATE as f64)))
-                    .with_system(server_sync_players),
-            );
+            .add_system(server_sync_players);
     }
 }
 
@@ -130,8 +122,9 @@ fn server_sync_players(
     entries.sort_by(|(a, _), (b, _)| a.last_sent.cmp(&b.last_sent));
 
     let mut messages: HashMap<u64, TranslationRotation> = HashMap::new();
+
     for (id, tr) in entries {
-        if messages.len() < 50 {
+        if messages.len() < 70 {
             messages.insert(id.id, tr);
         } else {
             break;
