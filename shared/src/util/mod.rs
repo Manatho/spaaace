@@ -1,6 +1,5 @@
 use std::f32::consts::PI;
 
-use bevy_ecs::{prelude::Component, system::Resource};
 use bevy_math::{Quat, Vec4};
 use rand::Rng;
 

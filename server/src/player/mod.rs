@@ -1,12 +1,12 @@
-use std::path::{self, Path};
+use std::path::Path;
 
 use bevy::{
     gltf::{Gltf, GltfNode},
     math::vec3,
     prelude::{
-        default, shape, App, AssetServer, Assets, BuildChildren, Color, Commands, Component,
-        CoreStage, DespawnRecursiveExt, Entity, EventReader, Mesh, PbrBundle, Plugin, Quat, Query,
-        Res, ResMut, SpatialBundle, StandardMaterial, SystemStage, Transform, Vec3, Without,
+        default, App, AssetServer, Assets, BuildChildren, Color, Commands, Component,
+        DespawnRecursiveExt, Entity, EventReader, PbrBundle, Plugin, Quat, Query, Res, ResMut,
+        SpatialBundle, Transform, Vec3,
     },
     scene::SceneBundle,
     time::Time,
@@ -62,7 +62,7 @@ fn update_players_system(mut query: Query<(&mut ExternalImpulse, &Transform, &Pl
         let forward = transform.forward();
         let projected_forward = (forward - Vec3::new(0.0, forward.y, 0.0)).normalize();
         let rotated_forward =
-            (Quat::from_axis_angle(transform.left(), -0.6 * thrust_vertical)) * projected_forward;
+            (Quat::from_axis_angle(transform.left(), -0.3 * thrust_vertical)) * projected_forward;
 
         let left = transform.left();
         let projected_left = (left - Vec3::new(0.0, left.y, 0.0)).normalize();
@@ -89,24 +89,24 @@ fn update_players_system(mut query: Query<(&mut ExternalImpulse, &Transform, &Pl
         {
             let (axis, angle) =
                 Quat::from_rotation_arc(transform.forward(), rotated_forward).to_axis_angle();
-            rigidbody.torque_impulse += axis.normalize_or_zero() * angle * 100.0;
+            rigidbody.torque_impulse += axis.normalize_or_zero() * angle * 200.0;
         }
 
         {
             let (axis, angle) = Quat::from_rotation_arc(transform.up(), Vec3::Y).to_axis_angle();
-            rigidbody.torque_impulse += axis.normalize_or_zero() * angle * 100.0;
+            rigidbody.torque_impulse += axis.normalize_or_zero() * angle * 300.0;
         }
     }
 }
 
 fn server_sync_players(
     mut server: ResMut<RenetServer>,
-    mut query: Query<(Entity, &Transform, &mut NetworkedId, Option<&Sleeping>)>,
+    mut query: Query<(&Transform, &mut NetworkedId, Option<&Sleeping>)>,
     time: Res<Time>,
 ) {
     let mut entries: Vec<(&NetworkedId, TranslationRotation)> = Vec::new();
 
-    for (entity, transform, network_id, sleeping) in query.iter() {
+    for (transform, network_id, sleeping) in query.iter() {
         if sleeping.is_some() && sleeping.unwrap().sleeping {
             continue;
         }
@@ -134,7 +134,7 @@ fn server_sync_players(
     let sync_message = bincode::serialize(&messages).unwrap();
     server.broadcast_message(DefaultChannel::Unreliable, sync_message);
 
-    for (_, _, mut network_id, sleeping) in query.iter_mut() {
+    for (_, mut network_id, sleeping) in query.iter_mut() {
         if sleeping.is_some() && sleeping.unwrap().sleeping {
             continue;
         }
@@ -220,8 +220,6 @@ fn on_client_connected(
     mut event_reader: EventReader<ServerEvent>,
     mut commands: Commands,
     mut lobby: ResMut<Lobby>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
     mut server: ResMut<RenetServer>,
     ass: Res<AssetServer>,
 ) {
