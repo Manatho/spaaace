@@ -2,15 +2,15 @@ use std::{f32::consts::PI, net::UdpSocket, time::SystemTime};
 
 use app::{
     camera::{OrbitCamera, OrbitCameraPlugin, OrbitCameraTarget},
-    capture_point::capture_point::ForceFieldMaterial,
+    capture_point::ClientCapturePointPlugin,
     controls::player_input,
     debug::fps::{fps_gui, team_swap_gui},
     game_state::ClientGameState,
     player::{ClientPlayerPlugin, ShipModelLoadHandle},
-    weapons::{ClientWeaponsPlugin},
     skybox::cubemap::CubemapPlugin,
     ui::GameUIPlugin,
     utils::{lerp_transform_targets, LerpTransformTarget},
+    weapons::ClientWeaponsPlugin,
 };
 use bevy::{
     app::App,
@@ -18,16 +18,12 @@ use bevy::{
     diagnostic::FrameTimeDiagnosticsPlugin,
     gltf::{Gltf, GltfNode},
     math::vec3,
-    pbr::NotShadowCaster,
     prelude::{
-        default, shape, AmbientLight, AssetServer, Assets, BuildChildren, Camera, Camera3dBundle,
-        ClearColor, Color, Commands, Component, DirectionalLight, DirectionalLightBundle, Entity,
-        EventWriter, Handle, IntoSystemDescriptor, MaterialMeshBundle, MaterialPlugin, Mesh,
-        PbrBundle, PluginGroup, Quat, Query, Res, ResMut, SpatialBundle, StandardMaterial,
-        Transform, Vec2, Vec3, Vec4,
+        default, AmbientLight, AssetServer, Assets, BuildChildren, Camera, Camera3dBundle,
+        ClearColor, Color, Commands, DirectionalLight, DirectionalLightBundle, Entity, EventWriter,
+        IntoSystemDescriptor, PluginGroup, Quat, Query, Res, ResMut, Transform, Vec2, Vec3, Vec4,
     },
     scene::SceneBundle,
-    time::Time,
     utils::HashMap,
     window::{WindowDescriptor, WindowPlugin},
     DefaultPlugins,
@@ -42,15 +38,13 @@ use bevy_hanabi::{
 
 use bevy_mod_gizmos::GizmosPlugin;
 use bevy_renet::{
-    renet::{
-        ClientAuthentication, DefaultChannel, RenetClient, RenetConnectionConfig, ServerEvent,
-    },
+    renet::{ClientAuthentication, DefaultChannel, RenetClient, RenetConnectionConfig},
     run_if_client_connected, RenetClientPlugin,
 };
-use rand::Rng;
+
 use spaaaace_shared::{
-    player::player_input::PlayerInput, team::team_enum::Team, util::Random, ClientMessages, Lobby,
-    ServerMessages, TranslationRotation, PROTOCOL_ID, SERVER_TICKRATE,
+    player::player_input::PlayerInput, ClientMessages, Lobby, ServerMessages, TranslationRotation,
+    PROTOCOL_ID, SERVER_TICKRATE,
 };
 
 pub fn run() {
@@ -77,9 +71,8 @@ pub fn run() {
         .insert_resource(PlayerInput::default())
         .add_system(player_input)
         .add_system(client_send_input.with_run_criteria(run_if_client_connected))
-        .add_system(client_sync_players.with_run_criteria(run_if_client_connected))
+        .add_system(client_update_system.with_run_criteria(run_if_client_connected))
         .add_system(lerp_transform_targets)
-        .add_plugin(MaterialPlugin::<ForceFieldMaterial>::default())
         .add_system(spawn_gltf_objects)
         .insert_resource(ClearColor(Color::rgb(0.01, 0.01, 0.01)))
         .add_system(fps_gui)
@@ -87,6 +80,7 @@ pub fn run() {
         // .add_system(client_update_system)
         .add_plugin(ClientPlayerPlugin {})
         .add_plugin(ClientWeaponsPlugin {})
+        .add_plugin(ClientCapturePointPlugin {})
         .add_event::<ServerMessages>()
         // Run App
         .add_plugin(OrbitCameraPlugin)
@@ -159,27 +153,12 @@ fn client_send_input(player_input: Res<PlayerInput>, mut client: ResMut<RenetCli
     client.send_message(DefaultChannel::Reliable, input_message);
 }
 
-// fn client_update_system(
-//     mut client: ResMut<RenetClient>,
-//     mut server_message_event_writer: EventWriter<ServerMessages>,
-// ) {
-//     while let Some(message) = client.receive_message(DefaultChannel::Reliable) {
-//         let server_message = bincode::deserialize(&message).unwrap();
-//         server_message_event_writer.send(server_message);
-//     }
-// }
-
-fn client_sync_players(
+fn client_update_system(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    mut force_field_materials: ResMut<Assets<ForceFieldMaterial>>,
     mut client: ResMut<RenetClient>,
     mut lobby: ResMut<Lobby>,
     mut server_message_event_writer: EventWriter<ServerMessages>,
-    query: Query<&Handle<ForceFieldMaterial>>,
     ass: Res<AssetServer>,
-    time: Res<Time>,
 ) {
     while let Some(message) = client.receive_message(DefaultChannel::Reliable) {
         let server_message = bincode::deserialize(&message).unwrap();
@@ -191,77 +170,7 @@ fn client_sync_players(
                     commands.entity(entity).despawn();
                 }
             }
-            ServerMessages::CapturePointSpawned {
-                position,
-                rotation,
-                id,
-                owner,
-                progress: _,
-            } => {
-                let capture_entity = commands
-                    .spawn(MaterialMeshBundle {
-                        mesh: meshes.add(
-                            shape::Icosphere {
-                                radius: 50.,
-                                subdivisions: 8,
-                            }
-                            .into(),
-                        ),
-                        material: force_field_materials.add(ForceFieldMaterial {
-                            color: match owner {
-                                Team::Neutral => Color::WHITE,
-                                Team::Red => Color::RED,
-                                Team::Blue => Color::BLUE,
-                            },
-                            prev_color: Color::WHITE,
-                            last_color_change: time.elapsed_seconds(),
-                            color_texture: Some(ass.load("hex_grid.jpg")),
-                        }),
-                        transform: Transform {
-                            rotation: rotation,
-                            translation: position,
-                            ..Default::default()
-                        },
-                        ..default()
-                    })
-                    .insert(NotShadowCaster)
-                    .id();
 
-                lobby.capture_points.insert(id, capture_entity);
-            }
-            ServerMessages::CapturePointUpdate {
-                id,
-                owner,
-                attacker: _,
-                progress: _,
-            } => {
-                if let Some(entity) = lobby.capture_points.get(&id) {
-                    match query.get(*entity) {
-                        Ok(material) => {
-                            if let Some(material) = force_field_materials.get_mut(material) {
-                                let next_color = match owner {
-                                    Team::Neutral => Color::WHITE,
-                                    Team::Red => Color::RED,
-                                    Team::Blue => Color::BLUE,
-                                };
-                                if material.color != next_color {
-                                    material.prev_color = material.color;
-                                    material.color = next_color;
-                                    material.last_color_change = time.elapsed_seconds();
-
-                                    println!(
-                                        "{:?} {:?} {:?}",
-                                        material.color,
-                                        material.prev_color,
-                                        material.last_color_change
-                                    );
-                                }
-                            }
-                        }
-                        _ => (),
-                    }
-                }
-            }
             ServerMessages::AsteroidSpawned {
                 id,
                 position,
