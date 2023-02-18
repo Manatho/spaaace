@@ -1,29 +1,28 @@
 use bevy::{
     math::vec3,
     prelude::{
-        default, shape, App, Assets, BuildChildren, Color, Commands, Component, CoreStage,
+        default, shape, App, Assets, BuildChildren, Color, Commands, Component,
         DespawnRecursiveExt, EventReader, Mesh, PbrBundle, Plugin, Quat, Query, Res, ResMut,
-        StandardMaterial, SystemStage, Transform, Vec3, Without,
+        StandardMaterial, Transform, Vec3,
     },
-    time::{FixedTimestep, Time},
+    time::Time,
     transform::TransformBundle,
     utils::{HashMap, Instant},
 };
 use bevy_mod_gizmos::{draw_gizmo, Gizmo};
 use bevy_rapier3d::prelude::{
-    Collider, ColliderMassProperties, Damping, ExternalForce, ExternalImpulse, GravityScale,
-    RigidBody, Sleeping,
+    Collider, ColliderMassProperties, Damping, ExternalImpulse, GravityScale, RigidBody, Sleeping,
 };
 
 use bevy_renet::renet::{DefaultChannel, RenetServer, ServerEvent};
 use spaaaace_shared::{
     player::player_input::PlayerInput, team::team_enum::Team, ClientMessages, Lobby, NetworkedId,
-    ServerMessages, TranslationRotation, SERVER_TICKRATE,
+    ServerMessages, TranslationRotation,
 };
 
 use crate::{
     weapons::{Barrel, Turret},
-    ClientEvent, FixedUpdateStage,
+    ClientEvent,
 };
 
 pub struct PlayerPlugin;
@@ -35,15 +34,15 @@ impl Plugin for PlayerPlugin {
             .add_system(player_input)
             .add_system(on_client_disconnected)
             .add_system(on_client_connected)
-            .add_system(server_sync_players
-            // .add_system(draw_player_gizmos)
-            
-            // .add_stage_after(
-            //     CoreStage::Update,
-            //     FixedUpdateStage,
-            //     SystemStage::parallel()
-            //         .with_run_criteria(FixedTimestep::step(1.0 / (SERVER_TICKRATE as f64)))
-            //         .with_system(),
+            .add_system(
+                server_sync_players, // .add_system(draw_player_gizmos)
+
+                                     // .add_stage_after(
+                                     //     CoreStage::Update,
+                                     //     FixedUpdateStage,
+                                     //     SystemStage::parallel()
+                                     //         .with_run_criteria(FixedTimestep::step(1.0 / (SERVER_TICKRATE as f64)))
+                                     //         .with_system(),
             );
     }
 }
