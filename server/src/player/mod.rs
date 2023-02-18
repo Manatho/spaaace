@@ -35,13 +35,15 @@ impl Plugin for PlayerPlugin {
             .add_system(player_input)
             .add_system(on_client_disconnected)
             .add_system(on_client_connected)
+            .add_system(server_sync_players
             // .add_system(draw_player_gizmos)
-            .add_stage_after(
-                CoreStage::Update,
-                FixedUpdateStage,
-                SystemStage::parallel()
-                    .with_run_criteria(FixedTimestep::step(1.0 / (SERVER_TICKRATE as f64)))
-                    .with_system(server_sync_players),
+            
+            // .add_stage_after(
+            //     CoreStage::Update,
+            //     FixedUpdateStage,
+            //     SystemStage::parallel()
+            //         .with_run_criteria(FixedTimestep::step(1.0 / (SERVER_TICKRATE as f64)))
+            //         .with_system(),
             );
     }
 }
@@ -123,8 +125,11 @@ fn server_sync_players(
     entries.sort_by(|(a, _), (b, _)| a.last_sent.cmp(&b.last_sent));
 
     let mut messages: HashMap<u64, TranslationRotation> = HashMap::new();
+
+    println!("{}", entries.len());
+
     for (id, tr) in entries {
-        if messages.len() < 50 {
+        if messages.len() < 70 {
             messages.insert(id.id, tr);
         } else {
             break;
