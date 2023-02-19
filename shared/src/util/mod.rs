@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use bevy_math::{Quat, Vec4};
+use bevy::prelude::{Quat, Vec4};
 use rand::Rng;
 
 pub trait Random {

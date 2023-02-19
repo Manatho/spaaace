@@ -1,6 +1,7 @@
-use bevy_asset::Handle;
-use bevy_ecs::prelude::Component;
-use bevy_gltf::Gltf;
+use bevy::{
+    gltf::Gltf,
+    prelude::{Component, Handle},
+};
 use phf::phf_map;
 
 #[derive(Clone, Copy)]
