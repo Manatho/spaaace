@@ -40,7 +40,6 @@ fn on_client_connected(
                     commands.spawn((SpatialBundle { ..default() }, ShipModelLoadHandle(my_gltf)));
 
                 if *id == client.client_id() {
-                    println!("Adding camera");
                     cmd.insert(OrbitCameraTarget {});
                 }
 

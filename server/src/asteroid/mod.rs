@@ -1,7 +1,6 @@
 use bevy::{
     prelude::{
-        App, Commands, Component, EventReader, Plugin, Quat,
-        Query, ResMut, Transform, Vec3, With,
+        App, Commands, Component, EventReader, Plugin, Quat, Query, ResMut, Transform, Vec3, With,
     },
     transform::TransformBundle,
 };
@@ -39,11 +38,6 @@ fn spawn_asteroids(
             scale: Vec3::splat(2.0 + rng.gen::<f32>() * 8.0),
             rotation: Quat::random(),
         };
-
-        println!(
-            "{} {} {}",
-            x.translation.x, x.translation.y, x.translation.z
-        );
 
         // commands
         // .spawn(id_provider.new_id())

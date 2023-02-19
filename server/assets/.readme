@@ -1,0 +1,6 @@
+Assets folder is required on linux/bash to load assets from shared - don't delete this :)
+
+On linux/bash you cannot do:
+ls /non-existing-folder/../ -> "No such file or directory"
+
+Whereas on windows it does work, and resolves to the current folder
