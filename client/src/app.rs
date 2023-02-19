@@ -9,8 +9,7 @@ use app::{
     player::ClientPlayerPlugin,
     skybox::cubemap::CubemapPlugin,
     ui::GameUIPlugin,
-    utils::{lerp_transform_targets, spawn_gltf_objects},
-    weapons::ClientWeaponsPlugin,
+    utils::{handle_ship_model_load, handle_turret_model_load, lerp_transform_targets},
 };
 use bevy::{
     app::App,
@@ -30,7 +29,7 @@ use bevy_hanabi::HanabiPlugin;
 
 use bevy_mod_gizmos::GizmosPlugin;
 
-use spaaaace_shared::{Lobby, ServerMessages};
+use spaaaace_shared::{weapons::WeaponsPlugin, Lobby, NetworkContext, ServerMessages};
 
 use crate::networking::ClientNetworkingPlugin;
 
@@ -54,7 +53,8 @@ pub fn run() {
         // Utils
         // ------------------
         .add_system(lerp_transform_targets)
-        .add_system(spawn_gltf_objects)
+        .add_system(handle_ship_model_load)
+        .add_system(handle_turret_model_load)
         .add_plugin(OrbitCameraPlugin)
         // ------------------
         // UI Stuff
@@ -64,10 +64,11 @@ pub fn run() {
         // ------------------
         // Gameplay stuff
         // ------------------
+        .insert_resource(NetworkContext { is_server: false })
         .add_plugin(ClientNetworkingPlugin)
         .insert_resource(Lobby::default())
         .add_plugin(ClientPlayerPlugin {})
-        .add_plugin(ClientWeaponsPlugin {})
+        .add_plugin(WeaponsPlugin {})
         .add_plugin(ClientCapturePointPlugin {})
         .add_plugin(AsteroidPlugin)
         .add_event::<ServerMessages>()

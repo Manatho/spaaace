@@ -30,5 +30,5 @@
   ],
 
   "files.autoSave": "afterDelay",
-  "files.autoSaveDelay": 100,
+  "files.autoSaveDelay": 100
 }

@@ -1,8 +1,8 @@
 use bevy::{
     gltf::{Gltf, GltfNode},
     prelude::{
-        Assets, BuildChildren, Commands, Component, Entity, Query, Res, ResMut, Transform, Vec2,
-        Vec4,
+        default, AssetServer, Assets, BuildChildren, Commands, Component, Entity, Handle, Query,
+        Res, ResMut, SpatialBundle, Transform, Vec2, Vec4,
     },
     scene::SceneBundle,
     time::Time,
@@ -33,11 +33,31 @@ pub fn lerp_transform_targets(
     }
 }
 
-pub fn spawn_gltf_objects(
+#[derive(Component)]
+pub struct LocalTurretModelLoadHandle(pub Handle<Gltf>);
+
+pub fn spawn_local_turret(
+    commands: &mut Commands,
+    ass: &Res<AssetServer>,
+    transform: &Transform,
+) -> Entity {
+    let turret_gltf = ass.load("../../shared/assets/turrets/turret_large/turret_large.gltf");
+    let turret_entity = commands
+        .spawn((
+            SpatialBundle { ..default() },
+            LocalTurretModelLoadHandle(turret_gltf),
+        ))
+        .insert(transform.clone())
+        .id();
+    turret_entity
+}
+
+pub fn handle_ship_model_load(
     mut commands: Commands,
     query: Query<(Entity, &ShipModelLoadHandle)>,
     assets_gltf: Res<Assets<Gltf>>,
     assets_gltfnode: Res<Assets<GltfNode>>,
+    ass: Res<AssetServer>,
     mut effects: ResMut<Assets<EffectAsset>>,
 ) {
     for (entity, handle) in query.iter() {
@@ -78,6 +98,7 @@ pub fn spawn_gltf_objects(
                 })
                 .id();
             let mut thruster_points: Vec<Entity> = vec![];
+            let mut turrets: Vec<Entity> = vec![];
 
             for node_name in gltf.named_nodes.keys().into_iter() {
                 if node_name.contains("forward_thrusters") {
@@ -89,13 +110,54 @@ pub fn spawn_gltf_objects(
                         thruster_points.push(thruster);
                     }
                 }
+                if node_name.contains("turret_pad_large") {
+                    if let Some(node) = assets_gltfnode.get(&gltf.named_nodes[node_name]) {
+                        let turret = spawn_local_turret(&mut commands, &ass, &node.transform);
+                        turrets.push(turret);
+                    }
+                }
             }
 
             commands
                 .entity(entity)
                 .push_children(&[model])
                 .push_children(&thruster_points)
+                .push_children(&turrets)
                 .remove::<ShipModelLoadHandle>();
+        }
+    }
+}
+
+pub fn handle_turret_model_load(
+    mut commands: Commands,
+    query: Query<(Entity, &LocalTurretModelLoadHandle)>,
+    assets_gltf: Res<Assets<Gltf>>,
+) {
+    for (entity, handle) in query.iter() {
+        if let Some(gltf) = assets_gltf.get(&handle.0) {
+            for node_name in gltf.named_nodes.keys().into_iter() {
+                match node_name.as_str() {
+                    "base" => {
+                        
+                    },
+                    "barrel_root" => {},
+                    "barrel_end" => {},
+                    _ => {}
+                }
+            }
+
+            // spawn the first scene in the file
+            let model = commands
+                .spawn(SceneBundle {
+                    scene: gltf.scenes[0].clone(),
+                    ..Default::default()
+                })
+                .id();
+
+            commands
+                .entity(entity)
+                .push_children(&[model])
+                .remove::<LocalTurretModelLoadHandle>();
         }
     }
 }

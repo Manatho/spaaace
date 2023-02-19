@@ -2,14 +2,14 @@ pub mod player;
 pub mod ships;
 pub mod team;
 pub mod util;
+pub mod weapons;
 
 use std::collections::HashMap;
 
-use bevy_ecs::{
-    prelude::{Component, Entity},
-    system::Resource,
+use bevy::{
+    ecs::schedule::ShouldRun,
+    prelude::{Component, Entity, Quat, Res, Resource, Vec3},
 };
-use bevy_math::{Quat, Vec3};
 use player::player_input::PlayerInput;
 use serde::{Deserialize, Serialize};
 use team::team_enum::Team;
@@ -107,3 +107,22 @@ pub struct TranslationRotation {
 }
 
 pub const SERVER_TICKRATE: f32 = 10.0;
+
+#[derive(Resource)]
+pub struct NetworkContext {
+    pub is_server: bool,
+}
+
+pub fn run_if_server(ctx: Res<NetworkContext>) -> ShouldRun {
+    match ctx.is_server {
+        true => ShouldRun::Yes,
+        false => ShouldRun::No,
+    }
+}
+
+pub fn run_if_client(ctx: Res<NetworkContext>) -> ShouldRun {
+    match ctx.is_server {
+        true => ShouldRun::No,
+        false => ShouldRun::Yes,
+    }
+}

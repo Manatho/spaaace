@@ -1,19 +1,27 @@
 use bevy::{
-    prelude::{App, Commands, Component, Entity, Plugin, Query, Res, ResMut, Transform},
+    prelude::{
+        App, Commands, Component, Entity, EventWriter, Plugin, Query, Res, ResMut, SystemSet,
+        Transform,
+    },
     time::Time,
 };
 use bevy_renet::renet::{DefaultChannel, RenetServer};
-use spaaaace_shared::{NetworkedId, ServerMessages};
+
+use crate::{run_if_server, NetworkedId, ServerMessages};
 
 pub struct BulletPlugin;
 
 impl Plugin for BulletPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(bullet_mover).add_system(bullet_remover);
+        app.add_system(bullet_mover).add_system_set(
+            SystemSet::new()
+                .with_run_criteria(run_if_server)
+                .with_system(bullet_remover),
+        );
     }
 }
 
-#[derive(Component)]
+#[derive(Component, Clone, Copy)]
 pub struct Bullet {
     pub speed: f32,
     pub lifetime: f32,
@@ -31,9 +39,9 @@ fn bullet_mover(
 
 fn bullet_remover(
     mut commands: Commands,
-    mut query: Query<(Entity, &Bullet, &NetworkedId)>, //
-    time: Res<Time>,
+    mut query: Query<(Entity, &Bullet, &NetworkedId)>,
     mut server: ResMut<RenetServer>,
+    time: Res<Time>,
 ) {
     for (entity, bullet, networked_id) in query.iter_mut() {
         if time.elapsed_seconds() > bullet.lifetime {

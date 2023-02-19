@@ -3732,10 +3732,9 @@ dependencies = [
 name = "spaaaace_shared"
 version = "0.1.0"
 dependencies = [
- "bevy_asset",
- "bevy_ecs",
- "bevy_gltf",
- "bevy_math",
+ "bevy",
+ "bevy_renet",
+ "bincode",
  "cfg-if",
  "log",
  "phf",
