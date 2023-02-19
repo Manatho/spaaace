@@ -46,22 +46,22 @@ fn on_asteroid_spawned(
                         },
                         ..default()
                     })
-                    // .spawn(PbrBundle {
-                    //     mesh: meshes.add(Mesh::from(shape::Capsule {
-                    //         radius: 5.0,
-                    //         ..Default::default()
-                    //     })),
-                    //     material: materials.add(StandardMaterial {
-                    //         base_color: Color::BLACK,
-                    //         ..default()
-                    //     }),
-                    //     transform: Transform {
-                    //         translation: *position,
-                    //         rotation: *rotation * Quat::from_rotation_x(PI / 2.0),
-                    //         ..Default::default()
-                    //     },
-                    //     ..Default::default()
-                    // })
+                    .insert(PbrBundle {
+                        mesh: meshes.add(Mesh::from(shape::Capsule {
+                            radius: 5.0,
+                            ..Default::default()
+                        })),
+                        material: materials.add(StandardMaterial {
+                            base_color: Color::BLACK,
+                            ..default()
+                        }),
+                        transform: Transform {
+                            translation: *position,
+                            rotation: *rotation * Quat::from_rotation_x(PI / 2.0),
+                            ..Default::default()
+                        },
+                        ..Default::default()
+                    })
                     .insert(Collider::ball(5.0))
                     .id();
 

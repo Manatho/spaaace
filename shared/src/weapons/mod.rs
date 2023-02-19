@@ -5,7 +5,7 @@ use std::{f32::consts::PI, time::Instant};
 
 use bevy::{
     prelude::{
-        default, shape, App, Assets, Color, Commands, Component, EventReader, EventWriter,
+        default, shape, App, Assets, Color, Commands, Component, EventReader,
         GlobalTransform, IntoSystemDescriptor, Mesh, Parent, PbrBundle, Plugin, Quat, Query, Res,
         ResMut, StandardMaterial, SystemSet, Transform, With, Without,
     },
@@ -16,10 +16,10 @@ use bevy_renet::renet::{DefaultChannel, RenetServer};
 
 use crate::{
     player::{player_input::PlayerInput, Player},
-    run_if_client, run_if_server, Lobby, NetworkContext, NetworkedId, ServerMessages,
+    run_if_client, run_if_server, Lobby, NetworkedId, ServerMessages,
 };
 
-use self::bullet::{BulletBundle, BulletPlugin};
+use self::bullet::{BulletBundle, BulletPlugin, Bullet};
 
 #[derive(Component)]
 pub struct Turret {

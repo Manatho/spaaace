@@ -30,9 +30,7 @@ use bevy_hanabi::HanabiPlugin;
 use bevy_mod_gizmos::GizmosPlugin;
 
 use bevy_rapier3d::prelude::{NoUserData, RapierPhysicsPlugin, RapierDebugRenderPlugin};
-use spaaaace_shared::{Lobby, ServerMessages};
-use bevy_rapier3d::prelude::{RapierPhysicsPlugin, NoUserData};
-use spaaaace_shared::{weapons::WeaponsPlugin, Lobby, NetworkContext, ServerMessages};
+use spaaaace_shared::{NetworkContext, Lobby, weapons::WeaponsPlugin, ServerMessages};
 
 use crate::networking::ClientNetworkingPlugin;
 

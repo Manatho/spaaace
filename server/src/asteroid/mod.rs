@@ -1,7 +1,5 @@
 use bevy::{
-    prelude::{
-        App, Commands, Component, EventReader, Plugin, Quat, Query, ResMut, Transform, Vec3, With,
-    },
+    prelude::{App, Commands, EventReader, Plugin, Quat, Query, ResMut, Transform, Vec3, With},
     transform::TransformBundle,
 };
 use bevy_rapier3d::prelude::{
@@ -10,12 +8,9 @@ use bevy_rapier3d::prelude::{
 use bevy_renet::renet::{DefaultChannel, RenetServer, ServerEvent};
 use rand::Rng;
 use spaaaace_shared::{
-    asteroid::Asteroid,
-    health::{Health, HealthPlugin},
-    util::Random,
-    NetworkIdProvider, NetworkedId, ServerMessages,
+    asteroid::Asteroid, health::Health, util::Random, NetworkIdProvider, NetworkedId,
+    ServerMessages,
 };
-
 pub struct AsteroidPlugin;
 
 impl Plugin for AsteroidPlugin {
@@ -40,16 +35,6 @@ fn spawn_asteroids(
             scale: Vec3::splat(2.0 + rng.gen::<f32>() * 8.0),
             rotation: Quat::random(),
         };
-
-        // commands
-        // .spawn(id_provider.new_id())
-        // .insert(Collider::cuboid(1.0, 1.0, 1.0))
-        // .insert(RigidBody::Dynamic)
-        // .insert(Asteroid)
-        // .insert(TransformBundle {
-        //     global: x.into(),
-        //     ..Default::default()
-        // });
 
         commands
             .spawn(Collider::ball(1.0))

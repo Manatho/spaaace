@@ -1,11 +1,4 @@
-use bevy::prelude::{Component, Entity};
+use bevy::prelude::{Component};
 
 #[derive(Component)]
 pub struct Asteroid;
-
-
-#[derive(Component)]
-pub struct Bullet {
-    pub speed: f32,
-    pub lifetime: f32,
-}

@@ -1,8 +1,10 @@
 use bevy::{
-    prelude::{App, Bundle, Commands, Component, Entity, Plugin, Query, Res, ResMut, Transform, SystemSet},
+    prelude::{
+        App, Bundle, Commands, Component, Entity, Plugin, Query, Res, ResMut, SystemSet, Transform,
+    },
     time::Time,
 };
-use bevy_rapier3d::prelude::{ActiveEvents, Collider, CollisionGroups, Group, Sensor};
+use bevy_rapier3d::prelude::{ActiveEvents, Collider, Sensor};
 use bevy_renet::renet::{DefaultChannel, RenetServer};
 
 use crate::{run_if_server, NetworkedId, ServerMessages};
@@ -24,7 +26,6 @@ pub struct Bullet {
     pub lifetime: f32,
 }
 
-
 #[derive(Bundle)]
 pub struct BulletBundle {
     pub bullet: Bullet,
@@ -42,6 +43,7 @@ impl BulletBundle {
             sensor: Sensor,
         }
     }
+}
 
 fn bullet_mover(
     mut query: Query<(&mut Transform, &Bullet)>, //

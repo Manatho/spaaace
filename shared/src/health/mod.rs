@@ -1,8 +1,8 @@
 use bevy::prelude::{App, Commands, Component, Entity, EventReader, Plugin, Query, ResMut};
 use bevy_rapier3d::prelude::CollisionEvent;
-use bevy_renet::renet::{RenetServer, DefaultChannel};
+use bevy_renet::renet::{DefaultChannel, RenetServer};
 
-use crate::{asteroid::Bullet, NetworkedId, ServerMessages};
+use crate::{weapons::bullet::Bullet, NetworkedId, ServerMessages};
 
 #[derive(Component)]
 pub struct Health {
@@ -27,9 +27,9 @@ fn handle_collisions(
         match event {
             CollisionEvent::Started(e1, e2, _) => {
                 let result = health_query.iter_many([*e1, *e2]);
-                let mut healthEntity: Option<Entity> = Option::None;
+                let mut health_entity: Option<Entity> = Option::None;
                 for (entity, _) in result {
-                    healthEntity = Some(entity);
+                    health_entity = Some(entity);
                 }
 
                 let result = bullet_query.iter_many([*e1, *e2]);
@@ -38,8 +38,8 @@ fn handle_collisions(
                     bullet = Some(b);
                 }
 
-                if healthEntity.is_some() && bullet.is_some() {
-                    let (_, mut health) = health_query.get_mut(healthEntity.unwrap()).unwrap();
+                if health_entity.is_some() && bullet.is_some() {
+                    let (_, mut health) = health_query.get_mut(health_entity.unwrap()).unwrap();
                     health.health -= 1.0;
                 }
             }

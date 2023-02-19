@@ -3,6 +3,8 @@ pub mod ships;
 pub mod team;
 pub mod util;
 pub mod weapons;
+pub mod health;
+pub mod asteroid;
 
 use std::collections::HashMap;
 

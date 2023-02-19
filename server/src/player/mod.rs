@@ -4,9 +4,9 @@ use bevy::{
     gltf::{Gltf, GltfNode},
     math::vec3,
     prelude::{
-        default, App, AssetServer, Assets, BuildChildren, Color, Commands, Component,
-        DespawnRecursiveExt, Entity, EventReader, PbrBundle, Plugin, Quat, Query, Res, ResMut,
-        SpatialBundle, Transform, Vec3,
+        default, App, AssetServer, Assets, BuildChildren, Color, Commands, DespawnRecursiveExt,
+        Entity, EventReader, PbrBundle, Plugin, Quat, Query, Res, ResMut, SpatialBundle, Transform,
+        Vec3,
     },
     scene::SceneBundle,
     time::Time,
