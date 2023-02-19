@@ -1,18 +1,29 @@
 use bevy::{
-    prelude::{App, Bundle, Commands, Component, Entity, Plugin, Query, Res, ResMut, Transform},
+    prelude::{App, Bundle, Commands, Component, Entity, Plugin, Query, Res, ResMut, Transform, SystemSet},
     time::Time,
 };
 use bevy_rapier3d::prelude::{ActiveEvents, Collider, CollisionGroups, Group, Sensor};
 use bevy_renet::renet::{DefaultChannel, RenetServer};
-use spaaaace_shared::{NetworkedId, ServerMessages, asteroid::Bullet};
+
+use crate::{run_if_server, NetworkedId, ServerMessages};
 
 pub struct BulletPlugin;
 
 impl Plugin for BulletPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(bullet_mover).add_system(bullet_remover);
+        app.add_system(bullet_mover).add_system_set(
+            SystemSet::new()
+                .with_run_criteria(run_if_server)
+                .with_system(bullet_remover),
+        );
     }
 }
+#[derive(Component, Clone, Copy)]
+pub struct Bullet {
+    pub speed: f32,
+    pub lifetime: f32,
+}
+
 
 #[derive(Bundle)]
 pub struct BulletBundle {
@@ -31,7 +42,6 @@ impl BulletBundle {
             sensor: Sensor,
         }
     }
-}
 
 fn bullet_mover(
     mut query: Query<(&mut Transform, &Bullet)>, //
@@ -45,9 +55,9 @@ fn bullet_mover(
 
 fn bullet_remover(
     mut commands: Commands,
-    mut query: Query<(Entity, &Bullet, &NetworkedId)>, //
-    time: Res<Time>,
+    mut query: Query<(Entity, &Bullet, &NetworkedId)>,
     mut server: ResMut<RenetServer>,
+    time: Res<Time>,
 ) {
     for (entity, bullet, networked_id) in query.iter_mut() {
         if time.elapsed_seconds() > bullet.lifetime {

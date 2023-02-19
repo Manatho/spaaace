@@ -22,18 +22,16 @@ use bevy_renet::{
     RenetServerPlugin,
 };
 
-use player::Player;
-use spaaaace_shared::{ClientMessages, Lobby, NetworkIdProvider, PROTOCOL_ID, health::HealthPlugin};
-
-use crate::{
-    asteroid::AsteroidPlugin, capture_point::CapturePointPlugin, player::PlayerPlugin,
-    weapons::WeaponsPlugin,
+use spaaaace_shared::{
+    player::Player, weapons::WeaponsPlugin, ClientMessages, Lobby, NetworkContext,
+    NetworkIdProvider, PROTOCOL_ID, health::HealthPlugin,
 };
+
+use crate::{asteroid::AsteroidPlugin, capture_point::CapturePointPlugin, player::PlayerPlugin};
 
 mod asteroid;
 pub mod capture_point;
 pub mod player;
-mod weapons;
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone, StageLabel)]
 struct FixedUpdateStage;
@@ -46,6 +44,7 @@ fn main() {
         // Plugins
         .insert_resource(Lobby::default())
         .insert_resource(NetworkIdProvider::new())
+        .insert_resource(NetworkContext { is_server: true })
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             window: WindowDescriptor {
                 title: "Spaaace Server".to_string(),

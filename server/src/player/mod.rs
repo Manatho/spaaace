@@ -21,16 +21,14 @@ use bevy_rapier3d::prelude::{
 
 use bevy_renet::renet::{DefaultChannel, RenetServer, ServerEvent};
 use spaaaace_shared::{
-    player::player_input::PlayerInput,
+    player::{player_input::PlayerInput, Player},
     ships::{ShipModelLoadHandle, SHIP_TYPES},
     team::team_enum::Team,
+    weapons::{Barrel, Turret},
     ClientMessages, Lobby, NetworkedId, ServerMessages, TranslationRotation,
 };
 
-use crate::{
-    weapons::{Barrel, Turret},
-    ClientEvent,
-};
+use crate::ClientEvent;
 
 pub struct PlayerPlugin;
 
@@ -47,11 +45,6 @@ impl Plugin for PlayerPlugin {
 }
 
 const PLAYER_MOVE_SPEED: f32 = 2.0;
-
-#[derive(Component, Clone, Hash, PartialEq, Eq)]
-pub struct Player {
-    pub team: Team,
-}
 
 fn update_players_system(mut query: Query<(&mut ExternalImpulse, &Transform, &PlayerInput)>) {
     for (mut rigidbody, transform, input) in query.iter_mut() {

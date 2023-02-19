@@ -1,19 +1,23 @@
 pub mod bullet;
+pub mod events;
 
-use std::time::Instant;
+use std::{f32::consts::PI, time::Instant};
 
 use bevy::{
     prelude::{
-        App, Commands, Component, GlobalTransform, IntoSystemDescriptor, Parent, Plugin, Quat,
-        Query, Res, ResMut, Transform, With, Without,
+        default, shape, App, Assets, Color, Commands, Component, EventReader, EventWriter,
+        GlobalTransform, IntoSystemDescriptor, Mesh, Parent, PbrBundle, Plugin, Quat, Query, Res,
+        ResMut, StandardMaterial, SystemSet, Transform, With, Without,
     },
     time::Time,
     transform::TransformBundle,
 };
 use bevy_renet::renet::{DefaultChannel, RenetServer};
-use spaaaace_shared::{player::player_input::PlayerInput, NetworkedId, ServerMessages, asteroid::Bullet};
 
-use crate::Player;
+use crate::{
+    player::{player_input::PlayerInput, Player},
+    run_if_client, run_if_server, Lobby, NetworkContext, NetworkedId, ServerMessages,
+};
 
 use self::bullet::{BulletBundle, BulletPlugin};
 
@@ -42,7 +46,16 @@ impl Plugin for WeaponsPlugin {
         app.add_plugin(BulletPlugin {})
             .add_system(trigger_weapons)
             .add_system(turn_turrets)
-            .add_system(fire_weapons.after(trigger_weapons));
+            .add_system_set(
+                SystemSet::new()
+                    .with_run_criteria(run_if_server)
+                    .with_system(fire_weapons_server.after(trigger_weapons)),
+            )
+            .add_system_set(
+                SystemSet::new()
+                    .with_run_criteria(run_if_client)
+                    .with_system(on_bullet_spawned_client),
+            );
     }
 }
 
@@ -102,7 +115,7 @@ fn turn_turrets(
     }
 }
 
-fn fire_weapons(
+fn fire_weapons_server(
     mut barrel_query: Query<(&Barrel, &GlobalTransform, &Parent)>,
     mut turret_query: Query<&mut Turret>,
     mut commands: Commands,
@@ -119,12 +132,14 @@ fn fire_weapons(
                 let since_start = now.duration_since(time.startup());
                 let id = since_start.as_nanos();
 
+                let bullet_transform = TransformBundle::from_transform(transform);
+                let bullet = Bullet {
+                    speed: 200.,
+                    lifetime: time.elapsed_seconds() + 2.0,
+                };
                 commands
-                    .spawn(TransformBundle::from_transform(transform))
-                    .insert(BulletBundle::new(Bullet {
-                        speed: 200.0,
-                        lifetime: time.elapsed_seconds() + 2.0,
-                    }))
+                    .spawn(bullet_transform)
+                    .insert(BulletBundle::new(bullet))
                     .insert(NetworkedId {
                         id: id.try_into().unwrap(),
                         last_sent: 0,
@@ -142,6 +157,53 @@ fn fire_weapons(
             turret.cooldown = turret.fire_rate;
         } else {
             turret.cooldown -= time.delta_seconds();
+        }
+    }
+}
+
+fn on_bullet_spawned_client(
+    mut commands: Commands,
+    mut lobby: ResMut<Lobby>,
+    mut event_reader: EventReader<ServerMessages>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    for event in event_reader.iter() {
+        match event {
+            ServerMessages::BulletSpawned {
+                id,
+                position,
+                rotation,
+            } => {
+                let entity_id = commands
+                    .spawn(PbrBundle {
+                        mesh: meshes.add(Mesh::from(shape::Capsule {
+                            depth: 0.5,
+                            radius: 0.1,
+                            ..Default::default()
+                        })),
+                        material: materials.add(StandardMaterial {
+                            base_color: Color::BLACK,
+                            perceptual_roughness: 1.,
+                            emissive: Color::rgb(1., 0.2, 0.2) * 5.,
+                            ..default()
+                        }),
+                        transform: Transform {
+                            translation: *position,
+                            rotation: *rotation * Quat::from_rotation_x(PI / 2.0),
+                            ..Default::default()
+                        },
+                        ..Default::default()
+                    })
+                    .insert(Bullet {
+                        lifetime: 0.0,
+                        speed: 0.0,
+                    })
+                    .id();
+
+                lobby.networked_entities.insert(*id, entity_id);
+            }
+            _ => {}
         }
     }
 }
