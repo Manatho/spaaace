@@ -11,11 +11,11 @@ use bevy::{
     transform::TransformBundle,
 };
 use bevy_renet::renet::{DefaultChannel, RenetServer};
-use spaaaace_shared::{player::player_input::PlayerInput, NetworkedId, ServerMessages};
+use spaaaace_shared::{player::player_input::PlayerInput, NetworkedId, ServerMessages, asteroid::Bullet};
 
 use crate::Player;
 
-use self::bullet::{Bullet, BulletPlugin};
+use self::bullet::{BulletBundle, BulletPlugin};
 
 #[derive(Component)]
 pub struct Turret {
@@ -121,10 +121,10 @@ fn fire_weapons(
 
                 commands
                     .spawn(TransformBundle::from_transform(transform))
-                    .insert(Bullet {
-                        speed: 200.,
+                    .insert(BulletBundle::new(Bullet {
+                        speed: 200.0,
                         lifetime: time.elapsed_seconds() + 2.0,
-                    })
+                    }))
                     .insert(NetworkedId {
                         id: id.try_into().unwrap(),
                         last_sent: 0,

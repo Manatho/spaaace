@@ -15,7 +15,8 @@ use bevy::{
 };
 use bevy_mod_gizmos::{draw_gizmo, Gizmo};
 use bevy_rapier3d::prelude::{
-    Collider, ColliderMassProperties, Damping, ExternalImpulse, GravityScale, RigidBody, Sleeping,
+    Collider, ColliderMassProperties, CollisionGroups, Damping, ExternalImpulse, GravityScale,
+    Group, RigidBody, Sleeping,
 };
 
 use bevy_renet::renet::{DefaultChannel, RenetServer, ServerEvent};
@@ -252,6 +253,7 @@ fn on_client_connected(
                     .insert(ColliderMassProperties::Density(3.0))
                     .insert(Player { team: Team::Red })
                     .insert(Collider::cuboid(2.0, 1.0, 12.0))
+                    .insert(CollisionGroups::new(Group::GROUP_1, Group::GROUP_1))
                     .insert(RigidBody::Dynamic)
                     // .insert(LockedAxes::ROTATION_LOCKED_Z)
                     .insert(GravityScale(0.0))

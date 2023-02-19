@@ -9,7 +9,7 @@ pub fn player_input(
     k_input: Res<Input<KeyCode>>,
     m_input: Res<Input<MouseButton>>,
     mut player_input: ResMut<PlayerInput>,
-    camera_query: Query<(&Transform, &OrbitCamera)>,
+    camera_query: Query<&Transform, With<OrbitCamera>>,
     camera_target_query: Query<&Transform, With<OrbitCameraTarget>>,
     rapier_context: Res<RapierContext>,
 ) {
@@ -24,7 +24,7 @@ pub fn player_input(
     player_input.primary_fire = m_input.pressed(MouseButton::Left);
 
     match camera_query.get_single() {
-        Ok((transform, orbit_camera)) => {
+        Ok(transform) => {
             let target_transform_result = camera_target_query.get_single();
             match target_transform_result {
                 Ok(_) => {
@@ -35,7 +35,7 @@ pub fn player_input(
                     let filter = QueryFilter::default();
 
                     let mut hit_point = ray_pos + ray_dir * max_toi;
-                    if let Some((entity, toi)) =
+                    if let Some((_, toi)) =
                         rapier_context.cast_ray(ray_pos, ray_dir, max_toi, solid, filter)
                     {
                         hit_point = ray_pos + ray_dir * toi;

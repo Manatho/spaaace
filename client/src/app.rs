@@ -30,7 +30,7 @@ use bevy_hanabi::HanabiPlugin;
 
 use bevy_mod_gizmos::GizmosPlugin;
 
-use bevy_rapier3d::prelude::{NoUserData, RapierPhysicsPlugin};
+use bevy_rapier3d::prelude::{NoUserData, RapierPhysicsPlugin, RapierDebugRenderPlugin};
 use spaaaace_shared::{Lobby, ServerMessages};
 
 use crate::networking::ClientNetworkingPlugin;
@@ -55,6 +55,7 @@ pub fn run() {
         // Third party
         // ------------------
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
+        .add_plugin(RapierDebugRenderPlugin::default())
         // ------------------
         // Utils
         // ------------------

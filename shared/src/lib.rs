@@ -2,14 +2,12 @@ pub mod player;
 pub mod ships;
 pub mod team;
 pub mod util;
+pub mod health;
+pub mod asteroid;
 
 use std::collections::HashMap;
 
-use bevy_ecs::{
-    prelude::{Component, Entity},
-    system::Resource,
-};
-use bevy_math::{Quat, Vec3};
+use bevy::prelude::{Component, Resource, Entity, Vec3, Quat};
 use player::player_input::PlayerInput;
 use serde::{Deserialize, Serialize};
 use team::team_enum::Team;
@@ -59,6 +57,12 @@ pub enum ServerMessages {
         progress: f32,
     },
     AsteroidSpawned {
+        id: u64,
+        position: Vec3,
+        scale: Vec3,
+        rotation: Quat,
+    },
+    BalloonSpawned {
         id: u64,
         position: Vec3,
         scale: Vec3,

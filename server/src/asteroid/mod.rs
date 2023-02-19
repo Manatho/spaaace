@@ -9,10 +9,12 @@ use bevy_rapier3d::prelude::{
 };
 use bevy_renet::renet::{DefaultChannel, RenetServer, ServerEvent};
 use rand::Rng;
-use spaaaace_shared::{util::Random, NetworkIdProvider, NetworkedId, ServerMessages};
-
-#[derive(Component)]
-pub struct Asteroid;
+use spaaaace_shared::{
+    asteroid::Asteroid,
+    health::{Health, HealthPlugin},
+    util::Random,
+    NetworkIdProvider, NetworkedId, ServerMessages,
+};
 
 pub struct AsteroidPlugin;
 
@@ -65,7 +67,8 @@ fn spawn_asteroids(
             })
             .insert(ColliderMassProperties::Density(1.0))
             .insert(id_provider.new_id())
-            .insert(Asteroid);
+            .insert(Asteroid)
+            .insert(Health { health: 10.0 });
     }
 }
 

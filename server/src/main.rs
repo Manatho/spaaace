@@ -23,7 +23,7 @@ use bevy_renet::{
 };
 
 use player::Player;
-use spaaaace_shared::{ClientMessages, Lobby, NetworkIdProvider, PROTOCOL_ID};
+use spaaaace_shared::{ClientMessages, Lobby, NetworkIdProvider, PROTOCOL_ID, health::HealthPlugin};
 
 use crate::{
     asteroid::AsteroidPlugin, capture_point::CapturePointPlugin, player::PlayerPlugin,
@@ -57,6 +57,7 @@ fn main() {
             ..default()
         }))
         .add_plugin(GizmosPlugin)
+        .add_plugin(HealthPlugin)
         .add_startup_system(setup)
         .add_plugin(WorldInspectorPlugin)
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())

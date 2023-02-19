@@ -70,8 +70,12 @@ fn client_reliable_message_handler(
 
         match server_message {
             ServerMessages::EntityDespawn { id } => {
+                print!("deleted {}", id);
                 if let Some(entity) = lobby.networked_entities.remove(&id) {
+                    println!("success");
                     commands.entity(entity).despawn();
+                } else {
+                    println!("failed");
                 }
             }
 

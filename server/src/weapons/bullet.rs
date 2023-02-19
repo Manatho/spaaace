@@ -1,9 +1,10 @@
 use bevy::{
-    prelude::{App, Commands, Component, Entity, Plugin, Query, Res, ResMut, Transform},
+    prelude::{App, Bundle, Commands, Component, Entity, Plugin, Query, Res, ResMut, Transform},
     time::Time,
 };
+use bevy_rapier3d::prelude::{ActiveEvents, Collider, CollisionGroups, Group, Sensor};
 use bevy_renet::renet::{DefaultChannel, RenetServer};
-use spaaaace_shared::{NetworkedId, ServerMessages};
+use spaaaace_shared::{NetworkedId, ServerMessages, asteroid::Bullet};
 
 pub struct BulletPlugin;
 
@@ -13,10 +14,23 @@ impl Plugin for BulletPlugin {
     }
 }
 
-#[derive(Component)]
-pub struct Bullet {
-    pub speed: f32,
-    pub lifetime: f32,
+#[derive(Bundle)]
+pub struct BulletBundle {
+    pub bullet: Bullet,
+    active_events: ActiveEvents,
+    collider: Collider,
+    sensor: Sensor,
+}
+
+impl BulletBundle {
+    pub fn new(bullet: Bullet) -> Self {
+        BulletBundle {
+            bullet,
+            active_events: ActiveEvents::COLLISION_EVENTS,
+            collider: Collider::ball(0.5),
+            sensor: Sensor,
+        }
+    }
 }
 
 fn bullet_mover(
