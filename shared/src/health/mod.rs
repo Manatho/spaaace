@@ -54,7 +54,7 @@ fn death(
     mut server: ResMut<RenetServer>,
 ) {
     for (entity, health, networked_id) in health_query.iter() {
-        if health.health < 0.0 {
+        if health.health <= 0.0 {
             commands.entity(entity).despawn();
             let message = bincode::serialize(&ServerMessages::EntityDespawn {
                 id: networked_id.id,
@@ -62,8 +62,5 @@ fn death(
             .unwrap();
             server.broadcast_message(DefaultChannel::Reliable, message);
         }
-
-        print!("{} : ", health.health);
     }
-    println!()
 }

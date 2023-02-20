@@ -1,10 +1,5 @@
-use std::f32::consts::PI;
-
 use bevy::{
-    prelude::{
-        shape, App, AssetServer, Assets, Color, Commands, EventReader, Mesh, PbrBundle, Plugin,
-        Quat, Res, ResMut, StandardMaterial, Transform,
-    },
+    prelude::{App, AssetServer, Commands, EventReader, Plugin, Res, ResMut, Transform},
     scene::SceneBundle,
     utils::default,
 };
@@ -24,8 +19,6 @@ fn on_asteroid_spawned(
     mut lobby: ResMut<Lobby>,
     mut event_reader: EventReader<ServerMessages>,
     ass: Res<AssetServer>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     for event in event_reader.iter() {
         match event {
@@ -46,23 +39,7 @@ fn on_asteroid_spawned(
                         },
                         ..default()
                     })
-                    .insert(PbrBundle {
-                        mesh: meshes.add(Mesh::from(shape::Capsule {
-                            radius: 5.0,
-                            ..Default::default()
-                        })),
-                        material: materials.add(StandardMaterial {
-                            base_color: Color::BLACK,
-                            ..default()
-                        }),
-                        transform: Transform {
-                            translation: *position,
-                            rotation: *rotation * Quat::from_rotation_x(PI / 2.0),
-                            ..Default::default()
-                        },
-                        ..Default::default()
-                    })
-                    .insert(Collider::ball(5.0))
+                    .insert(Collider::ball(1.0))
                     .id();
 
                 println!("{} {}", *id, x.index());

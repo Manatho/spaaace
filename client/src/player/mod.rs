@@ -1,8 +1,8 @@
 use bevy::{
     gltf::Gltf,
     prelude::{
-        App, AssetServer, Commands, Component, EventReader, Handle, Plugin, Res, ResMut,
-        SpatialBundle,
+        App, AssetServer, Commands, Component, DespawnRecursiveExt, EventReader, Handle, Plugin,
+        Res, ResMut, SpatialBundle,
     },
     utils::default,
 };
@@ -63,7 +63,7 @@ fn on_client_disconnected(
             ServerMessages::PlayerDisconnected { id } => {
                 println!("Player {} disconnected.", id);
                 if let Some(player_entity) = lobby.players.remove(&id) {
-                    commands.entity(player_entity).despawn();
+                    commands.entity(player_entity).despawn_recursive();
                 }
             }
             _ => {}
