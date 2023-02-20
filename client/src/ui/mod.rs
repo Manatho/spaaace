@@ -117,7 +117,7 @@ fn input(
             // Sleep a bit for window to register as focused
             // Otherwise mouse focus may fail because the old window still
             // has focus for some reason (POP_OS)
-            std::thread::sleep(std::time::Duration::from_millis(200));
+            std::thread::sleep(std::time::Duration::from_millis(400));
         }
         game_state.is_focused = focus;
     }
