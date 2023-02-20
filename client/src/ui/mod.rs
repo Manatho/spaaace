@@ -101,9 +101,25 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         });
 }
 
-fn input(keys: Res<Input<KeyCode>>, mut game_state: ResMut<ClientGameState>) {
+fn input(
+    keys: Res<Input<KeyCode>>,
+    mut game_state: ResMut<ClientGameState>,
+    mut windows: ResMut<Windows>,
+) {
     if keys.just_pressed(KeyCode::Escape) {
         game_state.is_paused = !game_state.is_paused;
+    }
+
+    let window = windows.get_primary_mut().unwrap();
+    let focus = window.is_focused();
+    if focus != game_state.is_focused {
+        if focus {
+            // Sleep a bit for window to register as focused
+            // Otherwise mouse focus may fail because the old window still
+            // has focus for some reason (POP_OS)
+            std::thread::sleep(std::time::Duration::from_millis(200));
+        }
+        game_state.is_focused = focus;
     }
 }
 
@@ -115,17 +131,24 @@ fn update_pause_mode(
     let window = windows.get_primary_mut().unwrap();
 
     if game_state.is_changed() {
-        for (_, mut vis) in query.iter_mut() {
-            vis.is_visible = game_state.is_paused;
+        if game_state.is_focused {
+            for (_, mut vis) in query.iter_mut() {
+                vis.is_visible = game_state.is_paused;
+            }
+
+            let grab_mode = match game_state.is_paused {
+                true => CursorGrabMode::None,
+                false => CursorGrabMode::Locked,
+            };
+
+            if window.is_focused() {
+                window.set_cursor_grab_mode(grab_mode);
+                window.set_cursor_visibility(game_state.is_paused);
+            }
+        } else {
+            window.set_cursor_grab_mode(CursorGrabMode::None);
+            window.set_cursor_visibility(game_state.is_paused);
         }
-
-        let grab_mode = match game_state.is_paused {
-            true => CursorGrabMode::None,
-            false => CursorGrabMode::Locked,
-        };
-
-        window.set_cursor_grab_mode(grab_mode);
-        window.set_cursor_visibility(game_state.is_paused);
     }
 }
 
