@@ -1,6 +1,9 @@
 use std::{net::UdpSocket, time::SystemTime};
 
-use app::{controls::player_input, utils::LerpTransformTarget};
+use app::{
+    controls::{player_input, targetting_input},
+    utils::LerpTransformTarget,
+};
 use bevy::{
     app::App,
     prelude::{
@@ -28,6 +31,7 @@ impl Plugin for ClientNetworkingPlugin {
             .insert_resource(new_renet_client())
             .insert_resource(PlayerInput::default())
             .add_system(player_input)
+            .add_system(targetting_input)
             .add_system(client_send_input.with_run_criteria(run_if_client_connected))
             .add_system(client_reliable_message_handler.with_run_criteria(run_if_client_connected))
             .add_system(

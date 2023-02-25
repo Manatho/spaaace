@@ -13,4 +13,5 @@ pub struct PlayerInput {
     pub rotate_right: bool,
     pub primary_fire: bool,
     pub aim_point: Vec3,
+    pub target_network_id: u64,
 }

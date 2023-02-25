@@ -1,7 +1,10 @@
-use bevy::prelude::{Color, Input, KeyCode, MouseButton, Query, Res, ResMut, Transform, With};
+use bevy::{
+    math::vec3,
+    prelude::{Color, Input, KeyCode, MouseButton, Query, Res, ResMut, Transform, Vec3, With},
+};
 use bevy_mod_gizmos::{draw_gizmo, Gizmo};
 use bevy_rapier3d::prelude::{QueryFilter, RapierContext};
-use spaaaace_shared::player::player_input::PlayerInput;
+use spaaaace_shared::{player::player_input::PlayerInput, targeting::Targetable, NetworkedId};
 
 use crate::camera::{OrbitCamera, OrbitCameraTarget};
 
@@ -49,4 +52,43 @@ pub fn player_input(
         }
         Err(_) => {}
     }
+}
+
+pub fn targetting_input(
+    keys: Res<Input<KeyCode>>,
+    target_query: Query<(&Transform, &NetworkedId), With<Targetable>>,
+    camera_query: Query<&Transform, With<OrbitCamera>>,
+    mut player_input: ResMut<PlayerInput>,
+) {
+    if keys.just_pressed(KeyCode::T) {
+        match camera_query.get_single() {
+            Ok(camera) => {
+                let mut min_distance = f32::MAX;
+                let mut min_id: u64 = 0;
+
+                for (transform, network_id) in target_query.into_iter() {
+                    let distance = nearest_point_on_line_to_point(
+                        camera.translation,
+                        camera.forward(),
+                        transform.translation,
+                    )
+                    .length_squared();
+
+                    if distance < min_distance {
+                        min_distance = distance;
+                        min_id = network_id.id;
+                    }
+                }
+                player_input.target_network_id = min_id;
+            }
+            Err(_) => todo!(),
+        }
+    }
+}
+
+fn nearest_point_on_line_to_point(origin: Vec3, direction: Vec3, point: Vec3) -> Vec3 {
+    let point_to_origin = origin - point;
+    let point_to_closest_point_on_line =
+        point_to_origin - point_to_origin.dot(direction) * direction;
+    return point_to_closest_point_on_line;
 }

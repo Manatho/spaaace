@@ -5,6 +5,7 @@ pub mod util;
 pub mod weapons;
 pub mod health;
 pub mod asteroid;
+pub mod targeting;
 
 use std::collections::HashMap;
 
