@@ -1,10 +1,10 @@
 use bevy::{
     prelude::{
-        App, Commands, Component, Entity, EventWriter, Plugin, Query, Res, ResMut, SystemSet,
-        Transform,
+        App, Bundle, Commands, Component, Entity, Plugin, Query, Res, ResMut, SystemSet, Transform,
     },
     time::Time,
 };
+use bevy_rapier3d::prelude::{ActiveEvents, Collider, Sensor};
 use bevy_renet::renet::{DefaultChannel, RenetServer};
 
 use crate::{run_if_server, NetworkedId, ServerMessages};
@@ -20,11 +20,29 @@ impl Plugin for BulletPlugin {
         );
     }
 }
-
 #[derive(Component, Clone, Copy)]
 pub struct Bullet {
     pub speed: f32,
     pub lifetime: f32,
+}
+
+#[derive(Bundle)]
+pub struct BulletBundle {
+    pub bullet: Bullet,
+    active_events: ActiveEvents,
+    collider: Collider,
+    sensor: Sensor,
+}
+
+impl BulletBundle {
+    pub fn new(bullet: Bullet) -> Self {
+        BulletBundle {
+            bullet,
+            active_events: ActiveEvents::COLLISION_EVENTS,
+            collider: Collider::ball(0.5),
+            sensor: Sensor,
+        }
+    }
 }
 
 fn bullet_mover(

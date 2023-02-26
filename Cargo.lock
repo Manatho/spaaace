@@ -3554,6 +3554,7 @@ dependencies = [
  "bevy_egui",
  "bevy_hanabi",
  "bevy_mod_gizmos",
+ "bevy_rapier3d",
  "bevy_renet",
  "bincode",
  "cfg-if",
@@ -3584,6 +3585,7 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "bevy_mod_gizmos",
+ "bevy_rapier3d",
  "bevy_renet",
  "bincode",
  "cfg-if",

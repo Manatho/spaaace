@@ -1,7 +1,6 @@
-use std::f32::consts::PI;
-
 use bevy::prelude::{Quat, Vec4};
 use rand::Rng;
+use std::f32::consts::PI;
 
 pub trait Random {
     fn random() -> Self;

@@ -8,7 +8,8 @@ use app::{
 use bevy::{
     app::App,
     prelude::{
-        Commands, EventWriter, IntoSystemDescriptor, Plugin, Res, ResMut, SystemSet, Transform,
+        Commands, DespawnRecursiveExt, EventWriter, IntoSystemDescriptor, Plugin, Res, ResMut,
+        Transform,
     },
     utils::HashMap,
 };
@@ -82,7 +83,7 @@ fn client_reliable_message_handler(
         match server_message {
             ServerMessages::EntityDespawn { id } => {
                 if let Some(entity) = lobby.networked_entities.remove(&id) {
-                    commands.entity(entity).despawn();
+                    commands.entity(entity).despawn_recursive();
                 }
             }
 
