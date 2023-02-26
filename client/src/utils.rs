@@ -136,7 +136,6 @@ pub fn handle_turret_model_load(
     mut commands: Commands,
     query: Query<(Entity, &LocalTurretModelLoadHandle)>,
     assets_gltf: Res<Assets<Gltf>>,
-    assets_gltfnode: Res<Assets<GltfNode>>,
 ) {
     for (entity, handle) in query.iter() {
         if let Some(gltf) = assets_gltf.get(&handle.0) {

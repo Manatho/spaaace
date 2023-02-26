@@ -23,8 +23,8 @@ use bevy_renet::{
 };
 
 use spaaaace_shared::{
-    asteroid::AsteroidPlugin, health::HealthPlugin, player::Player, weapons::WeaponsPlugin,
-    ClientMessages, Lobby, NetworkContext, NetworkIdProvider, PROTOCOL_ID,
+    asteroid::AsteroidPlugin, cooldown::CooldownPlugin, health::HealthPlugin, player::Player,
+    weapons::WeaponsPlugin, ClientMessages, Lobby, NetworkContext, NetworkIdProvider, PROTOCOL_ID,
 };
 
 use crate::{capture_point::CapturePointPlugin, player::PlayerPlugin};
@@ -41,9 +41,6 @@ fn main() {
     // Build App
     App::default()
         // Plugins
-        .insert_resource(Lobby::default())
-        .insert_resource(NetworkIdProvider::new())
-        .insert_resource(NetworkContext { is_server: true })
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             window: WindowDescriptor {
                 title: "Spaaace Server".to_string(),
@@ -54,28 +51,42 @@ fn main() {
             },
             ..default()
         }))
-        .add_plugin(GizmosPlugin)
-        .add_plugin(HealthPlugin)
         .add_startup_system(setup)
-        .add_plugin(WorldInspectorPlugin)
+        // ------------------
+        // Third party
+        // ------------------
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugin(RapierDebugRenderPlugin::default())
+        // ------------------
+        // Networking stuff
+        // ------------------
+        .insert_resource(Lobby::default())
+        .insert_resource(NetworkIdProvider::new())
+        .insert_resource(NetworkContext { is_server: true })
+        .add_event::<ClientEvent>()
         .add_plugin(RenetServerPlugin::default())
         .insert_resource(new_renet_server())
         .add_system(server_update_system)
+        // ------------------
+        // Gameplay stuff
+        // ------------------
+        .add_plugin(HealthPlugin)
         .add_plugin(WeaponsPlugin {})
         .add_plugin(AsteroidPlugin {})
         .add_plugin(PlayerPlugin)
         .add_plugin(CapturePointPlugin)
-        .add_event::<ClientEvent>()
-        .add_system(camera_follow_players)
-        // Server UI for debugging
+        .add_plugin(CooldownPlugin)
+        // ------------------
+        // Debugging stuff
+        // ------------------
+        .add_plugin(GizmosPlugin)
+        .add_plugin(WorldInspectorPlugin)
         // .add_plugin(InputPlugin::default())
         // .add_plugin(ScenePlugin::default())
         // .add_plugin(WindowPlugin::default())
         // .add_plugin(WinitPlugin::default())
         // .add_plugin(RenderPlugin::default())
-        // Run App
+        .add_system(camera_follow_players)
         .run();
 }
 

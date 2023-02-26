@@ -1,7 +1,7 @@
 use std::{net::UdpSocket, time::SystemTime};
 
 use app::{
-    controls::{local_player_input_sync, player_input},
+    controls::{player_input},
     game_state::run_if_not_paused,
     utils::LerpTransformTarget,
 };
@@ -36,7 +36,6 @@ impl Plugin for ClientNetworkingPlugin {
                     .with_run_criteria(run_if_not_paused)
                     .with_system(player_input),
             )
-            .add_system(local_player_input_sync)
             .add_system(client_send_input.with_run_criteria(run_if_client_connected))
             .add_system(client_reliable_message_handler.with_run_criteria(run_if_client_connected))
             .add_system(

@@ -13,8 +13,8 @@ use bevy_renet::renet::{DefaultChannel, RenetServer, ServerEvent};
 use rand::Rng;
 
 use crate::{
-    health::Health, run_if_client, run_if_server, util::Random, Lobby, NetworkIdProvider,
-    NetworkedId, ServerMessages,
+    health::Health, run_if_client, run_if_server, targeting::Targetable, util::Random, Lobby,
+    NetworkIdProvider, NetworkedId, ServerMessages,
 };
 
 #[derive(Component)]
@@ -132,6 +132,11 @@ fn on_asteroid_spawned(
                             ..default()
                         },
                         ..default()
+                    })
+                    .insert(Targetable {})
+                    .insert(NetworkedId {
+                        id: *id,
+                        last_sent: 0,
                     })
                     .insert(Collider::ball(1.0))
                     .id();
