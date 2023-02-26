@@ -8,6 +8,7 @@ pub mod asteroid;
 pub mod targeting;
 pub mod cooldown;
 pub mod lifetime;
+pub mod missile;
 
 use std::collections::HashMap;
 
