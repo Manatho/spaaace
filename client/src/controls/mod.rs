@@ -1,6 +1,5 @@
-use bevy::{
-    math::vec3,
-    prelude::{Color, Input, KeyCode, MouseButton, Query, Res, ResMut, Transform, Vec3, With},
+use bevy::prelude::{
+    App, Color, Input, KeyCode, MouseButton, Plugin, Query, Res, ResMut, Transform, Vec3, With,
 };
 use bevy_mod_gizmos::{draw_gizmo, Gizmo};
 use bevy_rapier3d::prelude::{QueryFilter, RapierContext};
@@ -8,13 +7,20 @@ use spaaaace_shared::{player::player_input::PlayerInput, targeting::Targetable, 
 
 use crate::camera::{OrbitCamera, OrbitCameraTarget};
 
+pub struct ControlsPlugin;
+
+impl Plugin for ControlsPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_system(player_input)
+            .add_system(targetting)
+            .add_system(aiming);
+    }
+}
+
 pub fn player_input(
     k_input: Res<Input<KeyCode>>,
     m_input: Res<Input<MouseButton>>,
     mut player_input: ResMut<PlayerInput>,
-    camera_query: Query<&Transform, With<OrbitCamera>>,
-    camera_target_query: Query<&Transform, With<OrbitCameraTarget>>,
-    rapier_context: Res<RapierContext>,
 ) {
     player_input.rotate_left = k_input.pressed(KeyCode::A);
     player_input.rotate_right = k_input.pressed(KeyCode::D);
@@ -24,8 +30,24 @@ pub fn player_input(
     player_input.thrust_right = k_input.pressed(KeyCode::E);
     player_input.thrust_up = k_input.pressed(KeyCode::Space);
     player_input.thrust_down = k_input.pressed(KeyCode::LControl);
+    player_input.ability_slot_1 = k_input.pressed(KeyCode::Key1);
+    player_input.ability_slot_2 = k_input.pressed(KeyCode::Key2);
+    player_input.ability_slot_3 = k_input.pressed(KeyCode::Key3);
+    player_input.ability_slot_4 = k_input.pressed(KeyCode::Key4);
+    player_input.ability_slot_5 = k_input.pressed(KeyCode::Key5);
+    player_input.ability_slot_6 = k_input.pressed(KeyCode::Key6);
+    player_input.ability_slot_7 = k_input.pressed(KeyCode::Key7);
+    player_input.ability_slot_8 = k_input.pressed(KeyCode::Key8);
+    player_input.ability_slot_9 = k_input.pressed(KeyCode::Key9);
     player_input.primary_fire = m_input.pressed(MouseButton::Left);
+}
 
+fn aiming(
+    camera_query: Query<&Transform, With<OrbitCamera>>,
+    camera_target_query: Query<&Transform, With<OrbitCameraTarget>>,
+    rapier_context: Res<RapierContext>,
+    mut player_input: ResMut<PlayerInput>,
+) {
     match camera_query.get_single() {
         Ok(transform) => {
             let target_transform_result = camera_target_query.get_single();
@@ -54,7 +76,7 @@ pub fn player_input(
     }
 }
 
-pub fn targetting_input(
+fn targetting(
     keys: Res<Input<KeyCode>>,
     target_query: Query<(&Transform, &NetworkedId), With<Targetable>>,
     camera_query: Query<&Transform, With<OrbitCamera>>,

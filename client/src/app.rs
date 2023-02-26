@@ -3,6 +3,7 @@ use std::f32::consts::PI;
 use app::{
     camera::{OrbitCamera, OrbitCameraPlugin},
     capture_point::ClientCapturePointPlugin,
+    controls::ControlsPlugin,
     debug::fps::{fps_gui, team_swap_gui},
     game_state::ClientGameState,
     player::ClientPlayerPlugin,
@@ -78,6 +79,7 @@ pub fn run() {
         .add_plugin(ClientNetworkingPlugin)
         .insert_resource(Lobby::default())
         .add_plugin(ClientPlayerPlugin {})
+        .add_plugin(ControlsPlugin {})
         .add_plugin(WeaponsPlugin {})
         .add_plugin(ClientCapturePointPlugin {})
         .add_plugin(AsteroidPlugin)
