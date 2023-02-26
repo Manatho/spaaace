@@ -8,6 +8,7 @@ pub mod team;
 pub mod util;
 pub mod weapons;
 pub mod lifetime;
+pub mod missile;
 
 use std::collections::HashMap;
 

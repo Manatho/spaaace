@@ -24,7 +24,7 @@ use bevy_renet::{
 
 use spaaaace_shared::{
     asteroid::AsteroidPlugin, cooldown::CooldownPlugin, health::HealthPlugin, player::Player,
-    weapons::WeaponsPlugin, ClientMessages, Lobby, NetworkContext, NetworkIdProvider, PROTOCOL_ID,
+    weapons::WeaponsPlugin, ClientMessages, Lobby, NetworkContext, NetworkIdProvider, PROTOCOL_ID, missile::MissilePlugin, lifetime::LifeTimePlugin,
 };
 
 use crate::{capture_point::CapturePointPlugin, player::PlayerPlugin};
@@ -75,6 +75,8 @@ fn main() {
         .add_plugin(PlayerPlugin)
         .add_plugin(CapturePointPlugin)
         .add_plugin(CooldownPlugin)
+        .add_plugin(LifeTimePlugin)
+        .add_plugin(MissilePlugin)
         // ------------------
         // Debugging stuff
         // ------------------
