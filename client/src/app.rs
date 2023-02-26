@@ -30,6 +30,7 @@ use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_mod_gizmos::GizmosPlugin;
 
 use bevy_rapier3d::prelude::{NoUserData, RapierDebugRenderPlugin, RapierPhysicsPlugin};
+use bevy_scene_hook::HookPlugin;
 use spaaaace_shared::{
     asteroid::AsteroidPlugin, weapons::WeaponsPlugin, Lobby, NetworkContext, ServerMessages,
 };
