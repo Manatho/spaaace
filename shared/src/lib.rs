@@ -3,6 +3,8 @@ pub mod ships;
 pub mod team;
 pub mod util;
 pub mod weapons;
+pub mod health;
+pub mod asteroid;
 
 use std::collections::HashMap;
 
@@ -59,6 +61,12 @@ pub enum ServerMessages {
         progress: f32,
     },
     AsteroidSpawned {
+        id: u64,
+        position: Vec3,
+        scale: Vec3,
+        rotation: Quat,
+    },
+    BalloonSpawned {
         id: u64,
         position: Vec3,
         scale: Vec3,

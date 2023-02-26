@@ -1,7 +1,9 @@
 use bevy::{
     prelude::{
-        App, Commands, Component, EventReader, Plugin, Quat, Query, ResMut, Transform, Vec3, With,
+        default, App, AssetServer, Commands, Component, EventReader, Plugin, Quat, Query, Res,
+        ResMut, SystemSet, Transform, Vec3, With,
     },
+    scene::SceneBundle,
     transform::TransformBundle,
 };
 use bevy_rapier3d::prelude::{
@@ -9,7 +11,11 @@ use bevy_rapier3d::prelude::{
 };
 use bevy_renet::renet::{DefaultChannel, RenetServer, ServerEvent};
 use rand::Rng;
-use spaaaace_shared::{util::Random, NetworkIdProvider, NetworkedId, ServerMessages};
+
+use crate::{
+    health::Health, run_if_client, run_if_server, util::Random, Lobby, NetworkIdProvider,
+    NetworkedId, ServerMessages,
+};
 
 #[derive(Component)]
 pub struct Asteroid;
@@ -18,8 +24,26 @@ pub struct AsteroidPlugin;
 
 impl Plugin for AsteroidPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(spawn_asteroids)
-            .add_system(on_client_connected);
+        //Both
+
+        //Client
+        app.add_system_set(
+            SystemSet::new()
+                .with_run_criteria(run_if_client)
+                .with_system(on_asteroid_spawned),
+        );
+
+        // Server
+        app.add_system_set(
+            SystemSet::new()
+                .with_run_criteria(run_if_server)
+                .with_system(on_client_connected),
+        )
+        .add_startup_system_set(
+            SystemSet::new()
+                .with_run_criteria(run_if_server)
+                .with_system(spawn_asteroids),
+        );
     }
 }
 
@@ -39,16 +63,6 @@ fn spawn_asteroids(
             rotation: Quat::random(),
         };
 
-        // commands
-        // .spawn(id_provider.new_id())
-        // .insert(Collider::cuboid(1.0, 1.0, 1.0))
-        // .insert(RigidBody::Dynamic)
-        // .insert(Asteroid)
-        // .insert(TransformBundle {
-        //     global: x.into(),
-        //     ..Default::default()
-        // });
-
         commands
             .spawn(Collider::ball(1.0))
             .insert(RigidBody::Dynamic)
@@ -65,7 +79,8 @@ fn spawn_asteroids(
             })
             .insert(ColliderMassProperties::Density(1.0))
             .insert(id_provider.new_id())
-            .insert(Asteroid);
+            .insert(Asteroid)
+            .insert(Health { health: 10.0 });
     }
 }
 
@@ -89,6 +104,41 @@ fn on_client_connected(
                 }
             }
             _ => (),
+        }
+    }
+}
+
+fn on_asteroid_spawned(
+    mut commands: Commands,
+    mut lobby: ResMut<Lobby>,
+    mut event_reader: EventReader<ServerMessages>,
+    ass: Res<AssetServer>,
+) {
+    for event in event_reader.iter() {
+        match event {
+            ServerMessages::AsteroidSpawned {
+                id,
+                position,
+                scale,
+                rotation,
+            } => {
+                let x = commands
+                    .spawn(SceneBundle {
+                        scene: ass.load("asteroid.glb#Scene0"),
+                        transform: Transform {
+                            translation: *position,
+                            scale: *scale,
+                            rotation: *rotation,
+                            ..default()
+                        },
+                        ..default()
+                    })
+                    .insert(Collider::ball(1.0))
+                    .id();
+
+                lobby.networked_entities.insert(*id, x);
+            }
+            _ => {}
         }
     }
 }

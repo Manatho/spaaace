@@ -1,7 +1,6 @@
 use std::f32::consts::PI;
 
 use app::{
-    asteroid::AsteroidPlugin,
     camera::{OrbitCamera, OrbitCameraPlugin},
     capture_point::ClientCapturePointPlugin,
     debug::fps::{fps_gui, team_swap_gui},
@@ -30,8 +29,10 @@ use bevy_hanabi::HanabiPlugin;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_mod_gizmos::GizmosPlugin;
 
-use bevy_scene_hook::HookPlugin;
-use spaaaace_shared::{weapons::WeaponsPlugin, Lobby, NetworkContext, ServerMessages};
+use bevy_rapier3d::prelude::{NoUserData, RapierDebugRenderPlugin, RapierPhysicsPlugin};
+use spaaaace_shared::{
+    asteroid::AsteroidPlugin, weapons::WeaponsPlugin, Lobby, NetworkContext, ServerMessages,
+};
 
 use crate::networking::ClientNetworkingPlugin;
 
@@ -52,6 +53,11 @@ pub fn run() {
         // ------------------
         .add_plugin(HanabiPlugin)
         // ------------------
+        // Third party
+        // ------------------
+        .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
+        .add_plugin(RapierDebugRenderPlugin::default())
+        // ------------------
         // Utils
         // ------------------
         .add_plugin(HookPlugin)
@@ -62,7 +68,10 @@ pub fn run() {
         // ------------------
         // UI Stuff
         // ------------------
-        .insert_resource(ClientGameState { is_paused: false })
+        .insert_resource(ClientGameState {
+            is_paused: false,
+            is_focused: true,
+        })
         .add_plugin(GameUIPlugin)
         // ------------------
         // Gameplay stuff

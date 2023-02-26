@@ -4,22 +4,21 @@ use std::{f32::consts::PI, time::Instant};
 
 use bevy::{
     prelude::{
-        default, shape, App, Assets, Color, Commands, Component, Entity, EventReader, EventWriter,
+        default, shape, App, Assets, Color, Commands, Component, Entity, EventReader,
         GlobalTransform, IntoSystemDescriptor, Mesh, Parent, PbrBundle, Plugin, Quat, Query, Res,
         ResMut, StandardMaterial, SystemSet, Transform, With, Without,
     },
     time::Time,
     transform::TransformBundle,
 };
-use bevy_mod_gizmos::draw_line;
 use bevy_renet::renet::{DefaultChannel, RenetServer};
 
 use crate::{
     player::{player_input::PlayerInput, Player},
-    run_if_client, run_if_server, Lobby, NetworkContext, NetworkedId, ServerMessages,
+    run_if_client, run_if_server, Lobby, NetworkedId, ServerMessages,
 };
 
-use self::bullet::{Bullet, BulletPlugin};
+use self::bullet::{Bullet, BulletBundle, BulletPlugin};
 
 #[derive(Component, Debug, Eq, PartialEq)]
 pub struct TurretOwner(pub(crate) Entity);
@@ -153,7 +152,7 @@ fn fire_weapons_server(
                 };
                 commands
                     .spawn(bullet_transform)
-                    .insert(bullet)
+                    .insert(BulletBundle::new(bullet))
                     .insert(NetworkedId {
                         id: id.try_into().unwrap(),
                         last_sent: 0,
