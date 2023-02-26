@@ -7,7 +7,9 @@ use bevy::{
     utils::default,
 };
 use bevy_renet::renet::RenetClient;
-use spaaaace_shared::{player::player_input::PlayerInput, Lobby, ServerMessages};
+use spaaaace_shared::{
+    player::player_input::PlayerInput, ships::ShipModelLoadHandle, Lobby, ServerMessages,
+};
 
 use crate::{camera::OrbitCameraTarget, controls::LocalPlayer};
 
@@ -19,9 +21,6 @@ impl Plugin for ClientPlayerPlugin {
         app.add_system(on_client_disconnected);
     }
 }
-
-#[derive(Component)]
-pub struct ShipModelLoadHandle(pub Handle<Gltf>);
 
 fn on_client_connected(
     mut commands: Commands,

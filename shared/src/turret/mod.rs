@@ -1,4 +1,5 @@
 pub mod bullet;
+pub mod model_load_handlers;
 
 use std::{f32::consts::PI, time::Instant};
 
@@ -6,7 +7,7 @@ use bevy::{
     prelude::{
         default, shape, App, Assets, Color, Commands, Component, Entity, EventReader,
         GlobalTransform, IntoSystemDescriptor, Mesh, Parent, PbrBundle, Plugin, Quat, Query, Res,
-        ResMut, StandardMaterial, SystemSet, Transform, With, Without,
+        ResMut, StandardMaterial, SystemSet, Transform, Vec3, With, Without,
     },
     time::Time,
     transform::TransformBundle,
@@ -14,11 +15,17 @@ use bevy::{
 use bevy_renet::renet::{DefaultChannel, RenetServer};
 
 use crate::{
+    cooldown::Cooldown,
     player::{player_input::PlayerInput, Player},
-    run_if_client, run_if_server, Lobby, NetworkedId, ServerMessages,
+    run_if_client, run_if_server,
+    util::spring::SpringVelocity,
+    Lobby, NetworkedId, ServerMessages,
 };
 
-use self::bullet::{Bullet, BulletBundle, BulletPlugin};
+use self::{
+    bullet::{Bullet, BulletBundle, BulletPlugin},
+    model_load_handlers::handle_turret_model_load,
+};
 
 #[derive(Component, Debug, Eq, PartialEq)]
 pub struct TurretOwner(pub(crate) Entity);
@@ -33,9 +40,23 @@ impl TurretOwner {
     }
 }
 
+#[derive(Component, Debug, Eq, PartialEq)]
+pub struct PartOfTurret(pub(crate) Entity);
+
+impl PartOfTurret {
+    pub fn new(entity: Entity) -> PartOfTurret {
+        PartOfTurret(entity)
+    }
+
+    pub fn get(&self) -> Entity {
+        self.0
+    }
+}
+
 #[derive(Component)]
 pub struct Turret {
     pub fire_rate: f32,
+    pub barrel_count: i8,
     pub cooldown: f32,
     pub trigger: bool,
     pub aim_dir: Quat,
@@ -43,7 +64,8 @@ pub struct Turret {
 impl Default for Turret {
     fn default() -> Self {
         Self {
-            fire_rate: 1.0,
+            fire_rate: 3.0,
+            barrel_count: 0,
             cooldown: Default::default(),
             trigger: Default::default(),
             aim_dir: Default::default(),
@@ -51,11 +73,12 @@ impl Default for Turret {
     }
 }
 
-pub struct WeaponsPlugin;
+pub struct TurretPlugin;
 
-impl Plugin for WeaponsPlugin {
+impl Plugin for TurretPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(BulletPlugin {})
+            .add_system(handle_turret_model_load)
             .add_system(trigger_weapons)
             .add_system(turn_turrets)
             .add_system_set(
@@ -72,16 +95,19 @@ impl Plugin for WeaponsPlugin {
 }
 
 #[derive(Component)]
-pub struct Barrel {}
+pub struct TurretBase {}
 
-fn trigger_weapons(
-    mut q_child: Query<(&Parent, &mut Turret)>,
-    q_parent: Query<(&Player, &PlayerInput)>,
-) {
-    for (parent, mut turret) in q_child.iter_mut() {
-        let result = q_parent.get(parent.get());
+#[derive(Component)]
+pub struct TurretPivot {}
+
+#[derive(Component)]
+pub struct TurretBarrel {}
+
+fn trigger_weapons(mut q_child: Query<(&mut Turret, &TurretOwner)>, q_parent: Query<&PlayerInput>) {
+    for (mut turret, turret_owner) in q_child.iter_mut() {
+        let result = q_parent.get(turret_owner.get());
         match result {
-            Ok((_player, player_input)) => {
+            Ok(player_input) => {
                 turret.trigger = player_input.primary_fire;
             }
             Err(_) => {}
@@ -91,15 +117,23 @@ fn trigger_weapons(
 
 fn turn_turrets(
     time: Res<Time>,
-    mut turret_query: Query<
-        (&TurretOwner, &mut Turret, &mut Transform, &GlobalTransform),
-        Without<Barrel>,
+    turret_query: Query<
+        (&TurretOwner, &Turret, &Transform, &GlobalTransform),
+        (Without<TurretBase>, Without<TurretPivot>),
     >,
-    mut barrel_query: Query<(&Parent, &mut Transform, &GlobalTransform), With<Barrel>>,
+    mut base_query: Query<
+        (&PartOfTurret, &mut Transform, &GlobalTransform),
+        (With<TurretBase>, Without<TurretPivot>),
+    >,
+    mut pivot_query: Query<
+        (&PartOfTurret, &mut Transform, &GlobalTransform),
+        (With<TurretPivot>, Without<TurretBase>),
+    >,
     player_query: Query<&PlayerInput>,
 ) {
-    for (owner, _, mut transform, global_transform) in turret_query.iter_mut() {
-        let player = player_query.get(owner.get());
+    for (part_of_turret, mut transform, global_transform) in base_query.iter_mut() {
+        let (turret_parent, _, _, _) = turret_query.get(part_of_turret.get()).unwrap();
+        let player = player_query.get(turret_parent.get());
 
         match player {
             Ok(player_input) => {
@@ -112,8 +146,8 @@ fn turn_turrets(
         }
     }
 
-    for (parent, mut transform, global_transform) in barrel_query.iter_mut() {
-        let (turret_parent, _, _, _) = turret_query.get(parent.get()).unwrap();
+    for (part_of_turret, mut transform, global_transform) in pivot_query.iter_mut() {
+        let (turret_parent, _, _, _) = turret_query.get(part_of_turret.get()).unwrap();
         let player = player_query.get(turret_parent.get());
 
         match player {
@@ -129,47 +163,59 @@ fn turn_turrets(
 }
 
 fn fire_weapons_server(
-    mut barrel_query: Query<(&Barrel, &GlobalTransform, &Parent)>,
-    mut turret_query: Query<&mut Turret>,
+    mut barrel_query: Query<
+        (Entity, &TurretBarrel, &GlobalTransform, &PartOfTurret),
+        Without<Cooldown>,
+    >,
+    mut turret_query: Query<(Entity, &Turret, Option<&Cooldown>)>,
     mut commands: Commands,
     time: Res<Time>,
     mut server: ResMut<RenetServer>,
 ) {
-    for (_, global_transform, parent) in barrel_query.iter_mut() {
-        let mut turret = turret_query.get_mut(parent.get()).unwrap();
-        if turret.cooldown <= 0.0 {
-            if turret.trigger {
-                let transform = global_transform.compute_transform();
+    let mut turrets_fired = Vec::<u32>::new();
+    for (entity, _, global_transform, part_of_turret) in barrel_query.iter_mut() {
+        let (turret_ent, turret, turret_cooldown) =
+            turret_query.get_mut(part_of_turret.get()).unwrap();
 
-                let now = Instant::now();
-                let since_start = now.duration_since(time.startup());
-                let id = since_start.as_nanos();
+        if turret_cooldown.is_none()
+            && turret.trigger
+            && turrets_fired.contains(&turret_ent.index()) == false
+        {
+            let transform = global_transform.compute_transform();
 
-                let bullet_transform = TransformBundle::from_transform(transform);
-                let bullet = Bullet {
-                    speed: 200.,
-                    lifetime: time.elapsed_seconds() + 2.0,
-                };
-                commands
-                    .spawn(bullet_transform)
-                    .insert(BulletBundle::new(bullet))
-                    .insert(NetworkedId {
-                        id: id.try_into().unwrap(),
-                        last_sent: 0,
-                    });
+            let now = Instant::now();
+            let since_start = now.duration_since(time.startup());
+            let id = since_start.as_nanos();
 
-                let message = bincode::serialize(&ServerMessages::BulletSpawned {
+            let bullet_transform = TransformBundle::from_transform(transform);
+            let bullet = Bullet {
+                speed: 20.,
+                lifetime: time.elapsed_seconds() + 2.0,
+            };
+            commands
+                .spawn(bullet_transform)
+                .insert(BulletBundle::new(bullet))
+                .insert(NetworkedId {
                     id: id.try_into().unwrap(),
-                    position: transform.translation,
-                    rotation: transform.rotation,
-                })
-                .unwrap();
+                    last_sent: 0,
+                });
 
-                server.broadcast_message(DefaultChannel::Reliable, message);
-            }
-            turret.cooldown = turret.fire_rate;
-        } else {
-            turret.cooldown -= time.delta_seconds();
+            let message = bincode::serialize(&ServerMessages::BulletSpawned {
+                id: id.try_into().unwrap(),
+                position: transform.translation,
+                rotation: transform.rotation,
+            })
+            .unwrap();
+
+            server.broadcast_message(DefaultChannel::Reliable, message);
+            commands.entity(entity).insert((
+                Cooldown { value: 0.6 },
+                SpringVelocity {
+                    value: Vec3::Z * 10.0,
+                },
+            ));
+            commands.entity(turret_ent).insert(Cooldown { value: 0.3 });
+            turrets_fired.push(turret_ent.index());
         }
     }
 }

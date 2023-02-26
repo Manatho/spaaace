@@ -1,6 +1,18 @@
-use bevy::prelude::{Quat, Vec4};
+pub mod spring;
+
+use bevy::prelude::{App, Plugin, Quat, Vec4};
 use rand::Rng;
 use std::f32::consts::PI;
+
+use self::spring::SpringPlugin;
+
+pub struct UtilityPlugins;
+
+impl Plugin for UtilityPlugins {
+    fn build(&self, app: &mut App) {
+        app.add_plugin(SpringPlugin);
+    }
+}
 
 pub trait Random {
     fn random() -> Self;

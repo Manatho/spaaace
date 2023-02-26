@@ -1,12 +1,15 @@
 use bevy::prelude::{
-    App, Color, Component, Input, KeyCode, MouseButton, Plugin, Query, Res, ResMut, Transform,
-    Vec3, With,
+    App, Color, Component, Input, KeyCode, MouseButton, Plugin, Query, Res, ResMut, SystemSet,
+    Transform, Vec3, With,
 };
 use bevy_mod_gizmos::{draw_gizmo, Gizmo};
 use bevy_rapier3d::prelude::{QueryFilter, RapierContext};
 use spaaaace_shared::{player::player_input::PlayerInput, targeting::Targetable, NetworkedId};
 
-use crate::camera::{OrbitCamera, OrbitCameraTarget};
+use crate::{
+    camera::{OrbitCamera, OrbitCameraTarget},
+    game_state::run_if_not_paused,
+};
 
 #[derive(Component)]
 pub struct LocalPlayer;
@@ -23,10 +26,14 @@ fn local_player_input_sync(
 pub struct ControlsPlugin;
 impl Plugin for ControlsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(player_input)
-            .add_system(targetting)
-            .add_system(aiming)
-            .add_system(local_player_input_sync);
+        app.add_system_set(
+            SystemSet::new()
+                .with_run_criteria(run_if_not_paused)
+                .with_system(player_input)
+                .with_system(targetting)
+                .with_system(local_player_input_sync)
+                .with_system(aiming),
+        );
     }
 }
 
