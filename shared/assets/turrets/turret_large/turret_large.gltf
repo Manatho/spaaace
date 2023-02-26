@@ -8,49 +8,27 @@
         {
             "name" : "Scene",
             "nodes" : [
-                8
+                3
             ]
         }
     ],
     "nodes" : [
         {
             "mesh" : 0,
-            "name" : "rail066_parts_0.001",
-            "rotation" : [
-                0.7071068286895752,
-                -2.2870611671453643e-15,
-                -1.479934800772411e-15,
-                0.7071068286895752
-            ],
-            "scale" : [
-                0.9999998807907104,
-                0.9999997019767761,
-                0.9999998211860657
-            ],
+            "name" : "barrel.001",
             "translation" : [
-                0.3583497107028961,
-                -1.9759153127670288,
-                0.05335816740989685
+                -0.35835403203964233,
+                -0.04950346797704697,
+                -3.044241428375244
             ]
         },
         {
             "mesh" : 1,
-            "name" : "rail066_parts_0.002",
-            "rotation" : [
-                0.7071068286895752,
-                -2.2870611671453643e-15,
-                -1.479934800772411e-15,
-                0.7071068286895752
-            ],
-            "scale" : [
-                0.9999998807907104,
-                0.9999997019767761,
-                0.9999998211860657
-            ],
+            "name" : "barrel",
             "translation" : [
-                -0.3583499789237976,
-                -1.9759153127670288,
-                0.05335816740989685
+                0.35834601521492004,
+                -0.049503374844789505,
+                -3.0442416667938232
             ]
         },
         {
@@ -58,126 +36,20 @@
                 0,
                 1
             ],
-            "name" : "barrel_end",
-            "rotation" : [
-                0.013641681522130966,
-                1.4711825152075508e-15,
-                3.663488712390972e-08,
-                0.9999069571495056
-            ],
-            "scale" : [
-                1,
-                0.9999999403953552,
-                1
-            ],
-            "translation" : [
-                -1.243732139499798e-08,
-                2.0002355575561523,
-                0.004631262272596359
-            ]
-        },
-        {
             "mesh" : 2,
-            "name" : "rail065_parts_0.001",
-            "rotation" : [
-                0.7166871428489685,
-                2.5904775213803077e-08,
-                2.5904778766516756e-08,
-                0.697394847869873
-            ],
-            "scale" : [
-                0.9999999403953552,
-                0.9999997615814209,
-                0.9999997615814209
-            ],
+            "name" : "pivot",
             "translation" : [
-                0.35834985971450806,
-                -5.849659956425057e-08,
-                -1.4542981929821508e-08
+                0,
+                0.44612202048301697,
+                0.32492104172706604
             ]
         },
         {
+            "children" : [
+                2
+            ],
             "mesh" : 3,
-            "name" : "rail065_parts_0.002",
-            "rotation" : [
-                0.7166871428489685,
-                2.5904775213803077e-08,
-                2.5904778766516756e-08,
-                0.697394847869873
-            ],
-            "scale" : [
-                0.9999999403953552,
-                0.9999997615814209,
-                0.9999997615814209
-            ],
-            "translation" : [
-                -0.35834982991218567,
-                -1.1100412677933491e-07,
-                -1.5259340457873805e-08
-            ]
-        },
-        {
-            "children" : [
-                2,
-                3,
-                4
-            ],
-            "name" : "barrel_root",
-            "rotation" : [
-                0.6973949074745178,
-                -2.2416909217781722e-08,
-                2.1116155934919334e-08,
-                0.7166870832443237
-            ],
-            "translation" : [
-                7.368897714243872e-10,
-                -0.06871166825294495,
-                -0.9999999403953552
-            ]
-        },
-        {
-            "mesh" : 4,
-            "name" : "rail_turret032_parts_0.001",
-            "rotation" : [
-                -1,
-                -8.829812372940097e-16,
-                -6.742367730794285e-08,
-                3.2740028466093918e-09
-            ],
-            "translation" : [
-                -7.238166526039934e-16,
-                0.4098708927631378,
-                5.367673860945388e-09
-            ]
-        },
-        {
-            "children" : [
-                5,
-                6
-            ],
-            "name" : "base",
-            "rotation" : [
-                1,
-                4.4149061864700483e-16,
-                6.742367730794285e-08,
-                3.2740028466093918e-09
-            ],
-            "translation" : [
-                0,
-                -0.018773138523101807,
-                -0.000382397323846817
-            ]
-        },
-        {
-            "children" : [
-                7
-            ],
-            "name" : "large_turret",
-            "translation" : [
-                0,
-                0.4286440312862396,
-                0.000382397323846817
-            ]
+            "name" : "base"
         }
     ],
     "materials" : [
@@ -210,7 +82,7 @@
     ],
     "meshes" : [
         {
-            "name" : "rail066_parts_0.001",
+            "name" : "rail066_parts_0.003",
             "primitives" : [
                 {
                     "attributes" : {
@@ -252,7 +124,7 @@
             ]
         },
         {
-            "name" : "rail065_parts_0.002",
+            "name" : "rail_turret008_parts_0.001",
             "primitives" : [
                 {
                     "attributes" : {
@@ -260,21 +132,7 @@
                         "NORMAL" : 12,
                         "TEXCOORD_0" : 13
                     },
-                    "indices" : 10,
-                    "material" : 0
-                }
-            ]
-        },
-        {
-            "name" : "rail_turret008_parts_0.001",
-            "primitives" : [
-                {
-                    "attributes" : {
-                        "POSITION" : 14,
-                        "NORMAL" : 15,
-                        "TEXCOORD_0" : 16
-                    },
-                    "indices" : 17,
+                    "indices" : 14,
                     "material" : 0
                 }
             ]
@@ -320,44 +178,33 @@
             "uri" : "Image_0.jpg"
         }
     ],
-    "skins" : [
-        {
-            "inverseBindMatrices" : 18,
-            "joints" : [
-                7,
-                5,
-                2
-            ],
-            "name" : "large_turret"
-        }
-    ],
     "accessors" : [
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 2444,
+            "count" : 2453,
             "max" : [
-                0.23588769137859344,
-                0.24350762367248535,
-                -0.7401994466781616
+                0.23589152097702026,
+                0.2964298129081726,
+                2.2803361415863037
             ],
             "min" : [
-                -0.2358837127685547,
-                -0.2435920685529709,
-                -3.5796518325805664
+                -0.23587971925735474,
+                -0.19067125022411346,
+                -0.5591161251068115
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 2444,
+            "count" : 2453,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 2444,
+            "count" : 2453,
             "type" : "VEC2"
         },
         {
@@ -369,247 +216,190 @@
         {
             "bufferView" : 4,
             "componentType" : 5126,
-            "count" : 2444,
+            "count" : 2453,
             "max" : [
-                0.23588769137859344,
-                0.24350762367248535,
-                -0.7401994466781616
+                0.23589155077934265,
+                0.29642975330352783,
+                2.2803361415863037
             ],
             "min" : [
-                -0.2358837127685547,
-                -0.2435920685529709,
-                -3.5796518325805664
+                -0.23587971925735474,
+                -0.19067128002643585,
+                -0.5591161251068115
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 5,
             "componentType" : 5126,
-            "count" : 2444,
+            "count" : 2453,
             "type" : "VEC3"
         },
         {
             "bufferView" : 6,
             "componentType" : 5126,
-            "count" : 2444,
+            "count" : 2453,
             "type" : "VEC2"
         },
         {
             "bufferView" : 7,
             "componentType" : 5126,
-            "count" : 662,
+            "count" : 1324,
             "max" : [
-                0.265658974647522,
-                0.28272756934165955,
-                0.17162127792835236
+                0.62400883436203,
+                0.2827261984348297,
+                0.17162151634693146
             ],
             "min" : [
-                -0.2656570076942444,
-                -0.26557624340057373,
-                -1.2908145189285278
+                -0.6240071058273315,
+                -0.26557785272598267,
+                -1.2908146381378174
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 8,
             "componentType" : 5126,
-            "count" : 662,
+            "count" : 1324,
             "type" : "VEC3"
         },
         {
             "bufferView" : 9,
             "componentType" : 5126,
-            "count" : 662,
+            "count" : 1324,
             "type" : "VEC2"
         },
         {
             "bufferView" : 10,
             "componentType" : 5123,
-            "count" : 822,
+            "count" : 1644,
             "type" : "SCALAR"
         },
         {
             "bufferView" : 11,
             "componentType" : 5126,
-            "count" : 662,
+            "count" : 1212,
             "max" : [
-                0.265658974647522,
-                0.28272756934165955,
-                0.17162127792835236
+                0.8907144665718079,
+                0.8100446462631226,
+                1.3415566682815552
             ],
             "min" : [
-                -0.2656570076942444,
-                -0.26557624340057373,
-                -1.2908145189285278
+                -0.8907144665718079,
+                -0.015356689691543579,
+                -0.9836241006851196
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 12,
             "componentType" : 5126,
-            "count" : 662,
+            "count" : 1212,
             "type" : "VEC3"
         },
         {
             "bufferView" : 13,
             "componentType" : 5126,
-            "count" : 662,
+            "count" : 1212,
             "type" : "VEC2"
         },
         {
             "bufferView" : 14,
-            "componentType" : 5126,
-            "count" : 1212,
-            "max" : [
-                0.8907064199447632,
-                0.7486194372177124,
-                1.3415510654449463
-            ],
-            "min" : [
-                -0.8907050490379333,
-                -0.07678183168172836,
-                -0.9836180806159973
-            ],
-            "type" : "VEC3"
-        },
-        {
-            "bufferView" : 15,
-            "componentType" : 5126,
-            "count" : 1212,
-            "type" : "VEC3"
-        },
-        {
-            "bufferView" : 16,
-            "componentType" : 5126,
-            "count" : 1212,
-            "type" : "VEC2"
-        },
-        {
-            "bufferView" : 17,
             "componentType" : 5123,
             "count" : 1284,
             "type" : "SCALAR"
-        },
-        {
-            "bufferView" : 18,
-            "componentType" : 5126,
-            "count" : 3,
-            "type" : "MAT4"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 29328,
+            "byteLength" : 29436,
             "byteOffset" : 0,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 29328,
-            "byteOffset" : 29328,
+            "byteLength" : 29436,
+            "byteOffset" : 29436,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 19552,
-            "byteOffset" : 58656,
+            "byteLength" : 19624,
+            "byteOffset" : 58872,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 6918,
-            "byteOffset" : 78208,
+            "byteOffset" : 78496,
             "target" : 34963
         },
         {
             "buffer" : 0,
-            "byteLength" : 29328,
-            "byteOffset" : 85128,
+            "byteLength" : 29436,
+            "byteOffset" : 85416,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 29328,
-            "byteOffset" : 114456,
+            "byteLength" : 29436,
+            "byteOffset" : 114852,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 19552,
-            "byteOffset" : 143784,
+            "byteLength" : 19624,
+            "byteOffset" : 144288,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 7944,
-            "byteOffset" : 163336,
+            "byteLength" : 15888,
+            "byteOffset" : 163912,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 7944,
-            "byteOffset" : 171280,
+            "byteLength" : 15888,
+            "byteOffset" : 179800,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 5296,
-            "byteOffset" : 179224,
+            "byteLength" : 10592,
+            "byteOffset" : 195688,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 1644,
-            "byteOffset" : 184520,
+            "byteLength" : 3288,
+            "byteOffset" : 206280,
             "target" : 34963
         },
         {
             "buffer" : 0,
-            "byteLength" : 7944,
-            "byteOffset" : 186164,
-            "target" : 34962
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 7944,
-            "byteOffset" : 194108,
-            "target" : 34962
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 5296,
-            "byteOffset" : 202052,
+            "byteLength" : 14544,
+            "byteOffset" : 209568,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 14544,
-            "byteOffset" : 207348,
-            "target" : 34962
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 14544,
-            "byteOffset" : 221892,
+            "byteOffset" : 224112,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 9696,
-            "byteOffset" : 236436,
+            "byteOffset" : 238656,
             "target" : 34962
         },
         {
             "buffer" : 0,
             "byteLength" : 2568,
-            "byteOffset" : 246132,
+            "byteOffset" : 248352,
             "target" : 34963
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 192,
-            "byteOffset" : 248700
         }
     ],
     "samplers" : [
@@ -620,7 +410,7 @@
     ],
     "buffers" : [
         {
-            "byteLength" : 248892,
+            "byteLength" : 250920,
             "uri" : "turret_large.bin"
         }
     ]

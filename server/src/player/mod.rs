@@ -23,7 +23,7 @@ use spaaaace_shared::{
     player::{player_input::PlayerInput, Player},
     ships::{ShipModelLoadHandle, SHIP_TYPES},
     team::team_enum::Team,
-    weapons::{Barrel, Turret},
+    weapons::{Barrel, Turret, TurretOwner},
     ClientMessages, Lobby, NetworkedId, ServerMessages, TranslationRotation,
 };
 
@@ -301,6 +301,7 @@ fn on_client_model_loaded(
                         let thruster = commands
                             .spawn((
                                 TransformBundle::from(node.transform),
+                                TurretOwner::new(entity),
                                 Turret {
                                     fire_rate: 1.0 / 10.,
                                     ..default()

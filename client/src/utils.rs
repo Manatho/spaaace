@@ -1,8 +1,8 @@
 use bevy::{
     gltf::{Gltf, GltfNode},
     prelude::{
-        default, AssetServer, Assets, BuildChildren, Commands, Component, Entity, Handle, Query,
-        Res, ResMut, SpatialBundle, Transform, Vec2, Vec4,
+        default, AssetServer, Assets, BuildChildren, Commands, Component, Entity, Handle, Name,
+        Query, Res, ResMut, SpatialBundle, Transform, Vec2, Vec4,
     },
     scene::SceneBundle,
     time::Time,
@@ -12,6 +12,8 @@ use bevy_hanabi::{
     ParticleLifetimeModifier, PositionSphereModifier, ShapeDimension, SizeOverLifetimeModifier,
     Spawner,
 };
+use bevy_scene_hook::{HookedSceneBundle, SceneHook};
+use spaaaace_shared::weapons::{Barrel, Turret, TurretOwner};
 
 use crate::player::ShipModelLoadHandle;
 
@@ -34,18 +36,19 @@ pub fn lerp_transform_targets(
 }
 
 #[derive(Component)]
-pub struct LocalTurretModelLoadHandle(pub Handle<Gltf>);
+pub struct LocalTurretModelLoadHandle(pub Handle<Gltf>, pub Entity);
 
 pub fn spawn_local_turret(
     commands: &mut Commands,
     ass: &Res<AssetServer>,
     transform: &Transform,
+    owner_entity: Entity,
 ) -> Entity {
     let turret_gltf = ass.load("../../shared/assets/turrets/turret_large/turret_large.gltf");
     let turret_entity = commands
         .spawn((
             SpatialBundle { ..default() },
-            LocalTurretModelLoadHandle(turret_gltf),
+            LocalTurretModelLoadHandle(turret_gltf, owner_entity),
         ))
         .insert(transform.clone())
         .id();
@@ -112,7 +115,8 @@ pub fn handle_ship_model_load(
                 }
                 if node_name.contains("turret_pad_large") {
                     if let Some(node) = assets_gltfnode.get(&gltf.named_nodes[node_name]) {
-                        let turret = spawn_local_turret(&mut commands, &ass, &node.transform);
+                        let turret =
+                            spawn_local_turret(&mut commands, &ass, &node.transform, entity);
                         turrets.push(turret);
                     }
                 }
@@ -132,25 +136,41 @@ pub fn handle_turret_model_load(
     mut commands: Commands,
     query: Query<(Entity, &LocalTurretModelLoadHandle)>,
     assets_gltf: Res<Assets<Gltf>>,
+    assets_gltfnode: Res<Assets<GltfNode>>,
 ) {
     for (entity, handle) in query.iter() {
         if let Some(gltf) = assets_gltf.get(&handle.0) {
-            for node_name in gltf.named_nodes.keys().into_iter() {
-                match node_name.as_str() {
-                    "base" => {
-                        
-                    },
-                    "barrel_root" => {},
-                    "barrel_end" => {},
-                    _ => {}
-                }
-            }
-
             // spawn the first scene in the file
+            let owner_entity_handle = Box::new(handle.1);
+
+            commands
+                .entity(*owner_entity_handle)
+                .insert(Name::new("TurretOwnerEntity"));
             let model = commands
-                .spawn(SceneBundle {
-                    scene: gltf.scenes[0].clone(),
-                    ..Default::default()
+                .spawn(HookedSceneBundle {
+                    scene: SceneBundle {
+                        scene: gltf.scenes[0].clone(),
+                        ..default()
+                    },
+                    hook: SceneHook::new(move |entity, cmds| {
+                        match entity.get::<Name>().map(|t| t.as_str()) {
+                            Some("base") => {
+                                cmds.insert((
+                                    Turret { ..default() },
+                                    TurretOwner::new(*owner_entity_handle),
+                                ));
+                                println!("Inserting Turret");
+                                cmds
+                            }
+                            Some("pivot") => {
+                                cmds.insert((Barrel {},));
+                                println!("Inserting Barrel");
+                                cmds
+                            }
+                            // Some("barrel_end") => cmds.insert(),
+                            _ => cmds,
+                        };
+                    }),
                 })
                 .id();
 

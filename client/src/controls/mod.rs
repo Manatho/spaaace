@@ -1,4 +1,6 @@
-use bevy::prelude::{Color, Input, KeyCode, MouseButton, Query, Res, ResMut, Transform, With};
+use bevy::prelude::{
+    Color, Component, Input, KeyCode, MouseButton, Query, Res, ResMut, Transform, With,
+};
 use bevy_mod_gizmos::{draw_gizmo, Gizmo};
 use spaaaace_shared::player::player_input::PlayerInput;
 
@@ -36,5 +38,16 @@ pub fn player_input(
             draw_gizmo(Gizmo::new(player_input.aim_point, 1.0, Color::GREEN));
         }
         Err(_) => {}
+    }
+}
+
+#[derive(Component)]
+pub struct LocalPlayer;
+pub fn local_player_input_sync(
+    mut query: Query<(&LocalPlayer, &mut PlayerInput)>,
+    player_input: Res<PlayerInput>,
+) {
+    for (_, mut input) in query.iter_mut() {
+        input.aim_point = player_input.aim_point;
     }
 }

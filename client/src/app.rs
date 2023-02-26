@@ -27,8 +27,10 @@ use bevy::{
 use bevy_egui::EguiPlugin;
 use bevy_hanabi::HanabiPlugin;
 
+use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_mod_gizmos::GizmosPlugin;
 
+use bevy_scene_hook::HookPlugin;
 use spaaaace_shared::{weapons::WeaponsPlugin, Lobby, NetworkContext, ServerMessages};
 
 use crate::networking::ClientNetworkingPlugin;
@@ -52,6 +54,7 @@ pub fn run() {
         // ------------------
         // Utils
         // ------------------
+        .add_plugin(HookPlugin)
         .add_system(lerp_transform_targets)
         .add_system(handle_ship_model_load)
         .add_system(handle_turret_model_load)
@@ -76,8 +79,9 @@ pub fn run() {
         // Debug
         // ------------------
         //.add_plugin(FrameTimeDiagnosticsPlugin::default())
+        .add_plugin(WorldInspectorPlugin)
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
-        .add_plugin(EguiPlugin)
+        // .add_plugin(EguiPlugin)
         .add_plugin(GizmosPlugin)
         .add_plugin(CubemapPlugin)
         .insert_resource(ClearColor(Color::rgb(0.01, 0.01, 0.01))) // Used by guis

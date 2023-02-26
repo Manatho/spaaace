@@ -3,16 +3,23 @@ use std::f32::consts::PI;
 use bevy::{
     input::mouse::{MouseMotion, MouseWheel},
     prelude::{
-        App, Component, EventReader, Plugin, Quat, Query, Res, Transform, Vec2, Vec3, With, Without,
+        App, Component, EventReader, Plugin, Quat, Query, Res, SystemSet, Transform, Vec2, Vec3,
+        With, Without,
     },
     window::Windows,
 };
+
+use crate::game_state::run_if_not_paused;
 
 pub struct OrbitCameraPlugin;
 
 impl Plugin for OrbitCameraPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(camera_follow_local_player);
+        app.add_system_set(
+            SystemSet::new()
+                .with_system(camera_follow_local_player)
+                .with_run_criteria(run_if_not_paused),
+        );
     }
 }
 

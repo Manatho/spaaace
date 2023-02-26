@@ -1,17 +1,17 @@
 pub mod bullet;
-pub mod events;
 
 use std::{f32::consts::PI, time::Instant};
 
 use bevy::{
     prelude::{
-        default, shape, App, Assets, Color, Commands, Component, EventReader, EventWriter,
+        default, shape, App, Assets, Color, Commands, Component, Entity, EventReader, EventWriter,
         GlobalTransform, IntoSystemDescriptor, Mesh, Parent, PbrBundle, Plugin, Quat, Query, Res,
         ResMut, StandardMaterial, SystemSet, Transform, With, Without,
     },
     time::Time,
     transform::TransformBundle,
 };
+use bevy_mod_gizmos::draw_line;
 use bevy_renet::renet::{DefaultChannel, RenetServer};
 
 use crate::{
@@ -20,6 +20,19 @@ use crate::{
 };
 
 use self::bullet::{Bullet, BulletPlugin};
+
+#[derive(Component, Debug, Eq, PartialEq)]
+pub struct TurretOwner(pub(crate) Entity);
+
+impl TurretOwner {
+    pub fn new(entity: Entity) -> TurretOwner {
+        TurretOwner(entity)
+    }
+
+    pub fn get(&self) -> Entity {
+        self.0
+    }
+}
 
 #[derive(Component)]
 pub struct Turret {
@@ -80,22 +93,23 @@ fn trigger_weapons(
 fn turn_turrets(
     time: Res<Time>,
     mut turret_query: Query<
-        (&Parent, &mut Turret, &mut Transform, &GlobalTransform),
+        (&TurretOwner, &mut Turret, &mut Transform, &GlobalTransform),
         Without<Barrel>,
     >,
     mut barrel_query: Query<(&Parent, &mut Transform, &GlobalTransform), With<Barrel>>,
-    player_query: Query<(&Player, &PlayerInput)>,
+    player_query: Query<&PlayerInput>,
 ) {
-    for (parent, _, mut transform, global_transform) in turret_query.iter_mut() {
-        let player = player_query.get(parent.get());
+    for (owner, _, mut transform, global_transform) in turret_query.iter_mut() {
+        let player = player_query.get(owner.get());
+
         match player {
-            Ok((_player, player_input)) => {
+            Ok(player_input) => {
                 let direction =
                     (global_transform.translation() - player_input.aim_point).normalize_or_zero();
-                let off_by = global_transform.right().dot(direction) * time.delta_seconds() * 5.;
+                let off_by = global_transform.right().dot(direction) * time.delta_seconds() * 10.0;
                 transform.rotate_local_y(off_by);
             }
-            Err(_) => {}
+            Err(x) => println!("Turret has not player parent: {}", x),
         }
     }
 
@@ -104,10 +118,10 @@ fn turn_turrets(
         let player = player_query.get(turret_parent.get());
 
         match player {
-            Ok((_player, player_input)) => {
+            Ok(player_input) => {
                 let direction =
                     (global_transform.translation() - player_input.aim_point).normalize_or_zero();
-                let off_by = global_transform.down().dot(direction) * time.delta_seconds() * 5.0;
+                let off_by = global_transform.down().dot(direction) * time.delta_seconds() * 10.0;
                 transform.rotate_local_x(off_by);
             }
             Err(_) => {}

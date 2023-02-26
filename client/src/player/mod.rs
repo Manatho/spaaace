@@ -7,9 +7,9 @@ use bevy::{
     utils::default,
 };
 use bevy_renet::renet::RenetClient;
-use spaaaace_shared::{Lobby, ServerMessages};
+use spaaaace_shared::{player::player_input::PlayerInput, Lobby, ServerMessages};
 
-use crate::camera::OrbitCameraTarget;
+use crate::{camera::OrbitCameraTarget, controls::LocalPlayer};
 
 pub struct ClientPlayerPlugin;
 
@@ -40,7 +40,13 @@ fn on_client_connected(
                     commands.spawn((SpatialBundle { ..default() }, ShipModelLoadHandle(my_gltf)));
 
                 if *id == client.client_id() {
-                    cmd.insert(OrbitCameraTarget {});
+                    cmd.insert((
+                        OrbitCameraTarget {},
+                        LocalPlayer {},
+                        PlayerInput {
+                            ..Default::default()
+                        },
+                    ));
                 }
 
                 let player_entity = cmd.id();
