@@ -33,3 +33,9 @@ impl Random for Quat {
         ))
     }
 }
+
+pub fn shared_asset(path: &str) -> String {
+    let mut owned_string: String = "../../shared/assets/".to_owned();
+    owned_string.push_str(path);
+    owned_string
+}

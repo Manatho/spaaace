@@ -8,7 +8,7 @@ use bevy::{
 };
 use bevy_scene_hook::{HookedSceneBundle, SceneHook};
 
-use crate::util::spring::LocalSpring;
+use crate::util::{shared_asset, spring::LocalSpring};
 
 use super::{PartOfTurret, Turret, TurretBarrel, TurretBase, TurretOwner, TurretPivot};
 
@@ -21,7 +21,7 @@ pub fn spawn_turret(
     transform: &Transform,
     owner_entity: Entity,
 ) -> Entity {
-    let turret_gltf = ass.load("../../shared/assets/turrets/turret_large/turret_large.gltf");
+    let turret_gltf = ass.load(shared_asset("turrets/turret_large/turret_large.gltf"));
     let turret_entity = commands
         .spawn((
             SpatialBundle { ..default() },

@@ -7,7 +7,7 @@ use bevy::{
 };
 use bevy_renet::renet::RenetClient;
 use spaaaace_shared::{
-    player::player_input::PlayerInput, ships::ShipModelLoadHandle, Lobby, ServerMessages,
+    player::player_input::PlayerInput, ships::ShipModelLoadHandle, Lobby, ServerMessages, util::shared_asset,
 };
 
 use crate::{camera::OrbitCameraTarget, controls::LocalPlayer};
@@ -33,7 +33,7 @@ fn on_client_connected(
             ServerMessages::PlayerConnected { id } => {
                 println!("Player {} connected.", id);
 
-                let my_gltf = ass.load("../../shared/assets/ships/test_ship/test_ship.gltf");
+                let my_gltf = ass.load(shared_asset("ships/test_ship/test_ship.gltf"));
                 let mut cmd =
                     commands.spawn((SpatialBundle { ..default() }, ShipModelLoadHandle(my_gltf)));
 

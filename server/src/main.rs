@@ -84,7 +84,6 @@ fn main() {
         .add_plugin(LifeTimePlugin)
         .add_plugin(MissilePlugin)
         .add_plugin(UtilityPlugins)
-        .add_plugin(UtilityPlugins)
         // ------------------
         // Debugging stuff
         .add_plugin(GizmosPlugin)

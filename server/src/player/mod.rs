@@ -20,6 +20,7 @@ use spaaaace_shared::{
     player::{player_input::PlayerInput, Player},
     ships::{ShipModelLoadHandle, SHIP_TYPES},
     team::team_enum::Team,
+    util::shared_asset,
     ClientMessages, Lobby, NetworkedId, ServerMessages, TranslationRotation,
 };
 
@@ -216,9 +217,8 @@ fn on_client_connected(
             ServerEvent::ClientConnected(id, _) => {
                 let ship_type = SHIP_TYPES["TEST_SHIP"];
 
-                let ship_gltf_handle = ass.load(
-                    Path::new("../../shared/assets/ships").join(Path::new(ship_type.model_name)),
-                );
+                let ship_gltf_handle = ass
+                    .load(Path::new(&shared_asset("ships")).join(Path::new(ship_type.model_name)));
 
                 println!("Player {} connected.", id);
                 // Spawn player cube
