@@ -1,16 +1,12 @@
 use std::path::Path;
 
 use bevy::{
-    gltf::{Gltf, GltfNode},
     math::vec3,
     prelude::{
-        default, App, AssetServer, Assets, BuildChildren, Color, Commands, DespawnRecursiveExt,
-        Entity, EventReader, PbrBundle, Plugin, Quat, Query, Res, ResMut, SpatialBundle, Transform,
-        Vec3,
+        default, App, AssetServer, Color, Commands, DespawnRecursiveExt, EventReader, PbrBundle,
+        Plugin, Quat, Query, Res, ResMut, SpatialBundle, Transform, Vec3,
     },
-    scene::SceneBundle,
     time::Time,
-    transform::TransformBundle,
     utils::{HashMap, Instant},
 };
 use bevy_mod_gizmos::{draw_gizmo, Gizmo};
@@ -24,7 +20,6 @@ use spaaaace_shared::{
     player::{player_input::PlayerInput, Player},
     ships::{ShipModelLoadHandle, SHIP_TYPES},
     team::team_enum::Team,
-    weapons::{Barrel, Turret, TurretOwner},
     ClientMessages, Lobby, NetworkedId, ServerMessages, TranslationRotation,
 };
 
@@ -39,7 +34,6 @@ impl Plugin for PlayerPlugin {
             .add_system(player_input)
             .add_system(on_client_disconnected)
             .add_system(on_client_connected)
-            .add_system(on_client_model_loaded)
             .add_system(server_sync_players);
     }
 }
@@ -274,55 +268,6 @@ fn on_client_connected(
                 server.broadcast_message(DefaultChannel::Reliable, message);
             }
             _ => (),
-        }
-    }
-}
-
-fn on_client_model_loaded(
-    mut commands: Commands,
-    query: Query<(Entity, &ShipModelLoadHandle)>,
-    assets_gltf: Res<Assets<Gltf>>,
-    assets_gltfnode: Res<Assets<GltfNode>>,
-) {
-    for (entity, handle) in query.iter() {
-        if let Some(gltf) = assets_gltf.get(&handle.0) {
-            println!("Loaded GLTF, spawning model and turrets");
-            // spawn the first scene in the file
-            let model = commands
-                .spawn(SceneBundle {
-                    scene: gltf.scenes[0].clone(),
-                    ..Default::default()
-                })
-                .id();
-            let mut turrets: Vec<Entity> = vec![];
-
-            for node_name in gltf.named_nodes.keys().into_iter() {
-                if node_name.contains("turret_pad_large") {
-                    if let Some(node) = assets_gltfnode.get(&gltf.named_nodes[node_name]) {
-                        println!("turret transform: {}", node.transform.translation);
-                        let thruster = commands
-                            .spawn((
-                                TransformBundle::from(node.transform),
-                                TurretOwner::new(entity),
-                                Turret {
-                                    fire_rate: 1.0 / 10.,
-                                    ..default()
-                                },
-                            ))
-                            .with_children(|parent| {
-                                parent.spawn((TransformBundle::default(), Barrel {}));
-                            })
-                            .id();
-                        turrets.push(thruster);
-                    }
-                }
-            }
-
-            commands
-                .entity(entity)
-                .push_children(&[model])
-                .push_children(&turrets)
-                .remove::<ShipModelLoadHandle>();
         }
     }
 }

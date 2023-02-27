@@ -22,9 +22,13 @@ use bevy_renet::{
     RenetServerPlugin,
 };
 
+use bevy_scene_hook::HookPlugin;
 use spaaaace_shared::{
-    asteroid::AsteroidPlugin, cooldown::CooldownPlugin, health::HealthPlugin, player::Player,
-    weapons::WeaponsPlugin, ClientMessages, Lobby, NetworkContext, NetworkIdProvider, PROTOCOL_ID, missile::MissilePlugin, lifetime::LifeTimePlugin,
+    asteroid::AsteroidPlugin, cooldown::CooldownPlugin, health::HealthPlugin,
+    lifetime::LifeTimePlugin, missile::MissilePlugin, player::Player, ships::ShipsPlugin,
+    turret::TurretPlugin, util::UtilityPlugins, weapons::WeaponsPlugin, ClientMessages,
+    ClientMessages, Lobby, Lobby, NetworkContext, NetworkContext, NetworkIdProvider,
+    NetworkIdProvider, PROTOCOL_ID, PROTOCOL_ID,
 };
 
 use crate::{capture_point::CapturePointPlugin, player::PlayerPlugin};
@@ -57,6 +61,7 @@ fn main() {
         // ------------------
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugin(RapierDebugRenderPlugin::default())
+        .add_plugin(HookPlugin)
         // ------------------
         // Networking stuff
         // ------------------
@@ -70,17 +75,17 @@ fn main() {
         // ------------------
         // Gameplay stuff
         // ------------------
+        .add_plugin(ShipsPlugin)
         .add_plugin(HealthPlugin)
-        .add_plugin(WeaponsPlugin {})
+        .add_plugin(TurretPlugin {})
         .add_plugin(AsteroidPlugin {})
         .add_plugin(PlayerPlugin)
         .add_plugin(CapturePointPlugin)
         .add_plugin(CooldownPlugin)
         .add_plugin(LifeTimePlugin)
         .add_plugin(MissilePlugin)
-        // ------------------
+        .add_plugin(UtilityPlugins)
         // Debugging stuff
-        // ------------------
         .add_plugin(GizmosPlugin)
         .add_plugin(WorldInspectorPlugin)
         // .add_plugin(InputPlugin::default())

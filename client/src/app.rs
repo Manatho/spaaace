@@ -9,7 +9,7 @@ use app::{
     player::ClientPlayerPlugin,
     skybox::cubemap::CubemapPlugin,
     ui::GameUIPlugin,
-    utils::{handle_ship_model_load, handle_turret_model_load, lerp_transform_targets},
+    utils::lerp_transform_targets,
 };
 use bevy::{
     app::App,
@@ -32,7 +32,8 @@ use bevy_mod_gizmos::GizmosPlugin;
 use bevy_rapier3d::prelude::{NoUserData, RapierDebugRenderPlugin, RapierPhysicsPlugin};
 use bevy_scene_hook::HookPlugin;
 use spaaaace_shared::{
-    asteroid::AsteroidPlugin, weapons::WeaponsPlugin, Lobby, NetworkContext, ServerMessages,
+    asteroid::AsteroidPlugin, ships::ShipsPlugin, turret::TurretPlugin, util::UtilityPlugins,
+    Lobby, NetworkContext, ServerMessages,
 };
 
 use crate::networking::ClientNetworkingPlugin;
@@ -63,8 +64,6 @@ pub fn run() {
         // ------------------
         .add_plugin(HookPlugin)
         .add_system(lerp_transform_targets)
-        .add_system(handle_ship_model_load)
-        .add_system(handle_turret_model_load)
         .add_plugin(OrbitCameraPlugin)
         // ------------------
         // UI Stuff
@@ -82,9 +81,11 @@ pub fn run() {
         .insert_resource(Lobby::default())
         .add_plugin(ClientPlayerPlugin {})
         .add_plugin(ControlsPlugin {})
-        .add_plugin(WeaponsPlugin {})
+        .add_plugin(ShipsPlugin)
+        .add_plugin(TurretPlugin {})
         .add_plugin(ClientCapturePointPlugin {})
         .add_plugin(AsteroidPlugin)
+        .add_plugin(UtilityPlugins)
         .add_event::<ServerMessages>()
         // ------------------
         // Debug

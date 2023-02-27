@@ -2,7 +2,7 @@ pub mod player;
 pub mod ships;
 pub mod team;
 pub mod util;
-pub mod weapons;
+pub mod turret;
 pub mod health;
 pub mod asteroid;
 pub mod targeting;

@@ -2,7 +2,7 @@ use bevy::prelude::{App, Commands, Component, Entity, EventReader, Plugin, Query
 use bevy_rapier3d::prelude::CollisionEvent;
 use bevy_renet::renet::{DefaultChannel, RenetServer};
 
-use crate::{weapons::bullet::Bullet, NetworkedId, ServerMessages};
+use crate::{turret::bullet::Bullet, NetworkedId, ServerMessages};
 
 #[derive(Component)]
 pub struct Health {
