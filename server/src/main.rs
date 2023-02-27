@@ -29,6 +29,9 @@ use spaaaace_shared::{
     turret::TurretPlugin, util::UtilityPlugins, weapons::WeaponsPlugin, ClientMessages,
     ClientMessages, Lobby, Lobby, NetworkContext, NetworkContext, NetworkIdProvider,
     NetworkIdProvider, PROTOCOL_ID, PROTOCOL_ID,
+    asteroid::AsteroidPlugin, cooldown::CooldownPlugin, health::HealthPlugin, player::Player,
+    ships::ShipsPlugin, turret::TurretPlugin, util::UtilityPlugins, ClientMessages, Lobby,
+    NetworkContext, NetworkIdProvider, PROTOCOL_ID,
 };
 
 use crate::{capture_point::CapturePointPlugin, player::PlayerPlugin};
@@ -85,6 +88,8 @@ fn main() {
         .add_plugin(LifeTimePlugin)
         .add_plugin(MissilePlugin)
         .add_plugin(UtilityPlugins)
+        .add_plugin(UtilityPlugins)
+        // ------------------
         // Debugging stuff
         .add_plugin(GizmosPlugin)
         .add_plugin(WorldInspectorPlugin)
