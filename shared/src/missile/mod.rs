@@ -1,10 +1,9 @@
 use bevy::{
     prelude::{
-        App, AssetServer, Assets, Bundle, Commands, Component, Handle, HandleUntyped, Plugin,
+        App, AssetServer, Assets, Bundle, Commands, Component, Handle, Plugin,
         Query, Res, ResMut, Resource, Transform,
     },
     reflect::TypeUuid,
-    text::Font,
     time::Time,
 };
 use bevy_common_assets::ron::RonAssetPlugin;

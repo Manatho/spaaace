@@ -1,11 +1,10 @@
 use std::{net::UdpSocket, time::SystemTime};
 
-use app::{controls::player_input, game_state::run_if_not_paused, utils::LerpTransformTarget};
+use app::{utils::LerpTransformTarget};
 use bevy::{
     app::App,
     prelude::{
-        Commands, DespawnRecursiveExt, EventWriter, IntoSystemDescriptor, Plugin, Res, ResMut,
-        SystemSet, Transform,
+        Commands, DespawnRecursiveExt, EventWriter, IntoSystemDescriptor, Plugin, Res, ResMut, Transform,
     },
     utils::HashMap,
 };

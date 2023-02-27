@@ -26,12 +26,8 @@ use bevy_scene_hook::HookPlugin;
 use spaaaace_shared::{
     asteroid::AsteroidPlugin, cooldown::CooldownPlugin, health::HealthPlugin,
     lifetime::LifeTimePlugin, missile::MissilePlugin, player::Player, ships::ShipsPlugin,
-    turret::TurretPlugin, util::UtilityPlugins, weapons::WeaponsPlugin, ClientMessages,
-    ClientMessages, Lobby, Lobby, NetworkContext, NetworkContext, NetworkIdProvider,
-    NetworkIdProvider, PROTOCOL_ID, PROTOCOL_ID,
-    asteroid::AsteroidPlugin, cooldown::CooldownPlugin, health::HealthPlugin, player::Player,
-    ships::ShipsPlugin, turret::TurretPlugin, util::UtilityPlugins, ClientMessages, Lobby,
-    NetworkContext, NetworkIdProvider, PROTOCOL_ID,
+    turret::TurretPlugin, util::UtilityPlugins, ClientMessages, Lobby, NetworkContext,
+    NetworkIdProvider, PROTOCOL_ID,
 };
 
 use crate::{capture_point::CapturePointPlugin, player::PlayerPlugin};

@@ -6,7 +6,7 @@ use std::{f32::consts::PI, time::Instant};
 use bevy::{
     prelude::{
         default, shape, App, Assets, Color, Commands, Component, Entity, EventReader,
-        GlobalTransform, IntoSystemDescriptor, Mesh, Parent, PbrBundle, Plugin, Quat, Query, Res,
+        GlobalTransform, IntoSystemDescriptor, Mesh, PbrBundle, Plugin, Quat, Query, Res,
         ResMut, StandardMaterial, SystemSet, Transform, Vec3, With, Without,
     },
     time::Time,
@@ -16,7 +16,7 @@ use bevy_renet::renet::{DefaultChannel, RenetServer};
 
 use crate::{
     cooldown::Cooldown,
-    player::{player_input::PlayerInput, Player},
+    player::{player_input::PlayerInput},
     run_if_client, run_if_server,
     util::spring::SpringVelocity,
     Lobby, NetworkedId, ServerMessages,

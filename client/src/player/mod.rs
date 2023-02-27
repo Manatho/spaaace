@@ -1,7 +1,6 @@
 use bevy::{
-    gltf::Gltf,
     prelude::{
-        App, AssetServer, Commands, Component, DespawnRecursiveExt, EventReader, Handle, Plugin,
+        App, AssetServer, Commands, DespawnRecursiveExt, EventReader, Plugin,
         Res, ResMut, SpatialBundle,
     },
     utils::default,

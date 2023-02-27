@@ -2,7 +2,7 @@ use bevy::{
     gltf::Gltf,
     prelude::{
         default, AssetServer, Assets, BuildChildren, Commands, Component, Entity, Handle, Name,
-        Query, Res, SpatialBundle, Transform, Vec3,
+        Query, Res, SpatialBundle, Transform,
     },
     scene::SceneBundle,
 };

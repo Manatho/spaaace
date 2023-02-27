@@ -1,14 +1,14 @@
 use bevy::{
     gltf::{Gltf, GltfNode},
     prelude::{
-        default, App, AssetServer, Assets, BuildChildren, Commands, Component, Entity, Handle,
-        Plugin, Query, Res, SpatialBundle, Transform,
+        App, AssetServer, Assets, BuildChildren, Commands, Component, Entity, Handle,
+        Plugin, Query, Res,
     },
     scene::SceneBundle,
 };
 use phf::phf_map;
 
-use crate::turret::model_load_handlers::{spawn_turret, TurretModelLoadHandle};
+use crate::turret::model_load_handlers::{spawn_turret};
 
 #[derive(Clone, Copy)]
 pub struct ShipType {
