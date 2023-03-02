@@ -1,62 +1,39 @@
-use std::{f32::consts::PI, net::UdpSocket, time::SystemTime};
+use std::{net::UdpSocket, time::SystemTime};
 
 use bevy::{
-    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
-    math::vec3,
     prelude::{
-        default, info, App, BuildChildren, Camera3dBundle, Color, Commands, Component, CoreStage,
-        DespawnRecursiveExt, EventReader, PluginGroup, Quat, Query, Res, ResMut, StageLabel,
-        SystemStage, Transform, Vec3,
+        default, info, App, Camera3d, Camera3dBundle, Commands, EventWriter, PluginGroup,
+        PointLight, PointLightBundle, Query, ResMut, StageLabel, Transform, Vec3, With, Without,
     },
-    time::{FixedTimestep, Time},
-    transform::TransformBundle,
-    utils::HashMap,
     window::{PresentMode, WindowDescriptor, WindowPlugin},
     DefaultPlugins,
 };
 
-use bevy_inspector_egui::WorldInspectorPlugin;
-use bevy_mod_gizmos::{draw_gizmo, Gizmo, GizmosPlugin};
+use bevy_inspector_egui::quick::WorldInspectorPlugin;
+use bevy_mod_gizmos::GizmosPlugin;
 use bevy_rapier3d::{
-    prelude::{
-        Collider, Damping, ExternalForce, GravityScale, LockedAxes, NoUserData,
-        RapierPhysicsPlugin, RigidBody,
-    },
+    prelude::{NoUserData, RapierPhysicsPlugin},
     render::RapierDebugRenderPlugin,
 };
 use bevy_renet::{
     renet::{
         DefaultChannel, RenetConnectionConfig, RenetServer, ServerAuthentication, ServerConfig,
-        ServerEvent,
     },
     RenetServerPlugin,
 };
 
-use capture_point::capture_point::CaptureSphere;
-
 use spaaaace_shared::{
-    team::team_enum::Team, ClientMessages, Lobby, PlayerInput, ServerMessages, TranslationRotation,
-    PROTOCOL_ID, SERVER_TICKRATE,
+    asteroid::AsteroidPlugin, cooldown::CooldownPlugin, health::HealthPlugin, player::Player,
+    weapons::WeaponsPlugin, ClientMessages, Lobby, NetworkContext, NetworkIdProvider, PROTOCOL_ID,
 };
 
-use crate::{
-    capture_point::CapturePointPlugin,
-    weapons::{Turret, WeaponsPlugin},
-};
+use crate::{capture_point::CapturePointPlugin, player::PlayerPlugin};
 
 pub mod capture_point;
-mod weapons;
+pub mod player;
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone, StageLabel)]
 struct FixedUpdateStage;
-
-#[derive(Component, Clone, Hash, PartialEq, Eq)]
-pub struct Player {
-    id: u64,
-    team: Team,
-}
-
-const PLAYER_MOVE_SPEED: f32 = 2.0;
 
 fn main() {
     info!("Naia Bevy Server Demo starting up");
@@ -64,55 +41,75 @@ fn main() {
     // Build App
     App::default()
         // Plugins
-        .insert_resource(Lobby::default())
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             window: WindowDescriptor {
                 title: "Spaaace Server".to_string(),
-                width: 320.,
-                height: 240.,
+                width: 1280.,
+                height: 720.,
                 present_mode: PresentMode::AutoVsync,
                 ..default()
             },
             ..default()
         }))
-        .add_plugin(GizmosPlugin)
-        .add_system(draw_player_gizmos)
-        .add_startup_system(init)
-        .add_plugin(WorldInspectorPlugin::new())
+        .add_startup_system(setup)
+        // ------------------
+        // Third party
+        // ------------------
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugin(RapierDebugRenderPlugin::default())
+        // ------------------
+        // Networking stuff
+        // ------------------
+        .insert_resource(Lobby::default())
+        .insert_resource(NetworkIdProvider::new())
+        .insert_resource(NetworkContext { is_server: true })
+        .add_event::<ClientEvent>()
         .add_plugin(RenetServerPlugin::default())
         .insert_resource(new_renet_server())
         .add_system(server_update_system)
-        .add_system(update_players_system)
+        // ------------------
+        // Gameplay stuff
+        // ------------------
+        .add_plugin(HealthPlugin)
         .add_plugin(WeaponsPlugin {})
+        .add_plugin(AsteroidPlugin {})
+        .add_plugin(PlayerPlugin)
         .add_plugin(CapturePointPlugin)
-        .add_stage_after(
-            CoreStage::Update,
-            FixedUpdateStage,
-            SystemStage::parallel()
-                .with_run_criteria(FixedTimestep::step(1.0 / (SERVER_TICKRATE as f64)))
-                .with_system(server_sync_players),
-        )
-        // Server UI for debugging
+        .add_plugin(CooldownPlugin)
+        // ------------------
+        // Debugging stuff
+        // ------------------
+        .add_plugin(GizmosPlugin)
+        .add_plugin(WorldInspectorPlugin)
         // .add_plugin(InputPlugin::default())
         // .add_plugin(ScenePlugin::default())
         // .add_plugin(WindowPlugin::default())
         // .add_plugin(WinitPlugin::default())
         // .add_plugin(RenderPlugin::default())
-        // Run App
+        .add_system(camera_follow_players)
         .run();
 }
 
-fn init(mut commands: Commands) {
+fn setup(mut commands: Commands) {
+    // light
+    commands.spawn(PointLightBundle {
+        point_light: PointLight {
+            intensity: 1500.0,
+            shadows_enabled: true,
+            ..default()
+        },
+        transform: Transform::from_xyz(4.0, 8.0, 4.0),
+        ..default()
+    });
+    // camera
     commands.spawn(Camera3dBundle {
-        transform: Transform::from_xyz(0.0, 6., -12.0).looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
+        transform: Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
         ..default()
     });
 }
 
 fn new_renet_server() -> RenetServer {
-    let server_addr = "192.168.87.158:5000".parse().unwrap();
+    let server_addr = "127.0.0.1:5000".parse().unwrap();
     let socket = UdpSocket::bind(server_addr).unwrap();
     let connection_config = RenetConnectionConfig::default();
     let server_config =
@@ -123,207 +120,51 @@ fn new_renet_server() -> RenetServer {
     RenetServer::new(current_time, server_config, connection_config, socket).unwrap()
 }
 
-fn draw_player_gizmos(
-    query: Query<(&Player, &Transform)>,
-    cap_query: Query<(&CaptureSphere, &Transform)>,
-) {
-    for (_, transform) in query.iter() {
-        draw_gizmo(Gizmo::sphere(transform.translation, 1.0, Color::RED))
-    }
-
-    for (_, transform) in cap_query.iter() {
-        draw_gizmo(Gizmo::sphere(transform.translation, 1.0, Color::GREEN))
-    }
+#[derive(Clone)]
+struct ClientEvent {
+    pub message: ClientMessages,
+    pub client_id: u64,
 }
 
 fn server_update_system(
-    mut server_events: EventReader<ServerEvent>,
-    mut commands: Commands,
-    mut lobby: ResMut<Lobby>,
     mut server: ResMut<RenetServer>,
-    mut capture_point_query: Query<(&Transform, &CaptureSphere)>,
-    mut player_query: Query<&mut Player>,
+    mut client_message_event_writer: EventWriter<ClientEvent>,
 ) {
-    for event in server_events.iter() {
-        match event {
-            ServerEvent::ClientConnected(id, _) => {
-                println!("Player {} connected.", id);
-                // Spawn player cube
-                let player_entity = commands
-                    .spawn(TransformBundle {
-                        local: Transform {
-                            translation: vec3(0.0, 0.5, 0.0),
-                            rotation: Quat::from_rotation_x(0.5),
-                            ..Default::default()
-                        },
-                        ..Default::default()
-                    })
-                    .insert(PlayerInput::default())
-                    .insert(Player {
-                        id: *id,
-                        team: Team::Red,
-                    })
-                    .insert(Collider::cuboid(1.0, 1.0, 1.0))
-                    .insert(RigidBody::Dynamic)
-                    // .insert(LockedAxes::ROTATION_LOCKED_Z)
-                    .insert(GravityScale(0.0))
-                    .insert(ExternalForce::default())
-                    .insert(Damping {
-                        linear_damping: 0.5,
-                        angular_damping: 1.0,
-                    })
-                    .with_children(|parent| {
-                        println!("spawning turret");
-                        parent
-                            .spawn(TransformBundle {
-                                ..Default::default()
-                            })
-                            .insert(Turret {
-                                cooldown: 0.0,
-                                fire_rate: 1.0 / 5.0,
-                                trigger: false,
-                            });
-                    })
-                    .id();
-
-                // We could send an InitState with all the players id and positions for the client
-                // but this is easier to do.
-                for &player_id in lobby.players.keys() {
-                    let message =
-                        bincode::serialize(&ServerMessages::PlayerConnected { id: player_id })
-                            .unwrap();
-                    server.send_message(*id, DefaultChannel::Reliable, message);
-                }
-
-                for (&transform, capture_point) in capture_point_query.iter() {
-                    let message = bincode::serialize(&ServerMessages::CapturePointSpawned {
-                        position: transform.translation,
-                        rotation: transform.rotation,
-                        id: capture_point.id,
-                        owner: capture_point.owner.clone(),
-                        progress: capture_point.progress,
-                    })
-                    .unwrap();
-                    server.send_message(*id, DefaultChannel::Reliable, message);
-                }
-
-                lobby.players.insert(*id, player_entity);
-
-                let message =
-                    bincode::serialize(&ServerMessages::PlayerConnected { id: *id }).unwrap();
-                server.broadcast_message(DefaultChannel::Reliable, message);
-            }
-            ServerEvent::ClientDisconnected(id) => {
-                println!("Player {} disconnected.", id);
-                if let Some(player_entity) = lobby.players.remove(id) {
-                    commands.entity(player_entity).despawn_recursive();
-                }
-
-                let message =
-                    bincode::serialize(&ServerMessages::PlayerDisconnected { id: *id }).unwrap();
-                server.broadcast_message(DefaultChannel::Reliable, message);
-            }
-        }
-    }
-
     for client_id in server.clients_id().into_iter() {
         while let Some(message) = server.receive_message(client_id, DefaultChannel::Reliable) {
-            let client_message: ClientMessages = bincode::deserialize(&message).unwrap();
-            match client_message {
-                ClientMessages::PlayerInput { input } => {
-                    if let Some(player_entity) = lobby.players.get(&client_id) {
-                        commands.entity(*player_entity).insert(input);
-                    }
-                }
-                ClientMessages::Command { command } => {
-                    let args_split = command.split(" ");
-                    let args: Vec<&str> = args_split.collect();
-
-                    match args[0] {
-                        "swap_team" => {
-                            let entity = lobby.players[&client_id];
-
-                            match player_query.get_mut(entity) {
-                                Ok(mut player) => match args[1] {
-                                    "1" => player.team = Team::Red,
-                                    "2" => player.team = Team::Blue,
-                                    _ => (),
-                                },
-                                Err(_) => (),
-                            }
-                        }
-                        _ => (),
-                    }
-                }
-            }
+            let message: ClientMessages = bincode::deserialize(&message).unwrap();
+            client_message_event_writer.send(ClientEvent { message, client_id });
         }
     }
 }
 
-fn server_sync_players(mut server: ResMut<RenetServer>, query: Query<(&Transform, &Player)>) {
-    let mut players: HashMap<u64, TranslationRotation> = HashMap::new();
-    for (transform, player) in query.iter() {
-        players.insert(
-            player.id,
-            TranslationRotation {
-                translation: transform.translation,
-                rotation: transform.rotation,
-            },
-        );
-    }
-
-    let sync_message = bincode::serialize(&players).unwrap();
-    server.broadcast_message(DefaultChannel::Unreliable, sync_message);
-}
-
-fn update_players_system(
-    mut query: Query<(&mut ExternalForce, &Transform, &PlayerInput)>,
-    time: Res<Time>,
-    mut commands: Commands,
-    mut server: ResMut<RenetServer>,
+fn camera_follow_players(
+    mut query_cam: Query<&mut Transform, (With<Camera3d>, Without<Player>)>,
+    query_players: Query<&Transform, With<Player>>,
 ) {
-    for (mut rigidbody, transform, input) in query.iter_mut() {
-        let rotation = (input.rotate_right as i8 - input.rotate_left as i8) as f32;
-        let thrust_longitudal = (input.thrust_forward as i8 - input.thrust_reverse as i8) as f32;
-        let thrust_lateral = (input.thrust_left as i8 - input.thrust_right as i8) as f32;
-        let thrust_vertical = (input.thrust_up as i8 - input.thrust_down as i8) as f32;
+    if query_players.is_empty() {
+        return;
+    }
+    let mut player_count = 0;
+    let mut avg = Vec3::ZERO;
+    for player_transform in query_players.iter() {
+        avg += player_transform.translation;
+        player_count += 1;
+    }
 
-        let forward = transform.forward();
-        let projected_forward = (forward - Vec3::new(0.0, forward.y, 0.0)).normalize();
-        let rotated_forward =
-            (Quat::from_axis_angle(transform.left(), -2.0 * thrust_vertical)) * projected_forward;
+    avg /= Vec3::splat(player_count as f32);
 
-        let left = transform.left();
-        let projected_left = (left - Vec3::new(0.0, left.y, 0.0)).normalize();
+    let mut max_dist_from_avg: f32 = 0.0;
 
-        let longitudal_force = thrust_longitudal * PLAYER_MOVE_SPEED * 20.0 * projected_forward;
-        let lateral_force = thrust_lateral * PLAYER_MOVE_SPEED * 5.0 * projected_left;
-        let vertical_force = thrust_vertical * PLAYER_MOVE_SPEED * 10.0 * Vec3::Y;
+    for player_transform in query_players.iter() {
+        let dist = player_transform.translation.distance(avg);
+        max_dist_from_avg = max_dist_from_avg.max(dist);
+    }
 
-        draw_gizmo(Gizmo::cubiod(
-            transform.translation + rotated_forward * 2.0,
-            vec3(0.3, 0.3, 0.3),
-            Color::PURPLE,
-        ));
+    for mut transform in query_cam.iter_mut() {
+        transform.look_at(avg, Vec3::Y);
 
-        draw_gizmo(Gizmo::cubiod(
-            transform.translation + transform.forward() * 2.5,
-            vec3(0.3, 0.3, 0.3),
-            Color::GREEN,
-        ));
-
-        rigidbody.force = longitudal_force + lateral_force + vertical_force;
-        rigidbody.torque = rotation * Vec3::NEG_Y * PLAYER_MOVE_SPEED * 2.0;
-
-        {
-            let (axis, angle) =
-                Quat::from_rotation_arc(transform.forward(), rotated_forward).to_axis_angle();
-            rigidbody.torque += axis.normalize_or_zero() * angle;
-        }
-
-        {
-            let (axis, angle) = Quat::from_rotation_arc(transform.up(), Vec3::Y).to_axis_angle();
-            rigidbody.torque += axis.normalize_or_zero() * angle * 10.0;
-        }
+        let back = transform.back();
+        transform.translation = avg + back * (max_dist_from_avg * 3.0 + 80.);
     }
 }

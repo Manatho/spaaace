@@ -2,8 +2,11 @@ pub mod camera;
 pub mod capture_point;
 pub mod controls;
 pub mod debug;
+pub mod game_state;
 pub mod particles;
+pub mod player;
 pub mod ship_editor;
+pub mod skybox;
 pub mod ui;
 pub mod utils;
 
