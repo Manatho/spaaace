@@ -1,4 +1,5 @@
 (
-    speed: 10.0,
-    lifetime: 1.0
+    id: "missile",
+    speed: 1000.0,
+    lifetime: 100.0
 )
