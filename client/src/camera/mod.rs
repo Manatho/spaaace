@@ -3,10 +3,10 @@ use std::f32::consts::PI;
 use bevy::{
     input::mouse::{MouseMotion, MouseWheel},
     prelude::{
-        App, Component, EventReader, Plugin, Quat, Query, Res, SystemSet, Transform, Vec2, Vec3,
-        With, Without,
+        App, Component, EventReader, IntoSystemConfig, Plugin, Quat, Query, Res, SystemSet,
+        Transform, Vec2, Vec3, With, Without,
     },
-    window::Windows,
+    window::{PrimaryWindow, Window},
 };
 
 use crate::game_state::run_if_not_paused;
@@ -15,11 +15,7 @@ pub struct OrbitCameraPlugin;
 
 impl Plugin for OrbitCameraPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(
-            SystemSet::new()
-                .with_system(camera_follow_local_player)
-                .with_run_criteria(run_if_not_paused),
-        );
+        app.add_system(camera_follow_local_player.run_if(run_if_not_paused));
     }
 }
 
@@ -37,7 +33,7 @@ fn camera_follow_local_player(
     local_player_query: Query<&Transform, With<OrbitCameraTarget>>,
     mut motion_evr: EventReader<MouseMotion>,
     mut scroll_evr: EventReader<MouseWheel>,
-    windows: Res<Windows>,
+    windows: Query<&Window, With<PrimaryWindow>>,
 ) {
     let mut rotation_move = Vec2::ZERO;
 
@@ -47,12 +43,13 @@ fn camera_follow_local_player(
 
     let scroll_zoom = scroll_evr.iter().map(|x| -x.y * 6.0).sum::<f32>();
 
+    let window = get_primary_window_size(windows);
+
     for (mut transform, mut orbit_camera) in camera_query.iter_mut() {
         orbit_camera.zoom += scroll_zoom;
         match local_player_query.get_single() {
             Ok(local_player_transform) => {
                 if rotation_move.length_squared() > 0.0 {
-                    let window = get_primary_window_size(&windows);
                     let delta = (rotation_move / window) / PI;
                     let yaw = Quat::from_rotation_y(-delta.x);
                     let pitch = Quat::from_rotation_x(-delta.y);
@@ -69,8 +66,8 @@ fn camera_follow_local_player(
     }
 }
 
-fn get_primary_window_size(windows: &Res<Windows>) -> Vec2 {
-    let window = windows.get_primary().unwrap();
+fn get_primary_window_size(windows: Query<&Window, With<PrimaryWindow>>) -> Vec2 {
+    let window = windows.get_single().unwrap();
     let window = Vec2::new(window.width() as f32, window.height() as f32);
     window
 }

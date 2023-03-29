@@ -3,9 +3,9 @@ use std::{net::UdpSocket, time::SystemTime};
 use bevy::{
     prelude::{
         default, info, App, Camera3d, Camera3dBundle, Commands, EventWriter, PluginGroup,
-        PointLight, PointLightBundle, Query, ResMut, StageLabel, Transform, Vec3, With, Without,
+        PointLight, PointLightBundle, Query, ResMut, Transform, Vec3, With, Without,
     },
-    window::{PresentMode, WindowDescriptor, WindowPlugin},
+    window::{PresentMode, Window, WindowPlugin, WindowResolution},
     DefaultPlugins,
 };
 
@@ -32,7 +32,7 @@ use crate::{capture_point::CapturePointPlugin, player::PlayerPlugin};
 pub mod capture_point;
 pub mod player;
 
-#[derive(Debug, Hash, PartialEq, Eq, Clone, StageLabel)]
+#[derive(Debug, Hash, PartialEq, Eq, Clone)]
 struct FixedUpdateStage;
 
 fn main() {
@@ -42,13 +42,12 @@ fn main() {
     App::default()
         // Plugins
         .add_plugins(DefaultPlugins.set(WindowPlugin {
-            window: WindowDescriptor {
+            primary_window: Some(Window {
                 title: "Spaaace Server".to_string(),
-                width: 1280.,
-                height: 720.,
+                resolution: WindowResolution::new(1280., 720.),
                 present_mode: PresentMode::AutoVsync,
                 ..default()
-            },
+            }),
             ..default()
         }))
         .add_startup_system(setup)
@@ -80,7 +79,7 @@ fn main() {
         // Debugging stuff
         // ------------------
         .add_plugin(GizmosPlugin)
-        .add_plugin(WorldInspectorPlugin)
+        // .add_plugin(WorldInspectorPlugin)
         // .add_plugin(InputPlugin::default())
         // .add_plugin(ScenePlugin::default())
         // .add_plugin(WindowPlugin::default())

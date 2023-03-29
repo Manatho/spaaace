@@ -2,12 +2,11 @@ pub mod camera;
 pub mod capture_point;
 pub mod controls;
 pub mod debug;
-pub mod particles;
-pub mod ui;
-pub mod utils;
-pub mod skybox;
 pub mod game_state;
 pub mod player;
+pub mod skybox;
+pub mod ui;
+pub mod utils;
 
 #[macro_use]
 extern crate cfg_if;

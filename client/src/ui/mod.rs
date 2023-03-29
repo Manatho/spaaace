@@ -1,12 +1,12 @@
 use bevy::{
     prelude::{
         default, App, AssetServer, BuildChildren, Children, Color, Commands, Component,
-        DespawnRecursiveExt, Entity, ImageBundle, Input, KeyCode, NodeBundle, Plugin, Query, Res,
-        ResMut, TextBundle, Visibility, With,
+        DespawnRecursiveExt, DetectChanges, Entity, ImageBundle, Input, KeyCode, NodeBundle,
+        Plugin, Query, Res, ResMut, TextBundle, Visibility, With,
     },
     text::TextStyle,
     ui::{AlignItems, FlexDirection, JustifyContent, Node, PositionType, Size, Style, Val},
-    window::{CursorGrabMode, Windows},
+    window::{CursorGrabMode, PrimaryWindow, Window},
 };
 
 use spaaaace_shared::Lobby;
@@ -104,14 +104,14 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 fn input(
     keys: Res<Input<KeyCode>>,
     mut game_state: ResMut<ClientGameState>,
-    mut windows: ResMut<Windows>,
+    primary_window_query: Query<(&PrimaryWindow, &Window)>,
 ) {
     if keys.just_pressed(KeyCode::Escape) {
         game_state.is_paused = !game_state.is_paused;
     }
 
-    let window = windows.get_primary_mut().unwrap();
-    let focus = window.is_focused();
+    let (_, window) = primary_window_query.get_single().unwrap();
+    let focus = window.focused;
     if focus != game_state.is_focused {
         if focus {
             // Sleep a bit for window to register as focused
@@ -126,14 +126,17 @@ fn input(
 fn update_pause_mode(
     game_state: Res<ClientGameState>,
     mut query: Query<(&PauseBackdrop, &mut Visibility)>,
-    mut windows: ResMut<Windows>,
+    mut primary_window_query: Query<(&PrimaryWindow, &mut Window)>,
 ) {
-    let window = windows.get_primary_mut().unwrap();
+    let (_, window) = primary_window_query.get_single_mut().unwrap();
 
     if game_state.is_changed() {
         if game_state.is_focused {
             for (_, mut vis) in query.iter_mut() {
-                vis.is_visible = game_state.is_paused;
+                *vis = match game_state.is_paused {
+                    true => Visibility::Visible,
+                    false => Visibility::Hidden,
+                };
             }
 
             let grab_mode = match game_state.is_paused {
@@ -141,13 +144,13 @@ fn update_pause_mode(
                 false => CursorGrabMode::Locked,
             };
 
-            if window.is_focused() {
-                window.set_cursor_grab_mode(grab_mode);
-                window.set_cursor_visibility(game_state.is_paused);
+            if window.focused {
+                // window.set_cursor_grab_mode(grab_mode);
+                // window.set_cursor_visibility(game_state.is_paused);
             }
         } else {
-            window.set_cursor_grab_mode(CursorGrabMode::None);
-            window.set_cursor_visibility(game_state.is_paused);
+            // window.set_cursor_grab_mode(CursorGrabMode::None);
+            // window.set_cursor_visibility(game_state.is_paused);
         }
     }
 }
@@ -161,7 +164,10 @@ fn scoreboard(
 ) {
     let lobby_players = lobby.players.clone();
     for (node_ent, _node, children, mut vis) in query.iter_mut() {
-        vis.is_visible = keys.pressed(KeyCode::Tab);
+        *vis = match keys.pressed(KeyCode::Tab) {
+            true => Visibility::Visible,
+            false => Visibility::Hidden,
+        };
 
         if lobby.is_changed() == false {
             continue;

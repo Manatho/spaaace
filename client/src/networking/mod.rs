@@ -1,14 +1,10 @@
 use std::{net::UdpSocket, time::SystemTime};
 
-use app::{
-    controls::{player_input},
-    game_state::run_if_not_paused,
-    utils::LerpTransformTarget,
-};
+use app::{controls::player_input, game_state::run_if_not_paused, utils::LerpTransformTarget};
 use bevy::{
     app::App,
     prelude::{
-        Commands, DespawnRecursiveExt, EventWriter, IntoSystemDescriptor, Plugin, Res, ResMut,
+        Commands, DespawnRecursiveExt, EventWriter, IntoSystemConfig, Plugin, Res, ResMut,
         SystemSet, Transform,
     },
     utils::HashMap,
@@ -16,7 +12,7 @@ use bevy::{
 
 use bevy_renet::{
     renet::{ClientAuthentication, DefaultChannel, RenetClient, RenetConnectionConfig},
-    run_if_client_connected, RenetClientPlugin,
+    RenetClientPlugin,
 };
 
 use spaaaace_shared::{
@@ -31,16 +27,10 @@ impl Plugin for ClientNetworkingPlugin {
         app.add_plugin(RenetClientPlugin::default())
             .insert_resource(new_renet_client())
             .insert_resource(PlayerInput::default())
-            .add_system_set(
-                SystemSet::new()
-                    .with_run_criteria(run_if_not_paused)
-                    .with_system(player_input),
-            )
-            .add_system(client_send_input.with_run_criteria(run_if_client_connected))
-            .add_system(client_reliable_message_handler.with_run_criteria(run_if_client_connected))
-            .add_system(
-                client_unreliable_message_handler.with_run_criteria(run_if_client_connected),
-            );
+            .add_system(player_input.run_if(run_if_not_paused))
+            .add_system(client_send_input)
+            .add_system(client_reliable_message_handler)
+            .add_system(client_unreliable_message_handler);
     }
 }
 

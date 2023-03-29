@@ -78,7 +78,9 @@ pub fn handle_ship_model_load(
                     spawner,
                     ..Default::default()
                 }
-                .init(InitLifetimeModifier { lifetime: 1.0 })
+                .init(InitLifetimeModifier {
+                    lifetime: bevy_hanabi::Value::Uniform((2., 5.)),
+                })
                 .init(InitVelocitySphereModifier {
                     speed: 0.0.into(),
                     ..Default::default()

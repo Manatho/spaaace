@@ -3,7 +3,8 @@ mod capture_point;
 use bevy::{
     pbr::NotShadowCaster,
     prelude::{
-        shape, App, AssetServer, Assets, Color, Commands, EventReader, Handle, MaterialMeshBundle,
+        shape::{self, Icosphere},
+        App, AssetServer, Assets, Color, Commands, EventReader, Handle, MaterialMeshBundle,
         MaterialPlugin, Mesh, Plugin, Query, Res, ResMut, Transform,
     },
     time::Time,
@@ -44,11 +45,13 @@ fn on_capture_point_spawned(
                 let capture_entity = commands
                     .spawn(MaterialMeshBundle {
                         mesh: meshes.add(
-                            shape::Icosphere {
+                            Icosphere {
                                 radius: 50.,
                                 subdivisions: 8,
+                                ..Default::default()
                             }
-                            .into(),
+                            .try_into()
+                            .unwrap(),
                         ),
                         material: force_field_materials.add(ForceFieldMaterial {
                             color: match owner {

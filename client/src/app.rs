@@ -4,7 +4,6 @@ use app::{
     camera::{OrbitCamera, OrbitCameraPlugin},
     capture_point::ClientCapturePointPlugin,
     controls::ControlsPlugin,
-    debug::fps::{fps_gui, team_swap_gui},
     game_state::ClientGameState,
     player::ClientPlayerPlugin,
     skybox::cubemap::CubemapPlugin,
@@ -20,7 +19,7 @@ use bevy::{
         default, AmbientLight, Camera, Camera3dBundle, ClearColor, Color, Commands,
         DirectionalLight, DirectionalLightBundle, PluginGroup, Quat, ResMut, Transform, Vec3,
     },
-    window::{WindowDescriptor, WindowPlugin},
+    window::{Window, WindowPlugin, WindowResolution},
     DefaultPlugins,
 };
 
@@ -40,12 +39,11 @@ use crate::networking::ClientNetworkingPlugin;
 pub fn run() {
     App::default()
         .add_plugins(DefaultPlugins.set(WindowPlugin {
-            window: WindowDescriptor {
+            primary_window: Some(Window {
                 title: "Spaaace Client".to_string(),
-                width: 1280.,
-                height: 640.,
+                resolution: WindowResolution::new(1280., 640.),
                 ..default()
-            },
+            }),
             ..default()
         }))
         .add_startup_system(init)
@@ -90,14 +88,14 @@ pub fn run() {
         // Debug
         // ------------------
         //.add_plugin(FrameTimeDiagnosticsPlugin::default())
-        .add_plugin(WorldInspectorPlugin)
+        // .add_plugin(WorldInspectorPlugin)
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
         // .add_plugin(EguiPlugin)
         .add_plugin(GizmosPlugin)
         .add_plugin(CubemapPlugin)
         .insert_resource(ClearColor(Color::rgb(0.01, 0.01, 0.01))) // Used by guis
-        .add_system(fps_gui)
-        .add_system(team_swap_gui)
+        // .add_system(fps_gui)
+        // .add_system(team_swap_gui)
         .run();
 }
 

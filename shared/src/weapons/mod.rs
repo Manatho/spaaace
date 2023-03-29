@@ -193,7 +193,7 @@ fn on_bullet_spawned_client(
                         material: materials.add(StandardMaterial {
                             base_color: Color::BLACK,
                             perceptual_roughness: 1.,
-                            emissive: Color::rgb(1., 0.2, 0.2) * 5.,
+                            emissive: Color::rgb(1., 0.2, 0.2) * 10.,
                             ..default()
                         }),
                         transform: Transform {
