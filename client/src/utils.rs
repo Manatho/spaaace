@@ -8,9 +8,9 @@ use bevy::{
     time::Time,
 };
 use bevy_hanabi::{
-    BillboardModifier, ColorOverLifetimeModifier, EffectAsset, Gradient, ParticleEffectBundle,
-    ParticleLifetimeModifier, PositionSphereModifier, ShapeDimension, SizeOverLifetimeModifier,
-    Spawner,
+    BillboardModifier, ColorOverLifetimeModifier, EffectAsset, Gradient, InitLifetimeModifier,
+    InitPositionSphereModifier, InitVelocitySphereModifier, ParticleEffectBundle, ShapeDimension,
+    SizeOverLifetimeModifier, Spawner,
 };
 use bevy_scene_hook::{HookedSceneBundle, SceneHook};
 use spaaaace_shared::weapons::{Barrel, Turret, TurretOwner};
@@ -78,10 +78,13 @@ pub fn handle_ship_model_load(
                     spawner,
                     ..Default::default()
                 }
-                .init(ParticleLifetimeModifier { lifetime: 1.0 })
-                .init(PositionSphereModifier {
-                    radius: 0.75,
+                .init(InitLifetimeModifier { lifetime: 1.0 })
+                .init(InitVelocitySphereModifier {
                     speed: 0.0.into(),
+                    ..Default::default()
+                })
+                .init(InitPositionSphereModifier {
+                    radius: 0.75,
                     dimension: ShapeDimension::Volume,
                     ..Default::default()
                 })
