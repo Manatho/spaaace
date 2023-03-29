@@ -1,6 +1,7 @@
 use bevy::{
     prelude::{
-        App, Bundle, Commands, Component, Entity, Plugin, Query, Res, ResMut, SystemSet, Transform,
+        App, Bundle, Commands, Component, Entity, IntoSystemConfig, Plugin, Query, Res, ResMut,
+        Transform,
     },
     time::Time,
 };
@@ -13,11 +14,8 @@ pub struct BulletPlugin;
 
 impl Plugin for BulletPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(bullet_mover).add_system_set(
-            SystemSet::new()
-                .with_run_criteria(run_if_server)
-                .with_system(bullet_remover),
-        );
+        app.add_system(bullet_mover)
+            .add_system(bullet_remover.run_if(run_if_server));
     }
 }
 #[derive(Component, Clone, Copy)]

@@ -1,19 +1,16 @@
+pub mod asteroid;
+pub mod cooldown;
+pub mod health;
 pub mod player;
 pub mod ships;
+pub mod targeting;
 pub mod team;
 pub mod util;
 pub mod weapons;
-pub mod health;
-pub mod asteroid;
-pub mod targeting;
-pub mod cooldown;
 
 use std::collections::HashMap;
 
-use bevy::{
-    ecs::schedule::ShouldRun,
-    prelude::{Component, Entity, Quat, Res, Resource, Vec3},
-};
+use bevy::prelude::{Component, Entity, Quat, Res, Resource, Vec3};
 use player::player_input::PlayerInput;
 use serde::{Deserialize, Serialize};
 use team::team_enum::Team;
@@ -123,16 +120,10 @@ pub struct NetworkContext {
     pub is_server: bool,
 }
 
-pub fn run_if_server(ctx: Res<NetworkContext>) -> ShouldRun {
-    match ctx.is_server {
-        true => ShouldRun::Yes,
-        false => ShouldRun::No,
-    }
+pub fn run_if_server(ctx: Res<NetworkContext>) -> bool {
+    return ctx.is_server;
 }
 
-pub fn run_if_client(ctx: Res<NetworkContext>) -> ShouldRun {
-    match ctx.is_server {
-        true => ShouldRun::No,
-        false => ShouldRun::Yes,
-    }
+pub fn run_if_client(ctx: Res<NetworkContext>) -> bool {
+    return !ctx.is_server;
 }

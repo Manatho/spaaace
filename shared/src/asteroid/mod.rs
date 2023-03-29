@@ -1,7 +1,7 @@
 use bevy::{
     prelude::{
-        default, App, AssetServer, Commands, Component, EventReader, Plugin, Quat, Query, Res,
-        ResMut, SystemSet, Transform, Vec3, With, IntoSystemConfig, CoreSet,
+        default, App, AssetServer, Commands, Component, CoreSet, EventReader, IntoSystemConfig,
+        Plugin, Quat, Query, Res, ResMut, Transform, Vec3, With,
     },
     scene::SceneBundle,
     transform::TransformBundle,
@@ -26,26 +26,9 @@ impl Plugin for AsteroidPlugin {
     fn build(&self, app: &mut App) {
         //Both
 
-        app.add_system(on_asteroid_spawned.in_base_set(CoreSet::PostUpdate));
-
-        //Client
-        // app.add_system_set(
-        //     SystemSet::new()
-        //         .with_run_criteria(run_if_client)
-        //         .with_system(on_asteroid_spawned),
-        // );
-
-        // // Server
-        // app.add_system_set(
-        //     SystemSet::new()
-        //         .with_run_criteria(run_if_server)
-        //         .with_system(on_client_connected),
-        // )
-        // .add_startup_system_set(
-        //     SystemSet::new()
-        //         .with_run_criteria(run_if_server)
-        //         .with_system(spawn_asteroids),
-        // );
+        app.add_system(on_asteroid_spawned.run_if(run_if_client))
+            .add_system(on_client_connected.run_if(run_if_server))
+            .add_startup_system(spawn_asteroids.run_if(run_if_server));
     }
 }
 

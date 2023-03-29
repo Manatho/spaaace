@@ -1,7 +1,4 @@
-use bevy::{
-    ecs::schedule::ShouldRun,
-    prelude::{Res, Resource},
-};
+use bevy::prelude::{Res, Resource};
 
 #[derive(Resource)]
 pub struct ClientGameState {
@@ -9,9 +6,6 @@ pub struct ClientGameState {
     pub is_focused: bool,
 }
 
-pub fn run_if_not_paused(ctx: Res<ClientGameState>) -> ShouldRun {
-    match ctx.is_paused {
-        true => ShouldRun::No,
-        false => ShouldRun::Yes,
-    }
+pub fn run_if_not_paused(ctx: Res<ClientGameState>) -> bool {
+    return !ctx.is_paused;
 }

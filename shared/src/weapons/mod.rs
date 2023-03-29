@@ -5,7 +5,7 @@ use std::{f32::consts::PI, time::Instant};
 use bevy::{
     prelude::{
         default, shape, App, Assets, Color, Commands, Component, Entity, EventReader,
-        GlobalTransform, IntoSystemDescriptor, Mesh, Parent, PbrBundle, Plugin, Quat, Query, Res,
+        GlobalTransform, IntoSystemConfig, Mesh, Parent, PbrBundle, Plugin, Quat, Query, Res,
         ResMut, StandardMaterial, SystemSet, Transform, With, Without,
     },
     time::Time,
@@ -56,18 +56,13 @@ pub struct WeaponsPlugin;
 impl Plugin for WeaponsPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(BulletPlugin {})
-            .add_system(trigger_weapons)
-            .add_system(turn_turrets)
-            .add_system_set(
-                SystemSet::new()
-                    .with_run_criteria(run_if_server)
-                    .with_system(fire_weapons_server.after(trigger_weapons)),
+            .add_systems((trigger_weapons, turn_turrets))
+            .add_system(
+                fire_weapons_server
+                    .after(trigger_weapons)
+                    .run_if(run_if_server),
             )
-            .add_system_set(
-                SystemSet::new()
-                    .with_run_criteria(run_if_client)
-                    .with_system(on_bullet_spawned_client),
-            );
+            .add_system(on_bullet_spawned_client.run_if(run_if_client));
     }
 }
 
