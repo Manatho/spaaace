@@ -1,7 +1,7 @@
 use bevy::{
     prelude::{
         default, App, AssetServer, Commands, Component, EventReader, Plugin, Quat, Query, Res,
-        ResMut, SystemSet, Transform, Vec3, With,
+        ResMut, SystemSet, Transform, Vec3, With, IntoSystemConfig, CoreSet,
     },
     scene::SceneBundle,
     transform::TransformBundle,
@@ -26,24 +26,26 @@ impl Plugin for AsteroidPlugin {
     fn build(&self, app: &mut App) {
         //Both
 
-        //Client
-        app.add_system_set(
-            SystemSet::new()
-                .with_run_criteria(run_if_client)
-                .with_system(on_asteroid_spawned),
-        );
+        app.add_system(on_asteroid_spawned.in_base_set(CoreSet::PostUpdate));
 
-        // Server
-        app.add_system_set(
-            SystemSet::new()
-                .with_run_criteria(run_if_server)
-                .with_system(on_client_connected),
-        )
-        .add_startup_system_set(
-            SystemSet::new()
-                .with_run_criteria(run_if_server)
-                .with_system(spawn_asteroids),
-        );
+        //Client
+        // app.add_system_set(
+        //     SystemSet::new()
+        //         .with_run_criteria(run_if_client)
+        //         .with_system(on_asteroid_spawned),
+        // );
+
+        // // Server
+        // app.add_system_set(
+        //     SystemSet::new()
+        //         .with_run_criteria(run_if_server)
+        //         .with_system(on_client_connected),
+        // )
+        // .add_startup_system_set(
+        //     SystemSet::new()
+        //         .with_run_criteria(run_if_server)
+        //         .with_system(spawn_asteroids),
+        // );
     }
 }
 
