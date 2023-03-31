@@ -6,7 +6,7 @@ use bevy::{
     },
     text::TextStyle,
     ui::{AlignItems, FlexDirection, JustifyContent, Node, PositionType, Size, Style, Val},
-    window::{CursorGrabMode, PrimaryWindow, Window},
+    window::{Cursor, CursorGrabMode, PrimaryWindow, Window},
 };
 
 use spaaaace_shared::Lobby;
@@ -128,7 +128,7 @@ fn update_pause_mode(
     mut query: Query<(&PauseBackdrop, &mut Visibility)>,
     mut primary_window_query: Query<(&PrimaryWindow, &mut Window)>,
 ) {
-    let (_, window) = primary_window_query.get_single_mut().unwrap();
+    let (_, mut window) = primary_window_query.get_single_mut().unwrap();
 
     if game_state.is_changed() {
         if game_state.is_focused {
@@ -145,12 +145,16 @@ fn update_pause_mode(
             };
 
             if window.focused {
-                // window.set_cursor_grab_mode(grab_mode);
-                // window.set_cursor_visibility(game_state.is_paused);
+                let mut cursor = Cursor::default();
+                cursor.visible = game_state.is_paused;
+                cursor.grab_mode = grab_mode;
+                window.cursor = cursor;
             }
         } else {
-            // window.set_cursor_grab_mode(CursorGrabMode::None);
-            // window.set_cursor_visibility(game_state.is_paused);
+            let mut cursor = Cursor::default();
+            cursor.visible = game_state.is_paused;
+            cursor.grab_mode = CursorGrabMode::None;
+            window.cursor = cursor;
         }
     }
 }

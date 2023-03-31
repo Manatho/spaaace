@@ -79,7 +79,7 @@ fn main() {
         // Debugging stuff
         // ------------------
         .add_plugin(GizmosPlugin)
-        // .add_plugin(WorldInspectorPlugin)
+        .add_plugin(WorldInspectorPlugin::default())
         // .add_plugin(InputPlugin::default())
         // .add_plugin(ScenePlugin::default())
         // .add_plugin(WindowPlugin::default())
