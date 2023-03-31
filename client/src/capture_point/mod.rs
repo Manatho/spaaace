@@ -3,9 +3,8 @@ mod capture_point;
 use bevy::{
     pbr::NotShadowCaster,
     prelude::{
-        shape::{self, Icosphere},
-        App, AssetServer, Assets, Color, Commands, EventReader, Handle, MaterialMeshBundle,
-        MaterialPlugin, Mesh, Plugin, Query, Res, ResMut, Transform,
+        shape::Icosphere, App, AssetServer, Assets, Color, Commands, EventReader, Handle,
+        MaterialMeshBundle, MaterialPlugin, Mesh, Plugin, Query, Res, ResMut, Transform,
     },
     time::Time,
     utils::default,
