@@ -16,9 +16,12 @@ use bevy::{
     core_pipeline::{bloom::BloomSettings, fxaa::Fxaa},
     diagnostic::FrameTimeDiagnosticsPlugin,
     math::vec3,
+    pbr::NotShadowCaster,
     prelude::{
-        default, AmbientLight, Camera, Camera3dBundle, ClearColor, Color, Commands,
-        DirectionalLight, DirectionalLightBundle, PluginGroup, Quat, ResMut, Transform, Vec3,
+        default, shape, AmbientLight, AssetPlugin, AssetServer, Assets, Camera, Camera3dBundle,
+        ClearColor, Color, Commands, DirectionalLight, DirectionalLightBundle, EnvironmentMapLight,
+        FogFalloff, FogSettings, Mesh, PbrBundle, PluginGroup, Quat, Res, ResMut, StandardMaterial,
+        Transform, Vec3,
     },
     window::{Window, WindowPlugin, WindowResolution},
     DefaultPlugins,
@@ -38,14 +41,21 @@ use crate::networking::ClientNetworkingPlugin;
 
 pub fn run() {
     App::default()
-        .add_plugins(DefaultPlugins.set(WindowPlugin {
-            primary_window: Some(Window {
-                title: "Spaaace Client".to_string(),
-                resolution: WindowResolution::new(1280., 640.),
-                ..default()
-            }),
-            ..default()
-        }))
+        .add_plugins(
+            DefaultPlugins
+                .set(WindowPlugin {
+                    primary_window: Some(Window {
+                        title: "Spaaace Client".to_string(),
+                        resolution: WindowResolution::new(1280., 640.),
+                        ..default()
+                    }),
+                    ..default()
+                })
+                .set(AssetPlugin {
+                    watch_for_changes: true,
+                    ..Default::default()
+                }),
+        )
         .add_startup_system(init)
         // ------------------
         // Effects
@@ -98,7 +108,13 @@ pub fn run() {
         .run();
 }
 
-fn init(mut commands: Commands, mut ambient_light: ResMut<AmbientLight>) {
+fn init(
+    mut commands: Commands,
+    mut ambient_light: ResMut<AmbientLight>,
+    asset_server: Res<AssetServer>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
     commands
         .spawn(Camera3dBundle {
             camera: Camera {
@@ -109,6 +125,16 @@ fn init(mut commands: Commands, mut ambient_light: ResMut<AmbientLight>) {
             transform: Transform::from_xyz(0.0, 6., -12.0)
                 .looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
             ..default()
+        })
+        .insert(FogSettings {
+            color: Color::rgba(0.1, 0.2, 0.4, 1.0) * 0.04,
+            directional_light_color: Color::rgba(1.0, 0.95, 0.75, 0.5),
+            directional_light_exponent: 30.0,
+            falloff: FogFalloff::from_visibility_colors(
+                3000.0, // distance in world units up to which objects retain visibility (>= 5% contrast)
+                Color::rgb(0.35, 0.5, 0.66), // atmospheric extinction color (after light is lost due to absorption by atmospheric particles)
+                Color::rgb(0.8, 0.844, 1.0), // atmospheric inscattering color (light gained due to scattering from the sun)
+            ),
         })
         .insert(OrbitCamera {
             zoom: 50.0,
@@ -133,4 +159,24 @@ fn init(mut commands: Commands, mut ambient_light: ResMut<AmbientLight>) {
 
     ambient_light.color = Color::hsl(207.0, 0.5, 0.4);
     ambient_light.brightness = 0.7;
+
+    commands.spawn((
+        PbrBundle {
+            mesh: meshes.add(Mesh::from(shape::UVSphere::default())),
+            material: materials.add(StandardMaterial {
+                base_color: Color::hex("888888").unwrap(),
+                unlit: true,
+                cull_mode: None,
+                ..default()
+            }),
+            transform: Transform::from_scale(Vec3::splat(10000.0)),
+            ..default()
+        },
+        NotShadowCaster,
+    ));
+
+    // commands.spawn(EnvironmentMapLight {
+    //     diffuse_map: asset_server.load("environment_maps/pisa_diffuse_rgb9e5_zstd.ktx2"),
+    //     specular_map: asset_server.load("environment_maps/pisa_specular_rgb9e5_zstd.ktx2"),
+    // });
 }
