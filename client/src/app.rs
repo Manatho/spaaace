@@ -4,6 +4,7 @@ use app::{
     camera::{OrbitCamera, OrbitCameraPlugin},
     capture_point::ClientCapturePointPlugin,
     controls::ControlsPlugin,
+    debug::fps::{fps_gui, team_swap_gui},
     game_state::ClientGameState,
     player::ClientPlayerPlugin,
     skybox::cubemap::CubemapPlugin,
@@ -23,9 +24,8 @@ use bevy::{
     DefaultPlugins,
 };
 
+use bevy_egui::EguiPlugin;
 use bevy_hanabi::HanabiPlugin;
-
-use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_mod_gizmos::GizmosPlugin;
 
 use bevy_rapier3d::prelude::{NoUserData, RapierDebugRenderPlugin, RapierPhysicsPlugin};
@@ -87,15 +87,14 @@ pub fn run() {
         // ------------------
         // Debug
         // ------------------
-        //.add_plugin(FrameTimeDiagnosticsPlugin::default())
-        // .add_plugin(WorldInspectorPlugin)
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
-        // .add_plugin(EguiPlugin)
+        //.add_plugin(WorldInspectorPlugin::default())
+        .add_plugin(EguiPlugin)
         .add_plugin(GizmosPlugin)
         .add_plugin(CubemapPlugin)
         .insert_resource(ClearColor(Color::rgb(0.01, 0.01, 0.01))) // Used by guis
-        // .add_system(fps_gui)
-        // .add_system(team_swap_gui)
+        .add_system(fps_gui)
+        .add_system(team_swap_gui)
         .run();
 }
 
