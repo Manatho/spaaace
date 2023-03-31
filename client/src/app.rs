@@ -19,9 +19,9 @@ use bevy::{
     pbr::NotShadowCaster,
     prelude::{
         default, shape, AmbientLight, AssetPlugin, AssetServer, Assets, Camera, Camera3dBundle,
-        ClearColor, Color, Commands, DirectionalLight, DirectionalLightBundle, EnvironmentMapLight,
-        FogFalloff, FogSettings, Mesh, PbrBundle, PluginGroup, Quat, Res, ResMut, StandardMaterial,
-        Transform, Vec3,
+        ClearColor, Color, Commands, DirectionalLight, DirectionalLightBundle, FogFalloff,
+        FogSettings, Mesh, PbrBundle, PluginGroup, Quat, Res, ResMut, StandardMaterial, Transform,
+        Vec3,
     },
     window::{Window, WindowPlugin, WindowResolution},
     DefaultPlugins,
@@ -111,7 +111,7 @@ pub fn run() {
 fn init(
     mut commands: Commands,
     mut ambient_light: ResMut<AmbientLight>,
-    asset_server: Res<AssetServer>,
+    _asset_server: Res<AssetServer>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {

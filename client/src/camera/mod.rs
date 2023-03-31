@@ -3,8 +3,8 @@ use std::f32::consts::PI;
 use bevy::{
     input::mouse::{MouseMotion, MouseWheel},
     prelude::{
-        App, Component, EventReader, IntoSystemConfig, Plugin, Quat, Query, Res, SystemSet,
-        Transform, Vec2, Vec3, With, Without,
+        App, Component, EventReader, IntoSystemConfig, Plugin, Quat, Query, Transform, Vec2, Vec3,
+        With, Without,
     },
     window::{PrimaryWindow, Window},
 };

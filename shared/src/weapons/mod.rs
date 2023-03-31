@@ -6,7 +6,7 @@ use bevy::{
     prelude::{
         default, shape, App, Assets, Color, Commands, Component, Entity, EventReader,
         GlobalTransform, IntoSystemConfig, Mesh, Parent, PbrBundle, Plugin, Quat, Query, Res,
-        ResMut, StandardMaterial, SystemSet, Transform, With, Without,
+        ResMut, StandardMaterial, Transform, With, Without,
     },
     time::Time,
     transform::TransformBundle,

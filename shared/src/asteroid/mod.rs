@@ -1,6 +1,6 @@
 use bevy::{
     prelude::{
-        default, App, AssetServer, Commands, Component, CoreSet, EventReader, IntoSystemConfig,
+        default, App, AssetServer, Commands, Component, EventReader, IntoSystemConfig,
         Plugin, Quat, Query, Res, ResMut, Transform, Vec3, With,
     },
     scene::SceneBundle,
@@ -37,6 +37,7 @@ fn spawn_asteroids(
     mut id_provider: ResMut<NetworkIdProvider>,
 ) {
     let mut rng = rand::thread_rng();
+
     for _ in 0..20 {
         let x = Transform {
             translation: Vec3 {
