@@ -1,4 +1,6 @@
 #import bevy_pbr::mesh_view_bindings
+// #import bevy_pbr::prepass_utils
+
 
 
 struct ForceFieldMaterial {
@@ -65,9 +67,13 @@ struct FragmentInput {
 };
 
 @fragment
-fn fragment(input: FragmentInput) -> @location(0) vec4<f32> {
+fn fragment(
+    input: FragmentInput,
+    @builtin(sample_index) sample_index: u32,
+    @builtin(position) frag_coord: vec4<f32>,
+) -> @location(0) vec4<f32> {
 
-
+    // let depth = prepass_depth(frag_coord, sample_index);
     let Normal = normalize(input.world_normal);
 
     let V = normalize(view.world_position.xyz - input.world_position.xyz);
@@ -75,12 +81,13 @@ fn fragment(input: FragmentInput) -> @location(0) vec4<f32> {
     let NdotV = max(dot(Normal, V), 0.0001);
     var fresnel = clamp(1.0 - NdotV, 0.0, 1.0);
 
-    fresnel = pow(fresnel, 3.0) * 2.0;
+    fresnel = pow(fresnel, 8.0) * 8.0;
 
     let time_diff = clamp((globals.time - material.last_color_change - fresnel) / 0.1, 0.0, 1.0);
     let lerp_color = (1.0 - time_diff) * material.prev_color + time_diff * material.color;
 
     let s = textureSample(base_color_texture, base_color_sampler, view.viewport.xy);
 
-    return lerp_color * vec4(1.0, 1.0, 1.0, fresnel) ;
+    // return depth;
+    return lerp_color * vec4(1.0, 1.0, 1.0, 1.0) * fresnel ;
 }

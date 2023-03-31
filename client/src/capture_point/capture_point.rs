@@ -26,6 +26,6 @@ impl Material for ForceFieldMaterial {
     }
 
     fn alpha_mode(&self) -> AlphaMode {
-        AlphaMode::Blend
+        AlphaMode::Add
     }
 }
