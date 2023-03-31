@@ -88,7 +88,6 @@ impl NetworkIdProvider {
         Self(0)
     }
 
-    /// Creates a new, unique [`NetworkId`].
     pub fn new_id(&mut self) -> NetworkedId {
         let id = NetworkedId {
             id: self.0,
