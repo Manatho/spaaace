@@ -88,11 +88,6 @@ pub fn capture_progress(
         }
 
         if old_progress != capture_sphere.progress {
-            //println!(
-            //    "Q {} {} {}",
-            //    capture_sphere.progress,
-            //    capture_sphere.owner
-            //);
             let message = bincode::serialize(&ServerMessages::CapturePointUpdate {
                 id: capture_sphere.id,
                 owner: capture_sphere.owner.clone(),

@@ -6,7 +6,10 @@ use bevy_mod_gizmos::{draw_gizmo, Gizmo};
 use bevy_rapier3d::prelude::{QueryFilter, RapierContext};
 use spaaaace_shared::{player::player_input::PlayerInput, targeting::Targetable, NetworkedId};
 
-use crate::camera::{OrbitCamera, OrbitCameraTarget};
+use crate::{
+    camera::{OrbitCamera, OrbitCameraTarget},
+    game_state::ClientGameState,
+};
 
 #[derive(Component)]
 pub struct LocalPlayer;
@@ -34,25 +37,26 @@ pub fn player_input(
     k_input: Res<Input<KeyCode>>,
     m_input: Res<Input<MouseButton>>,
     mut player_input: ResMut<PlayerInput>,
+    game_state: Res<ClientGameState>,
 ) {
-    player_input.rotate_left = k_input.pressed(KeyCode::A);
-    player_input.rotate_right = k_input.pressed(KeyCode::D);
-    player_input.thrust_forward = k_input.pressed(KeyCode::W);
-    player_input.thrust_reverse = k_input.pressed(KeyCode::S);
-    player_input.thrust_left = k_input.pressed(KeyCode::Q);
-    player_input.thrust_right = k_input.pressed(KeyCode::E);
-    player_input.thrust_up = k_input.pressed(KeyCode::Space);
-    player_input.thrust_down = k_input.pressed(KeyCode::LControl);
-    player_input.ability_slot_1 = k_input.pressed(KeyCode::Key1);
-    player_input.ability_slot_2 = k_input.pressed(KeyCode::Key2);
-    player_input.ability_slot_3 = k_input.pressed(KeyCode::Key3);
-    player_input.ability_slot_4 = k_input.pressed(KeyCode::Key4);
-    player_input.ability_slot_5 = k_input.pressed(KeyCode::Key5);
-    player_input.ability_slot_6 = k_input.pressed(KeyCode::Key6);
-    player_input.ability_slot_7 = k_input.pressed(KeyCode::Key7);
-    player_input.ability_slot_8 = k_input.pressed(KeyCode::Key8);
-    player_input.ability_slot_9 = k_input.pressed(KeyCode::Key9);
-    player_input.primary_fire = m_input.pressed(MouseButton::Left);
+    player_input.rotate_left = !game_state.is_paused && k_input.pressed(KeyCode::A);
+    player_input.rotate_right = !game_state.is_paused && k_input.pressed(KeyCode::D);
+    player_input.thrust_forward = !game_state.is_paused && k_input.pressed(KeyCode::W);
+    player_input.thrust_reverse = !game_state.is_paused && k_input.pressed(KeyCode::S);
+    player_input.thrust_left = !game_state.is_paused && k_input.pressed(KeyCode::Q);
+    player_input.thrust_right = !game_state.is_paused && k_input.pressed(KeyCode::E);
+    player_input.thrust_up = !game_state.is_paused && k_input.pressed(KeyCode::Space);
+    player_input.thrust_down = !game_state.is_paused && k_input.pressed(KeyCode::LControl);
+    player_input.ability_slot_1 = !game_state.is_paused && k_input.pressed(KeyCode::Key1);
+    player_input.ability_slot_2 = !game_state.is_paused && k_input.pressed(KeyCode::Key2);
+    player_input.ability_slot_3 = !game_state.is_paused && k_input.pressed(KeyCode::Key3);
+    player_input.ability_slot_4 = !game_state.is_paused && k_input.pressed(KeyCode::Key4);
+    player_input.ability_slot_5 = !game_state.is_paused && k_input.pressed(KeyCode::Key5);
+    player_input.ability_slot_6 = !game_state.is_paused && k_input.pressed(KeyCode::Key6);
+    player_input.ability_slot_7 = !game_state.is_paused && k_input.pressed(KeyCode::Key7);
+    player_input.ability_slot_8 = !game_state.is_paused && k_input.pressed(KeyCode::Key8);
+    player_input.ability_slot_9 = !game_state.is_paused && k_input.pressed(KeyCode::Key9);
+    player_input.primary_fire = !game_state.is_paused && m_input.pressed(MouseButton::Left);
 }
 
 fn aiming(
